@@ -13,7 +13,9 @@ NB: The name of the environment to be created can be changed in the first line o
 <code>conda activate appl-docchat</code>
 
 ### Prerequisite for working with OpenAI API
-Fill in your OpenAI API key in the first line of the .env file 
+Create a file .env and enter your OpenAI API key in the first line of this file :<br>
+OPENAI_API_KEY="sk-....."<br>
+Save and close this file<br>
 * In case you don't have an OpenAI API key yet, you can obtain one here: https://platform.openai.com/account/api-keys
 * Click on + Create new secret key
 * Enter an identifier name (optional) and click on Create secret key
