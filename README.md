@@ -13,10 +13,10 @@ NB: The name of the environment to be created can be changed in the first line o
 <code>conda activate appl-docchat</code>
 
 ### Prerequisite for working with OpenAI API
-Fill in your OpenAI API key in the forst line of the .env file 
-In case you don't have an API key yet, you can obtain one here: https://platform.openai.com/account/api-keys
-Click on + Create new secret key
-Enter an identifier name (optional) and click on Create secret key
+Fill in your OpenAI API key in the first line of the .env file 
+* In case you don't have an OpenAI API key yet, you can obtain one here: https://platform.openai.com/account/api-keys
+* Click on + Create new secret key
+* Enter an identifier name (optional) and click on Create secret key
 
 ### Ingesting documents
 The file ingest.py can be used to vectorize all documents in a chosen folder and store the vectors and texts in a vector database for later use.<br>
