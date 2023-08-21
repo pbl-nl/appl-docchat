@@ -1,0 +1,15 @@
+# Welcome to ChatPBL!
+
+To directly start chatting with documents in natural language, first choose a document folder in the sidebar.<br><br>
+Is there no folder with documents you want to query yet? No problem, it is possible to create your own folder, the application will then create a "vector database" based on the documents in our folder so this extra step will take some time.<br>
+
+It only takes a few steps to create and use your own document folder:
+1. In the folder "docs", create a subfolder with a distinctive name 
+2. Put any relevant documents you want to chat with in that folder
+3. Refresh the screen of this app (shift + F5)
+4. Choose the newly created folder in the sidebar and click 'OK'. A "vector database" will be created from your documents. Depending on the size of the folder, this may take some time.
+5. Once the creation of the vector database is finished, you can start chatting with your documents<br><br>
+
+Some characteristics of this application:<br>
+<b>The app is multilingual:</b> here is an example conversation<br>
+

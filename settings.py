@@ -1,0 +1,10 @@
+# APP_STATUS="development"
+APP_LOGO = "./images/pbl_logo_bg.png"
+APP_INFO="./info/explanation.txt"
+APP_HEADER = "ChatNMDC: chat with your documents"
+DOC_DIR = "./docs"
+EMBEDDINGS_TYPE = "openai"
+VECDB_DIR = "./vector_stores"
+VECDB_TYPE = "chromadb"
+CHUNK_SIZE = 1000
+CHUNK_OVERLAP = 100
