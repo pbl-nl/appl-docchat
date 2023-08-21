@@ -7,10 +7,10 @@ This repo is created to run on the Windows platform
 ### Environment setup
 1. Open an Anaconda prompt or other command prompt
 2. When using conda environments, go to the root folder of the project and create a Python environment with conda using commandline command<br>
-<code>conda env create -f chatpbl.yml</code><br>
+<code>conda env create -f appl-docchat.yml</code><br>
 NB: The name of the environment to be created can be changed in the first line of the yml file
 3. Activate this environment using commandline command<br>
-<code>conda activate chatpbl</code>
+<code>conda activate appl-docchat</code>
 
 ### Ingesting documents
 The file ingest.py can be used to vectorize all documents in a chosen folder and store the vectors and texts in a vector database for later use.<br>
