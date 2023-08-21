@@ -2,7 +2,7 @@
 A setup for further exploration of chatting to company documents
 
 ## How to use this repo
-This repo is created to run in Windows
+This repo is created to run on the Windows platform
 
 ### Environment setup
 1. Open an Anaconda prompt or other command prompt
