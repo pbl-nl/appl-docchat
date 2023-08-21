@@ -4,21 +4,23 @@ A setup for further exploration of chatting to company documents
 ## How to use this repo
 This repo is created to run on the Windows platform
 
-### Environment setup
+### Preparation
+1. clone this repo to a folder of your choice
+2. create a subfolder vector_stores in the root folder of the cloned repo
+3. Create a file .env and enter your OpenAI API key in the first line of this file :<br>
+OPENAI_API_KEY="sk-....."<br>
+Save and close the .env file<br>
+* In case you don't have an OpenAI API key yet, you can obtain one here: https://platform.openai.com/account/api-keys
+* Click on + Create new secret key
+* Enter an identifier name (optional) and click on Create secret key
+
+### Virtual environment setup
 1. Open an Anaconda prompt or other command prompt
 2. When using conda environments, go to the root folder of the project and create a Python environment with conda using commandline command<br>
 <code>conda env create -f appl-docchat.yml</code><br>
 NB: The name of the environment to be created can be changed in the first line of the yml file
 3. Activate this environment using commandline command<br>
 <code>conda activate appl-docchat</code>
-
-### Prerequisite for working with OpenAI API
-Create a file .env and enter your OpenAI API key in the first line of this file :<br>
-OPENAI_API_KEY="sk-....."<br>
-Save and close this file<br>
-* In case you don't have an OpenAI API key yet, you can obtain one here: https://platform.openai.com/account/api-keys
-* Click on + Create new secret key
-* Enter an identifier name (optional) and click on Create secret key
 
 ### Ingesting documents
 The file ingest.py can be used to vectorize all documents in a chosen folder and store the vectors and texts in a vector database for later use.<br>
