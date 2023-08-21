@@ -24,12 +24,12 @@ NB: The name of the environment to be created can be changed in the first line o
 
 ### Ingesting documents
 The file ingest.py can be used to vectorize all documents in a chosen folder and store the vectors and texts in a vector database for later use.<br>
-Execution is done using commandline command:<br>
+Execution is done in the activated virtual environment using commandline command:<br>
 <code>python ingest.py</code>
 
 ### Querying documents
 The file query.py can be used to query any folder with documents, provided that the associated vector database exists.<br>
-Execution is done using commandline command:<br>
+Execution is done in the activated virtual environment using commandline command:<br>
 <code>python query.py</code>
 
 ### Ingesting and querying documents through a user interface
