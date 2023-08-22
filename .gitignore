@@ -1,6 +1,3 @@
-# Project specific files
-*.env
-
 # backup files
 *.bak
 
