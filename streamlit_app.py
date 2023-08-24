@@ -138,10 +138,12 @@ if st.session_state['folder_selected']:
     # If button "Clear Conversation" is clicked, remove all existing messages, if any
     if clear_messages_button:
         st.session_state['messages'] = []
+        querier.clear_history()
 
     # Display chat messages from history on app rerun
     display_chat_history()
 
     # React to user input if a question has been asked
     if prompt := st.chat_input("Ask your question"):
-        handle_query(querier, prompt)
+        with st.spinner(f'Thinking...'):
+            handle_query(querier, prompt)

@@ -67,3 +67,8 @@ class Querier:
         self.chat_history.append(HumanMessage(content=question))
         self.chat_history.append(AIMessage(content=answer))
         return answer, source
+    
+    def clear_history(self):
+        # used by "Clear Conversation" button
+        self.chat_history = []
+ 
