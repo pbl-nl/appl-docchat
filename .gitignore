@@ -1,5 +1,5 @@
-# Project specific files
-*.env
+# developer folder
+/dev
 
 # backup files
 *.bak
