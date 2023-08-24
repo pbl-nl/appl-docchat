@@ -1,7 +1,3 @@
-# project specific folders
-/dev
-/vector_stores
-
 # backup files
 *.bak
 
