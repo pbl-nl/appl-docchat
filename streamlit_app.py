@@ -1,10 +1,11 @@
 import os
 import streamlit as st
-from PIL import Image
+# from PIL import Image
 # local imports
 from ingest.ingester import Ingester
 from query.querier import Querier
-from settings import APP_INFO, APP_HEADER, DOC_DIR, VECDB_DIR, VECDB_TYPE, CHUNK_SIZE, CHUNK_OVERLAP, EMBEDDINGS_TYPE
+from settings import APP_INFO, APP_HEADER, DOC_DIR, VECDB_TYPE, CHUNK_SIZE, CHUNK_OVERLAP, EMBEDDINGS_TYPE
+import utils
 
 
 def click_folder_selected_button():
@@ -28,11 +29,11 @@ def folderlist_creator(folder_path):
 
 
 def folder_selector(folders):
-    content_folder_name_selected = st.sidebar.selectbox("label=folder_selector", options=folders, on_change=unclick_folder_selected_button, label_visibility="hidden")
-    content_folder_path_selected = os.path.join(DOC_DIR, content_folder_name_selected)
-    vectordb_name = "_" + VECDB_TYPE + "_" + str(CHUNK_SIZE) + "_" + str(CHUNK_OVERLAP) + "_" + EMBEDDINGS_TYPE
-    selected_vectordb_folder = os.path.join(VECDB_DIR, content_folder_name_selected) + vectordb_name 
-    return content_folder_name_selected, content_folder_path_selected, selected_vectordb_folder
+    # Get source folder with docs from user
+    content_folder_name = st.sidebar.selectbox("label=folder_selector", options=folders, on_change=unclick_folder_selected_button, label_visibility="hidden")
+    # get associated source folder path and vectordb path
+    content_folder_path, vectordb_folder_path = utils.create_vectordb_name(content_folder_name)
+    return content_folder_name, content_folder_path, vectordb_folder_path
 
 
 def handle_query(querier, prompt: str):
@@ -42,7 +43,6 @@ def handle_query(querier, prompt: str):
     # Add user message to chat history
     st.session_state['messages'].append({"role": "user", "content": prompt})
     # Generate a response
-    # response, sources = process_query(querier, prompt)
     response, sources = querier.ask_question(prompt)
     # Display the response in chat message container
     with st.chat_message("assistant"):
@@ -77,7 +77,6 @@ def initialize_page():
     # Let user choose a folder with docs in the sidebar
     st.sidebar.title("Select a document folder")
     # necessary at first start of session
-    # can this go to page_initialization?
     if "folder_selected" not in st.session_state:
         st.session_state['folder_selected'] = False
     if "messages" not in st.session_state:
@@ -92,17 +91,6 @@ def initialize_querier(input_folder: str, vectordb_folder: str):
     querier = Querier(input_folder, vectordb_folder, EMBEDDINGS_TYPE, VECDB_TYPE, CHUNK_SIZE, CHUNK_OVERLAP)
     print("Querier object created")
     return querier
-
-
-# def process_query(querier, question: str) -> str:
-#     """
-#     Query the model with the provided question
-#     :param question: The question to ask the model
-#     :return: The answer from the model
-#     """
-#     # querier = Querier(input_folder, vectordb_folder, EMBEDDINGS_TYPE, VECDB_TYPE, CHUNK_SIZE, CHUNK_OVERLAP)
-#     response, sources = querier.ask_question(question)
-#     return response, sources
 
 
 def set_page_config():

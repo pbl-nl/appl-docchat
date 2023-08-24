@@ -1,16 +1,15 @@
 import os
 # local imports
 from ingest.ingester import Ingester
-from settings import DOC_DIR, VECDB_DIR, VECDB_TYPE, CHUNK_SIZE, CHUNK_OVERLAP, EMBEDDINGS_TYPE
+from settings import VECDB_TYPE, CHUNK_SIZE, CHUNK_OVERLAP, EMBEDDINGS_TYPE
+import utils
 
 def main():
     # Get source folder with docs from user
-    input_folder = input("Source folder of documents (without path): ")
-    selected_folder = os.path.join(DOC_DIR, input_folder)
-    vectordb_name = "_" + VECDB_TYPE + "_" + str(CHUNK_SIZE) + "_" + str(CHUNK_OVERLAP) + "_" + EMBEDDINGS_TYPE
-    vectordb_folder = os.path.join(VECDB_DIR, input_folder) + vectordb_name 
-
-    ingester = Ingester(input_folder, selected_folder, vectordb_folder, EMBEDDINGS_TYPE, VECDB_TYPE, CHUNK_SIZE, CHUNK_OVERLAP)
+    content_folder_name = input("Source folder of documents (without path): ")
+    # get associated source folder path and vectordb path
+    content_folder_path, vectordb_folder_path = utils.create_vectordb_name(content_folder_name)
+    ingester = Ingester(content_folder_name, content_folder_path, vectordb_folder_path, EMBEDDINGS_TYPE, VECDB_TYPE, CHUNK_SIZE, CHUNK_OVERLAP)
     ingester.ingest()
 
 
