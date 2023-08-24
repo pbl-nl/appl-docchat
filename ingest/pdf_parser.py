@@ -2,14 +2,12 @@ import os
 import re
 # from datetime import date
 from typing import Callable, Dict, List, Tuple
-
 import langchain.docstore.document as docstore
 import langchain.text_splitter as splitter
 from loguru import logger
 from pypdf import PdfReader
-
-from .utils import getattr_or_default
-# from settings import CHUNK_SIZE, CHUNK_OVERLAP
+# local imports
+from ingest.ingest_utils import getattr_or_default
 
 
 class PdfParser:
