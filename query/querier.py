@@ -71,7 +71,7 @@ class Querier:
         #     return_source_documents=True,
         # )
 
-        print("Executed make_chain(self, input_folder, vectordb_folder)")
+        logger.info("Executed make_chain(self, input_folder, vectordb_folder)")
         # return chain
         self.chain = chain
 
