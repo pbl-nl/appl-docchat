@@ -7,4 +7,4 @@ EMBEDDINGS_TYPE = "openai"
 VECDB_DIR = "./vector_stores"
 VECDB_TYPE = "chromadb"
 CHUNK_SIZE = 1000
-CHUNK_OVERLAP = 100
+CHUNK_OVERLAP = 200

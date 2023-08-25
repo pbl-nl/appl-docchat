@@ -1,4 +1,3 @@
-import os
 # local imports
 from ingest.ingester import Ingester
 from settings import VECDB_TYPE, CHUNK_SIZE, CHUNK_OVERLAP, EMBEDDINGS_TYPE

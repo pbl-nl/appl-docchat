@@ -1,6 +1,7 @@
 import os
 import streamlit as st
 # from PIL import Image
+from loguru import logger
 # local imports
 from ingest.ingester import Ingester
 from query.querier import Querier
@@ -8,8 +9,10 @@ from settings import APP_INFO, APP_HEADER, DOC_DIR, VECDB_TYPE, CHUNK_SIZE, CHUN
 import utils
 
 
-def click_folder_selected_button():
-    st.session_state['folder_selected'] = True
+def create_vectordb(content_folder_name_selected, content_folder_path_selected, vectordb_folder_path_selected):
+    ingester = Ingester(content_folder_name_selected, content_folder_path_selected, vectordb_folder_path_selected, EMBEDDINGS_TYPE, VECDB_TYPE, CHUNK_SIZE, CHUNK_OVERLAP)
+    ingester.ingest()
+
 
 
 def display_chat_history():
@@ -17,23 +20,49 @@ def display_chat_history():
         if message["role"] != "system":
             with st.chat_message(message["role"]):
                 st.markdown(message["content"])
+    logger.info("Executed display_chat_history()")
 
 
-def folderlist_creator(folder_path):
+def folderlist_creator():
+    """
+    Creates a list of folder names (without path).
+    Folder names are found in DOC_DIR (see settings).
+    """
     folders = []
-    for file in os.listdir(folder_path):
-        folder = os.path.join(folder_path, file)
-        if os.path.isdir(folder):
-            folders.append(file)
+    for folder_name in os.listdir(DOC_DIR):
+        folder_path = os.path.join(DOC_DIR, folder_name)
+        if os.path.isdir(folder_path):
+            folders.append(folder_name)
+    logger.info("Executed folderlist_creator()")
     return folders
 
 
-def folder_selector(folders):
-    # Get source folder with docs from user
-    content_folder_name = st.sidebar.selectbox("label=folder_selector", options=folders, on_change=unclick_folder_selected_button, label_visibility="hidden")
+def folder_selector(querier, folders):
+    # Select source folder with docs
+    folder_name_selected = st.sidebar.selectbox("label=folder_selector", options=folders, label_visibility="hidden")
+    logger.info(f"folder_name_selected is now {folder_name_selected}")
     # get associated source folder path and vectordb path
-    content_folder_path, vectordb_folder_path = utils.create_vectordb_name(content_folder_name)
-    return content_folder_name, content_folder_path, vectordb_folder_path
+    folder_path_selected, vectordb_folder_path_selected = utils.create_vectordb_name(folder_name_selected)
+    logger.info(f"vectordb_folder_path_selected is now {vectordb_folder_path_selected}")
+    # If a folder is chosen that is not equal to the last know source folder
+    if folder_name_selected != st.session_state['folder_selected']:
+        # set session state of is_folder_selected to False (will be set to True when OK button is clicked)
+        st.session_state['is_folder_selected'] = False
+        # clear all chat messages on screen and in Querier object
+        st.session_state['messages'] = []
+        querier.clear_history()
+        # When the associated vector database of the chosen content folder doesn't exist with the settings as given in settings.py, create it first
+        if not os.path.exists(vectordb_folder_path_selected):
+            logger.info("Creating vectordb")
+            with st.spinner(f'Creating vector database for folder {folder_name_selected}. Depending on the size of the source folder, this may take a while. Please wait...'):
+                create_vectordb(folder_name_selected, folder_path_selected, vectordb_folder_path_selected)
+        # create a new chain based on the new source folder 
+        querier.make_chain(folder_name_selected, vectordb_folder_path_selected)
+        # set session state of selected folder to new source folder 
+        st.session_state['folder_selected'] = folder_name_selected
+        logger.info(f"Content folder name is now {folder_name_selected}")
+    logger.info("Executed folder_selector(folders)")
+    return folder_name_selected, folder_path_selected, vectordb_folder_path_selected
 
 
 def handle_query(querier, prompt: str):
@@ -51,6 +80,7 @@ def handle_query(querier, prompt: str):
     st.session_state['messages'].append({"role": "assistant", "content": response})
     with st.expander("Show sources"):
         st.write(sources)
+    logger.info("Executed handle_query(querier, prompt)")
 
 
 @st.cache_data
@@ -74,71 +104,68 @@ def initialize_page():
         st.markdown(body=explanation, unsafe_allow_html=True)
         st.image("./images/multilingual.png")
     st.divider()
-    # Let user choose a folder with docs in the sidebar
+    # Sidebar text for folder selection
     st.sidebar.title("Select a document folder")
-    # necessary at first start of session
-    if "folder_selected" not in st.session_state:
-        st.session_state['folder_selected'] = False
-    if "messages" not in st.session_state:
+    logger.info("Executed initialize_page()")
+
+
+def initialize_session_state():
+    if 'is_folder_selected' not in st.session_state:
+        st.session_state['is_folder_selected'] = False
+    if 'folder_selected' not in st.session_state:
+        st.session_state['folder_selected'] = ""
+    if 'messages' not in st.session_state:
         st.session_state['messages'] = []
 
 
 @st.cache_resource
-def initialize_querier(input_folder: str, vectordb_folder: str):
+def initialize_querier():
     """
     Create a Querier object
     """
-    querier = Querier(input_folder, vectordb_folder, EMBEDDINGS_TYPE, VECDB_TYPE, CHUNK_SIZE, CHUNK_OVERLAP)
-    print("Querier object created")
+    querier = Querier(EMBEDDINGS_TYPE, VECDB_TYPE, CHUNK_SIZE, CHUNK_OVERLAP)
+    logger.info("Executed initialize_querier()")
     return querier
 
 
 def set_page_config():
     st.set_page_config(page_title="Chat with your documents", page_icon=':books:', layout='wide', initial_sidebar_state='auto')
+    logger.info("\nExecuted set_page_config()")
 
 
-def unclick_folder_selected_button():
-    st.session_state['folder_selected'] = False
-    st.session_state['messages'] = []
 
 
 #### MAIN PROGRAM ####
 # set page configuration, this is the first thing that needs to be done
 set_page_config()
-# initialize page. Needs to be done before any action from the user
+# Initialize page, executed only once per session
 initialize_page()
-# return list of folder names
-source_folders_available = folderlist_creator(DOC_DIR)
-
-# Initialise session state variables
-if 'folder_selected' not in st.session_state:
-    st.session_state['folder_selected'] = False
-if 'messages' not in st.session_state:
-    st.session_state['messages'] = []
+# create list of content folders
+source_folders_available = folderlist_creator()
+# initialize session state variables
+initialize_session_state()
+# Creation of Querier object, executed only once per session
+querier = initialize_querier()
 
 # Chosen folder and associated vector database
-content_folder_name_selected, content_folder_path_selected, vectordb_folder_selected = folder_selector(source_folders_available)
+content_folder_name_selected, content_folder_path_selected, vectordb_folder_path_selected = folder_selector(querier, source_folders_available)
 
-# Button to confirm folder selction
-st.sidebar.button("OK", on_click=click_folder_selected_button)
+# Create button to confirm folder selection. This button sets session_state['is_folder_selected'] to True
+is_folder_selected_button = st.sidebar.button("OK", type="primary")
+if is_folder_selected_button:
+    st.session_state['is_folder_selected'] = True
 
-# Start a conversation when a folder is selected
-if st.session_state['folder_selected']:
-    # When the associated vector database of the chosen content folder doesn't exist with the settings as given in settings.py, create it first
-    if not os.path.exists(vectordb_folder_selected):
-        with st.spinner(f'Creating vector database for folder {content_folder_name_selected}. Depending on the size of the source folder, this may take a while. Please wait...'):
-            ingester = Ingester(content_folder_name_selected, content_folder_path_selected, vectordb_folder_selected, EMBEDDINGS_TYPE, VECDB_TYPE, CHUNK_SIZE, CHUNK_OVERLAP)
-            ingester.ingest()
-    
-    # Creation of Querier object
-    querier = initialize_querier(content_folder_name_selected, vectordb_folder_selected)
-    
+# Only start a conversation when a folder is selected and selection is confirmed with "OK" button
+if st.session_state['is_folder_selected']:
     # Show button "Clear Conversation"
     clear_messages_button = st.button("Clear Conversation", key="clear")
-    # If button "Clear Conversation" is clicked, remove all existing messages, if any
+    # If button "Clear Conversation" is clicked
     if clear_messages_button:
+        # clear all chat messages on screen and in Querier object
+        # NB: session state of is_folder_selected, folder_selected remain unchanged
         st.session_state['messages'] = []
         querier.clear_history()
+        logger.info("Clear Conversation button clicked")
 
     # Display chat messages from history on app rerun
     display_chat_history()

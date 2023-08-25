@@ -11,18 +11,32 @@ from loguru import logger
 
 
 class Querier:
-    def __init__(self, input_folder: str, vectordb_folder:str, embeddings_type: str, vectordb_type: str, chunk_size: int, chunk_overlap: int):
+    # def __init__(self, input_folder: str, vectordb_folder:str, embeddings_type: str, vectordb_type: str, chunk_size: int, chunk_overlap: int):
+    #     load_dotenv()
+    #     self.input_folder = input_folder
+    #     self.vectordb_folder = vectordb_folder
+    #     self.vectordb_type = vectordb_type
+    #     self.chunk_size = chunk_size
+    #     self.chunk_overlap = chunk_overlap
+    #     self.embeddings_type = embeddings_type
+    #     self.chain = self.make_chain()
+    #     self.chat_history = []
+
+    def __init__(self, embeddings_type: str, vectordb_type: str, chunk_size: int, chunk_overlap: int):
         load_dotenv()
-        self.input_folder = input_folder
-        self.vectordb_folder = vectordb_folder
+        # self.input_folder = input_folder
+        # self.vectordb_folder = vectordb_folder
         self.vectordb_type = vectordb_type
         self.chunk_size = chunk_size
         self.chunk_overlap = chunk_overlap
         self.embeddings_type = embeddings_type
-        self.chain = self.make_chain()
+        # self.chain = self.make_chain()
         self.chat_history = []
 
-    def make_chain(self):
+    def make_chain(self, input_folder, vectordb_folder):
+        self.input_folder = input_folder
+        self.vectordb_folder = vectordb_folder
+
         llm = ChatOpenAI(
             client=None,
             model="gpt-3.5-turbo",
@@ -56,7 +70,10 @@ class Querier:
         #     memory=memory,
         #     return_source_documents=True,
         # )
-        return chain
+
+        print("Executed make_chain(self, input_folder, vectordb_folder)")
+        # return chain
+        self.chain = chain
 
     def ask_question(self, question: str):
         response = self.chain({"question": question, "chat_history": self.chat_history})
@@ -71,4 +88,6 @@ class Querier:
     def clear_history(self):
         # used by "Clear Conversation" button
         self.chat_history = []
+
+    
  
