@@ -11,7 +11,7 @@ from .content_iterator import ContentIterator
 
 class Ingester:
 
-    def __init__(self, input_folder: str, content_folder: str, vectordb_folder:str, embeddings_type: str, vectordb_type: str, chunk_size: int, chunk_overlap: int):
+    def __init__(self, input_folder: str, content_folder: str, vectordb_folder: str, embeddings_type: str, vectordb_type: str, chunk_size: int, chunk_overlap: int):
         load_dotenv()
         self.input_folder = input_folder
         self.content_folder = content_folder
@@ -28,11 +28,14 @@ class Ingester:
         chunks: List[docstore.Document] = []
         # for each pdf file that the content_iterator yields
         for document in content_iterator:
-            # convert the pdf text to cleaned text chunks
-            pdf_parser.set_pdf_file_path(document)
-            document_chunks = pdf_parser.clean_text_to_docs()
-            chunks.extend(document_chunks)
-            logger.info(f"Extracted {len(chunks)} chunks from {document}")
+            if document.endswith(".pdf"):
+                # convert the pdf text to cleaned text chunks
+                pdf_parser.set_pdf_file_path(document)
+                document_chunks = pdf_parser.clean_text_to_docs()
+                chunks.extend(document_chunks)
+                logger.info(f"Extracted {len(chunks)} chunks from {document}")
+            else:
+                logger.info(f"Cannot ingest document {document} because it has extension {document[-4:]}")
         
         if self.embeddings_type == "openai":
             embeddings = OpenAIEmbeddings(client=None)

@@ -14,7 +14,6 @@ def create_vectordb(content_folder_name_selected, content_folder_path_selected, 
     ingester.ingest()
 
 
-
 def display_chat_history():
     for message in st.session_state['messages']:
         if message["role"] != "system":

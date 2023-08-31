@@ -7,5 +7,5 @@ class ContentIterator():
 
     def __iter__(self):
         for file in os.listdir(self.content_path):
-            if file.endswith(".pdf"):
-                yield os.path.join(self.content_path, file)
+            # if file.endswith(".pdf"):
+            yield os.path.join(self.content_path, file)
