@@ -1,8 +1,9 @@
 # Chat with your docs!
-A setup for further exploration of chatting to company documents
+A RAG (Retrieval Augemented Generation) setup for further exploration of chatting to company documents<br><br><br>
+![image](https://github.com/pbl-nl/appl-docchat/assets/7226328/8172f7af-58ef-415b-b8c5-b340d3e7e516)
 
 ## How to use this repo
-This repo is created to run on the Windows platform
+This repo is tested on the Windows platform
 
 ### Preparation
 1. clone this repo to a folder of your choice
@@ -37,15 +38,6 @@ The functionalities described above can also be used through a User Interface.<b
 The UI can be started by using commandline command:<br>
 <code>streamlit run streamlit_app.py</code><br>
 When this command is used, a browser session will open automatically
-
-## Suggestions for further development
-todo
-
-
-
-
-
-
 
 ## References
 This repo is mainly inspired by:
