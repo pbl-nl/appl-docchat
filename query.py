@@ -8,6 +8,7 @@ import utils
 
 def main():
     proceed = True
+    # Create instance of Querier once
     querier = Querier(EMBEDDINGS_TYPE, VECDB_TYPE, CHUNK_SIZE, CHUNK_OVERLAP)
     # Get source folder with docs from user
     content_folder_name = input("Source folder of documents (without path): ")
@@ -19,8 +20,7 @@ def main():
         logger.info("There is no vector database for this folder yet. First run \"python ingest.py\"")
         proceed = False
     else:
-        # Create instance of Querier once
-        # querier = Querier(content_folder_name, vectordb_folder_path, EMBEDDINGS_TYPE, VECDB_TYPE, CHUNK_SIZE, CHUNK_OVERLAP)
+        # create the query chain
         querier.make_chain(content_folder_name, vectordb_folder_path)
         while proceed:
             logger.info("")
