@@ -50,7 +50,7 @@ class PdfParser:
             logger.info(f"{getattr(metadata, 'title', 'no title')}")
             # default_date = date(1900, 1, 1)
             return {
-                # TODO toevoegen metadata title + pdf filenaam vanuit output notebook script download_pbl_pdfs.ipynb
+                # TODO add metadata title + pdf filename
                 "title": getattr_or_default(metadata, 'title', '').strip(),
                 "author": getattr_or_default(metadata, 'author', '').strip(),
                 # "creation_date": getattr_or_default(metadata,

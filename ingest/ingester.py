@@ -23,6 +23,9 @@ class Ingester:
 
     def ingest(self) -> None:
         content_iterator = ContentIterator(self.content_folder)
+        # create text chunks with chosen settings of:
+        # - chunk size
+        # - chunk overlap
         pdf_parser = PdfParser(self.chunk_size, self.chunk_overlap)
 
         chunks: List[docstore.Document] = []
@@ -41,6 +44,7 @@ class Ingester:
             embeddings = OpenAIEmbeddings(client=None)
             logger.info("Loaded openai embeddings")
 
+        # create vector store with chosen settings of vector store type (e.g. chromadb)
         if self.vectordb_type == "chromadb":
             vector_store = Chroma.from_documents(
                 documents=chunks,

@@ -5,12 +5,18 @@ from loguru import logger
 # local imports
 from ingest.ingester import Ingester
 from query.querier import Querier
-from settings import APP_INFO, APP_HEADER, DOC_DIR, VECDB_TYPE, CHUNK_SIZE, CHUNK_OVERLAP, EMBEDDINGS_TYPE
+import settings
 import utils
 
 
 def create_vectordb(content_folder_name_selected, content_folder_path_selected, vectordb_folder_path_selected):
-    ingester = Ingester(content_folder_name_selected, content_folder_path_selected, vectordb_folder_path_selected, EMBEDDINGS_TYPE, VECDB_TYPE, CHUNK_SIZE, CHUNK_OVERLAP)
+    ingester = Ingester(content_folder_name_selected, 
+                        content_folder_path_selected, 
+                        vectordb_folder_path_selected, 
+                        settings.EMBEDDINGS_TYPE, 
+                        settings.VECDB_TYPE, 
+                        settings.CHUNK_SIZE, 
+                        settings.CHUNK_OVERLAP)
     ingester.ingest()
 
 
@@ -28,8 +34,8 @@ def folderlist_creator():
     Folder names are found in DOC_DIR (see settings).
     """
     folders = []
-    for folder_name in os.listdir(DOC_DIR):
-        folder_path = os.path.join(DOC_DIR, folder_name)
+    for folder_name in os.listdir(settings.DOC_DIR):
+        folder_path = os.path.join(settings.DOC_DIR, folder_name)
         if os.path.isdir(folder_path):
             folders.append(folder_name)
     logger.info("Executed folderlist_creator()")
@@ -41,7 +47,14 @@ def folder_selector(querier, folders):
     folder_name_selected = st.sidebar.selectbox("label=folder_selector", options=folders, label_visibility="hidden")
     logger.info(f"folder_name_selected is now {folder_name_selected}")
     # get associated source folder path and vectordb path
-    folder_path_selected, vectordb_folder_path_selected = utils.create_vectordb_name(folder_name_selected)
+    folder_path_selected, vectordb_folder_path_selected = utils.create_vectordb_name(folder_name_selected, 
+                                                                                    settings.DOC_DIR, 
+                                                                                    settings.VECDB_DIR, 
+                                                                                    settings.VECDB_TYPE, 
+                                                                                    settings.EMBEDDINGS_TYPE, 
+                                                                                    settings.CHUNK_SIZE, 
+                                                                                    settings.CHUNK_OVERLAP)
+
     logger.info(f"vectordb_folder_path_selected is now {vectordb_folder_path_selected}")
     # If a folder is chosen that is not equal to the last know source folder
     if folder_name_selected != st.session_state['folder_selected']:
@@ -93,12 +106,12 @@ def initialize_page():
     # with imagecol:
     #     st.image(logo_image, width=250)
     with headercol:
-        st.header(APP_HEADER)
+        st.header(settings.APP_HEADER)
     # set session state default for messages
     # st.session_state.setdefault('messages', [{"role": "system", "content": "You are a helpful assistant. If the answer to the question cannot be found in the context, just answer that you don't know the answer because the given context doesn't provide information"}])
     with st.expander("Show explanation how to use this application"):
         # read app explanation from file explanation.txt
-        with open(file=APP_INFO) as file:
+        with open(file=settings.APP_INFO) as file:
             explanation = file.read()
         st.markdown(body=explanation, unsafe_allow_html=True)
         st.image("./images/multilingual.png")
@@ -122,7 +135,7 @@ def initialize_querier():
     """
     Create a Querier object
     """
-    querier = Querier(EMBEDDINGS_TYPE, VECDB_TYPE, CHUNK_SIZE, CHUNK_OVERLAP)
+    querier = Querier(settings.EMBEDDINGS_TYPE, settings.VECDB_TYPE, settings.CHUNK_SIZE, settings.CHUNK_OVERLAP)
     logger.info("Executed initialize_querier()")
     return querier
 
