@@ -13,6 +13,7 @@ def main():
     if not os.path.exists(vectordb_folder_path):
         ingester = Ingester(content_folder_name, content_folder_path, vectordb_folder_path, EMBEDDINGS_TYPE, VECDB_TYPE, CHUNK_SIZE, CHUNK_OVERLAP)
         ingester.ingest()
+        logger.info(f"Created Chroma vector store in folder {vectordb_folder_path}")
     else:
         logger.info(f"Chroma vector store already exists for folder {content_folder_name}")
 
