@@ -1,6 +1,7 @@
 # Chat with your docs!
 A RAG (Retrieval Augmented Generation) setup for further exploration of chatting to company documents<br><br><br>
-![image](https://github.com/pbl-nl/appl-docchat/assets/7226328/8172f7af-58ef-415b-b8c5-b340d3e7e516)
+![image](https://github.com/pbl-nl/appl-docchat/assets/7226328/d30cdb13-2276-4510-aae9-c94fcaeb9f66)
+
 
 ## How to use this repo
 This repo is tested on the Windows platform
