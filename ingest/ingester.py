@@ -49,4 +49,3 @@ class Ingester:
                 persist_directory=self.vectordb_folder
             )
             vector_store.persist()
-            logger.info(f"Created Chroma vector store in folder {self.vectordb_folder}")
