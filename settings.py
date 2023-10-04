@@ -1,10 +1,14 @@
-# APP_STATUS="development"
 APP_LOGO = "./images/pbl_logo_bg.png"
 APP_INFO="./info/explanation.txt"
 APP_HEADER = "ChatNMDC: chat with your documents"
 DOC_DIR = "./docs"
+LLM_TYPE = "gpt-3.5-turbo"
 EMBEDDINGS_TYPE = "openai"
+SEARCH_TYPE = "similarity"
 VECDB_DIR = "./vector_stores"
 VECDB_TYPE = "chromadb"
 CHUNK_SIZE = 1000
 CHUNK_OVERLAP = 200
+CHUNK_K = 4
+APP_STATUS="evaluate"
+EVALUATION_FOLDER = "verhuismotieven_eval"
