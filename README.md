@@ -4,11 +4,11 @@ A RAG (Retrieval Augmented Generation) setup for further exploration of chatting
 
 
 ## How to use this repo
-This repo is tested on the Windows platform
+!This repo is tested on the Windows platform
 
 ### Preparation
-1. clone this repo to a folder of your choice
-2. create a subfolder vector_stores in the root folder of the cloned repo
+1. Clone this repo to a folder of your choice
+2. Create a subfolder vector_stores in the root folder of the cloned repo
 3. Create a file .env and enter your OpenAI API key in the first line of this file :<br>
 OPENAI_API_KEY="sk-....."<br>
 Save and close the .env file<br>
@@ -39,6 +39,9 @@ The functionalities described above can also be used through a User Interface.<b
 The UI can be started by using commandline command:<br>
 <code>streamlit run streamlit_app.py</code><br>
 When this command is used, a browser session will open automatically
+
+## User Stories for improvements
+todo
 
 ## References
 This repo is mainly inspired by:
