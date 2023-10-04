@@ -5,6 +5,8 @@ from langchain.embeddings.openai import OpenAIEmbeddings
 from langchain.schema import AIMessage, HumanMessage
 from langchain.vectorstores.chroma import Chroma
 from loguru import logger
+# local imports
+import settings
 
 
 class Querier:
@@ -22,7 +24,7 @@ class Querier:
 
         llm = ChatOpenAI(
             client=None,
-            model="gpt-3.5-turbo",
+            model=settings.LLM_TYPE,
             temperature=0,
         )
 
@@ -40,12 +42,11 @@ class Querier:
 
         chain = ConversationalRetrievalChain.from_llm(
             llm,
-            retriever=vector_store.as_retriever(search_type="similarity", search_kwargs={"k": 4}),
+            retriever=vector_store.as_retriever(search_type=settings.SEARCH_TYPE, search_kwargs={"k": settings.CHUNK_K}),
             return_source_documents=True,
         )
 
-        logger.info("Executed make_chain(self, input_folder, vectordb_folder)")
-        # return chain
+        logger.info("Executed Querier.make_chain(self, input_folder, vectordb_folder)")
         self.chain = chain
 
     def ask_question(self, question: str):
