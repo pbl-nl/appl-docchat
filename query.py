@@ -1,9 +1,15 @@
 import os
+import sys
 from loguru import logger
 # local imports
 from query.querier import Querier
 from settings import VECDB_TYPE, CHUNK_SIZE, CHUNK_OVERLAP, EMBEDDINGS_TYPE
 import utils
+
+
+def exit_program():
+    print("Exiting the program...")
+    sys.exit(0)
 
 
 def main():
@@ -18,24 +24,26 @@ def main():
     # If vector store folder does not exist, stop
     if not os.path.exists(vectordb_folder_path):
         logger.info("There is no vector database for this folder yet. First run \"python ingest.py\"")
-        proceed = False
+        exit_program()
     else:
         # create the query chain
         querier.make_chain(content_folder_name, vectordb_folder_path)
         while proceed:
-            logger.info("")
             # Get question from user
             question = input("Question: ")
-            if question != "exit":
+            if question not in ["exit", "quit", "q"]:
+                # log the question
+                logger.info(f"\nQuestion: {question}")
                 # Generate answer and include sources used to produce that answer
                 answer, source = querier.ask_question(question)
-
-                logger.info(f"\nAnswer: {answer}")
+                # log the answer to the question and the sources used for creating the answer
                 logger.info("\nSources:\n")
                 for document in source:
                     logger.info(f"Page {document.metadata['page_number']} chunk used: {document.page_content}\n")
+                logger.info(f"\nAnswer: {answer}")
             else:
                 proceed = False
+                exit_program()
 
 
 if __name__ == "__main__":
