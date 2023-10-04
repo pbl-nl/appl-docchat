@@ -4,7 +4,7 @@ A RAG (Retrieval Augmented Generation) setup for further exploration of chatting
 
 
 ## How to use this repo
-!This repo is tested on the Windows platform
+! This repo is tested on the Windows platform
 
 ### Preparation
 1. Clone this repo to a folder of your choice
@@ -50,5 +50,3 @@ This repo is mainly inspired by:
 - https://docs.streamlit.io/
 - https://docs.langchain.com/docs/
 
-### Further useful resources:
-todo
