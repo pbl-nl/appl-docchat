@@ -13,7 +13,6 @@ def exit_program():
 
 
 def main():
-    proceed = True
     # Create instance of Querier once
     querier = Querier(EMBEDDINGS_TYPE, VECDB_TYPE, CHUNK_SIZE, CHUNK_OVERLAP)
     # Get source folder with docs from user
@@ -28,7 +27,7 @@ def main():
     else:
         # create the query chain
         querier.make_chain(content_folder_name, vectordb_folder_path)
-        while proceed:
+        while True:
             # Get question from user
             question = input("Question: ")
             if question not in ["exit", "quit", "q"]:
@@ -42,7 +41,6 @@ def main():
                     logger.info(f"Page {document.metadata['page_number']} chunk used: {document.page_content}\n")
                 logger.info(f"\nAnswer: {answer}")
             else:
-                proceed = False
                 exit_program()
 
 
