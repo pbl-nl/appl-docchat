@@ -4,7 +4,7 @@ A RAG (Retrieval Augmented Generation) setup for further exploration of chatting
 
 
 ## How to use this repo
-! This repo is tested on the Windows platform
+! This repo is tested on a Windows platform, in a conda virtual environment
 
 ### Preparation
 1. Clone this repo to a folder of your choice
