@@ -5,28 +5,23 @@ from langchain.vectorstores import Chroma
 import langchain.docstore.document as docstore
 from loguru import logger
 # local imports
+import settings
 from .pdf_parser import PdfParser
 from .content_iterator import ContentIterator
 
 
 class Ingester:
 
-    def __init__(self, input_folder: str, content_folder: str, vectordb_folder: str, embeddings_type: str, vectordb_type: str, chunk_size: int, chunk_overlap: int):
+    def __init__(self, input_folder: str, content_folder: str, vectordb_folder: str):
         load_dotenv()
         self.input_folder = input_folder
         self.content_folder = content_folder
         self.vectordb_folder = vectordb_folder
-        self.vectordb_type = vectordb_type
-        self.chunk_size = chunk_size
-        self.chunk_overlap = chunk_overlap
-        self.embeddings_type = embeddings_type
 
     def ingest(self) -> None:
         content_iterator = ContentIterator(self.content_folder)
-        # create text chunks with chosen settings of:
-        # - chunk size
-        # - chunk overlap
-        pdf_parser = PdfParser(self.chunk_size, self.chunk_overlap)
+        # create text chunks with chosen settings of chunk size and chunk overlap
+        pdf_parser = PdfParser(settings.CHUNK_SIZE, settings.CHUNK_OVERLAP)
 
         chunks: List[docstore.Document] = []
         # for each pdf file that the content_iterator yields
@@ -40,12 +35,12 @@ class Ingester:
             else:
                 logger.info(f"Cannot ingest document {document} because it has extension {document[-4:]}")
         
-        if self.embeddings_type == "openai":
-            embeddings = OpenAIEmbeddings(client=None)
+        if settings.EMBEDDINGS_PROVIDER == "openai":
+            embeddings = OpenAIEmbeddings(model=settings.EMBEDDINGS_MODEL, client=None)
             logger.info("Loaded openai embeddings")
 
         # create vector store with chosen settings of vector store type (e.g. chromadb)
-        if self.vectordb_type == "chromadb":
+        if settings.VECDB_TYPE == "chromadb":
             vector_store = Chroma.from_documents(
                 documents=chunks,
                 embedding=embeddings,

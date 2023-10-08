@@ -10,29 +10,28 @@ import settings
 
 
 class Querier:
-    def __init__(self, embeddings_type: str, vectordb_type: str, chunk_size: int, chunk_overlap: int):
+    def __init__(self):
         load_dotenv()
-        self.vectordb_type = vectordb_type
-        self.chunk_size = chunk_size
-        self.chunk_overlap = chunk_overlap
-        self.embeddings_type = embeddings_type
         self.chat_history = []
 
     def make_chain(self, input_folder, vectordb_folder):
         self.input_folder = input_folder
         self.vectordb_folder = vectordb_folder
 
-        llm = ChatOpenAI(
-            client=None,
-            model=settings.LLM_TYPE,
-            temperature=0,
-        )
+        if settings.LLM_TYPE == "chatopenai":
+            if settings.LLM_MODEL_TYPE == "gpt35":
+                llm_model_type = "gpt-3.5-turbo"
+            llm = ChatOpenAI(
+                client=None,
+                model=llm_model_type,
+                temperature=0,
+            )
 
-        if self.embeddings_type == "openai":
-            embeddings = OpenAIEmbeddings(client=None)
+        if settings.EMBEDDINGS_PROVIDER == "openai":
+            embeddings = OpenAIEmbeddings(model=settings.EMBEDDINGS_MODEL, client=None)
             logger.info("Loaded openai embeddings")
 
-        if self.vectordb_type == "chromadb":
+        if settings.VECDB_TYPE == "chromadb":
             vector_store = Chroma(
                 collection_name=self.input_folder,
                 embedding_function=embeddings,
@@ -40,11 +39,12 @@ class Querier:
             )
             logger.info(f"Loaded chromadb from folder {self.vectordb_folder}")
 
-        chain = ConversationalRetrievalChain.from_llm(
-            llm,
-            retriever=vector_store.as_retriever(search_type=settings.SEARCH_TYPE, search_kwargs={"k": settings.CHUNK_K}),
-            return_source_documents=True,
-        )
+        if settings.CHAIN_TYPE == "conversationalretrievalchain":
+            chain = ConversationalRetrievalChain.from_llm(
+                llm,
+                retriever=vector_store.as_retriever(search_type=settings.SEARCH_TYPE, search_kwargs={"k": settings.CHUNK_K}),
+                return_source_documents=True,
+            )
 
         logger.info("Executed Querier.make_chain(self, input_folder, vectordb_folder)")
         self.chain = chain
