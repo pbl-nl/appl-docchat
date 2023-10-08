@@ -10,13 +10,7 @@ import utils
 
 
 def create_vectordb(content_folder_name_selected, content_folder_path_selected, vectordb_folder_path_selected):
-    ingester = Ingester(content_folder_name_selected, 
-                        content_folder_path_selected, 
-                        vectordb_folder_path_selected, 
-                        settings.EMBEDDINGS_TYPE, 
-                        settings.VECDB_TYPE, 
-                        settings.CHUNK_SIZE, 
-                        settings.CHUNK_OVERLAP)
+    ingester = Ingester(content_folder_name_selected, content_folder_path_selected, vectordb_folder_path_selected)
     ingester.ingest()
 
 
@@ -47,13 +41,7 @@ def folder_selector(querier, folders):
     folder_name_selected = st.sidebar.selectbox("label=folder_selector", options=folders, label_visibility="hidden")
     logger.info(f"folder_name_selected is now {folder_name_selected}")
     # get associated source folder path and vectordb path
-    folder_path_selected, vectordb_folder_path_selected = utils.create_vectordb_name(folder_name_selected, 
-                                                                                    settings.DOC_DIR, 
-                                                                                    settings.VECDB_DIR, 
-                                                                                    settings.VECDB_TYPE, 
-                                                                                    settings.EMBEDDINGS_TYPE, 
-                                                                                    settings.CHUNK_SIZE, 
-                                                                                    settings.CHUNK_OVERLAP)
+    folder_path_selected, vectordb_folder_path_selected = utils.create_vectordb_name(folder_name_selected)
 
     logger.info(f"vectordb_folder_path_selected is now {vectordb_folder_path_selected}")
     # If a folder is chosen that is not equal to the last know source folder
@@ -135,7 +123,7 @@ def initialize_querier():
     """
     Create a Querier object
     """
-    querier = Querier(settings.EMBEDDINGS_TYPE, settings.VECDB_TYPE, settings.CHUNK_SIZE, settings.CHUNK_OVERLAP)
+    querier = Querier()
     logger.info("Executed initialize_querier()")
     return querier
 
@@ -174,7 +162,7 @@ if st.session_state['is_folder_selected']:
     # If button "Clear Conversation" is clicked
     if clear_messages_button:
         # clear all chat messages on screen and in Querier object
-        # NB: session state of is_folder_selected, folder_selected remain unchanged
+        # NB: session state of "is_folder_selected" and "folder_selected" remain unchanged
         st.session_state['messages'] = []
         querier.clear_history()
         logger.info("Clear Conversation button clicked")
