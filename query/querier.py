@@ -21,6 +21,10 @@ class Querier:
         if settings.LLM_TYPE == "chatopenai":
             if settings.LLM_MODEL_TYPE == "gpt35":
                 llm_model_type = "gpt-3.5-turbo"
+            elif settings.LLM_MODEL_TYPE == "gpt35_16":
+                llm_model_type = "gpt-3.5-turbo-16k"
+            elif settings.LLM_MODEL_TYPE == "gpt4":
+                llm_model_type = "gpt-4"
             llm = ChatOpenAI(
                 client=None,
                 model=llm_model_type,
@@ -37,23 +41,29 @@ class Querier:
                 embedding_function=embeddings,
                 persist_directory=self.vectordb_folder,
             )
+            retriever = vector_store.as_retriever(search_type=settings.SEARCH_TYPE, search_kwargs={"k": settings.CHUNK_K})
             logger.info(f"Loaded chromadb from folder {self.vectordb_folder}")
 
-        if settings.CHAIN_TYPE == "conversationalretrievalchain":
+
+        if settings.CHAIN == "conversationalretrievalchain":
             chain = ConversationalRetrievalChain.from_llm(
-                llm,
-                retriever=vector_store.as_retriever(search_type=settings.SEARCH_TYPE, search_kwargs={"k": settings.CHUNK_K}),
-                return_source_documents=True,
+                llm=llm,
+                retriever=retriever,
+                chain_type=settings.CHAIN_TYPE,
+                verbose=True,
+                return_source_documents=True
             )
 
         logger.info("Executed Querier.make_chain(self, input_folder, vectordb_folder)")
         self.chain = chain
 
     def ask_question(self, question: str):
-        response = self.chain({"question": question, "chat_history": self.chat_history})
         logger.info(f"current chat history: {self.chat_history}")
+        response = self.chain({"question": question, "chat_history": self.chat_history})
+        logger.info(f"question: {question}")
 
         answer = response["answer"]
+        logger.info(f"answer: {answer}")
         source = response["source_documents"]
         self.chat_history.append(HumanMessage(content=question))
         self.chat_history.append(AIMessage(content=answer))
