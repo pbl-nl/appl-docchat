@@ -1,4 +1,4 @@
-APP_LOGO = "./images/pbl_logo_bg.png"
+APP_LOGO = "./images/nmdc_logo.png"
 APP_INFO="./info/explanation.txt"
 APP_HEADER = "ChatNMDC: chat with your documents"
 DOC_DIR = "./docs"
@@ -10,6 +10,7 @@ LLM_MODEL_TYPE = "gpt35"                        # must be one of: "gpt35", "gpt3
 EMBEDDINGS_PROVIDER = "openai"
 EMBEDDINGS_MODEL = "text-embedding-ada-002"
 CHAIN = "conversationalretrievalchain"
+CHAIN_VERBOSITY=False
 CHAIN_TYPE = "stuff"
 SEARCH_TYPE = "similarity"                      # must be one of: "similarity", 
 VECDB_TYPE = "chromadb"                         # must be one of: "chromadb"

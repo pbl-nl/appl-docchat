@@ -1,6 +1,6 @@
 import os
 import streamlit as st
-# from PIL import Image
+from PIL import Image
 from loguru import logger
 # local imports
 from ingest.ingester import Ingester
@@ -72,14 +72,14 @@ def handle_query(querier, prompt: str):
     # Add user message to chat history
     st.session_state['messages'].append({"role": "user", "content": prompt})
     # Generate a response
-    response, sources = querier.ask_question(prompt)
+    response = querier.ask_question(prompt)
     # Display the response in chat message container
     with st.chat_message("assistant"):
-        st.markdown(response)
+        st.markdown(response["answer"])
     # Add the response to chat history
-    st.session_state['messages'].append({"role": "assistant", "content": response})
-    with st.expander("Show sources"):
-        st.write(sources)
+    st.session_state['messages'].append({"role": "assistant", "content": response["answer"]})
+    with st.expander("Show sources used for answer"):
+        st.write(response["source_documents"])
     logger.info("Executed handle_query(querier, prompt)")
 
 
@@ -90,12 +90,12 @@ def initialize_page():
     Also prepares the sidebar with folder list
     """
     imagecol, headercol = st.columns([0.3, 0.7])
-    # logo_image = Image.open(APP_LOGO)
-    # with imagecol:
-    #     st.image(logo_image, width=250)
+    logo_image = Image.open(settings.APP_LOGO)
+    with imagecol:
+        st.image(logo_image, width=250)
     with headercol:
         st.header(settings.APP_HEADER)
-    # set session state default for messages
+    # set session state default for messages to fight hallucinations
     # st.session_state.setdefault('messages', [{"role": "system", "content": "You are a helpful assistant. If the answer to the question cannot be found in the context, just answer that you don't know the answer because the given context doesn't provide information"}])
     with st.expander("Show explanation how to use this application"):
         # read app explanation from file explanation.txt

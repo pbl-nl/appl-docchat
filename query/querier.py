@@ -50,7 +50,7 @@ class Querier:
                 llm=llm,
                 retriever=retriever,
                 chain_type=settings.CHAIN_TYPE,
-                verbose=True,
+                verbose=settings.CHAIN_VERBOSITY,
                 return_source_documents=True
             )
 
@@ -67,7 +67,7 @@ class Querier:
         source = response["source_documents"]
         self.chat_history.append(HumanMessage(content=question))
         self.chat_history.append(AIMessage(content=answer))
-        return answer, source
+        return response
     
     def clear_history(self):
         # used by "Clear Conversation" button
