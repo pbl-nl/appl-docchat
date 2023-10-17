@@ -16,7 +16,7 @@ click==8.1.6
 clickhouse-connect==0.6.8
 colorama==0.4.6
 coloredlogs==15.0.1
-dataclasses-json==0.5.12
+dataclasses-json==0.5.14
 decorator==5.1.1
 defusedxml==0.7.1
 duckdb==0.8.1
@@ -54,7 +54,7 @@ nbclient==0.8.0
 nbconvert==7.6.0
 nbformat==5.9.0
 numexpr==2.8.4
-numpy==1.25.1
+numpy
 onnxruntime==1.15.1
 openai==0.27.8
 openapi-schema-pydantic==1.2.4
