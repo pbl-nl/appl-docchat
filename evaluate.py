@@ -3,6 +3,8 @@ from loguru import logger
 import json
 import pandas as pd
 import datetime as dt
+from collections import defaultdict
+from datasets import Dataset
 # local imports
 from ingest.ingester import Ingester
 from query.querier import Querier
@@ -42,8 +44,7 @@ def main():
     querier = Querier()
 
     # only now import ragas evaluation related modules because ragas requires the openai api key to be set on beforehand
-    from ragas.langchain.evalchain import RagasEvaluatorChain
-    from ragas.metrics import faithfulness, answer_relevancy, context_precision, context_recall
+    from ragas import evaluation
 
     # Get source folder with evaluation documents from user
     content_folder_name = input("Source folder of evaluation documents (without path): ")
@@ -83,40 +84,53 @@ def main():
     # create list of dictionaries with the generated answers and source_documents
     results = [{"result": answers[i], "source_documents": sources[i]} for i in range(len(eval_questions))]
 
-    # define evaluation chains
-    eval_chains = {chain.name: RagasEvaluatorChain(metric=chain) for chain in [faithfulness, answer_relevancy, context_precision, context_recall]}
-    # get evaluation metrics for all generated context and final answers
-    chains_scores = []
-    for name, eval_chain in eval_chains.items():
-        chain_score_name = f"{name}_score"
-        chain_scores = eval_chain.evaluate(examples, results)
-        chain_scores_list = [metric_score[chain_score_name] for metric_score in chain_scores]
-        chains_scores.append(chain_scores_list)
+    # prepare for ragas evaluation 
+    dataset_dict = defaultdict(list)
+    for i, example in enumerate(examples):
+        dataset_dict["question"].append(example["query"])
+        dataset_dict["ground_truths"].append(example["ground_truths"])
+        dataset_dict["answer"].append(results[i]["result"])
+        dataset_dict["contexts"].append([d.page_content for d in results[i]["source_documents"]])
+    dataset = Dataset.from_dict(dataset_dict)
+    # evaluate
+    result = evaluation.evaluate(dataset)
 
-    # prepare to store the evaluation results
-    settings_dict = get_settings_dictionary("settings.py")
+    # store aggregate results including the ragas score
+    agg_columns = list(result.keys())
+    agg_scores = list(result.values())
     admin_columns = ["folder", "timestamp"]
+    folder = content_folder_name
+    timestamp = str(dt.datetime.now())
+    agg_data = [folder] + [timestamp] + agg_scores
+    df_agg = pd.DataFrame(data=[agg_data], columns=admin_columns + agg_columns)
+    df_agg.rename(columns={"context_relevancy": "context_precision"}, errors="raise")
+    # add result to existing evaluation file (if that exists) and store to disk
+    if os.path.isfile(os.path.join(settings.EVAL_DIR, "eval_agg_" + content_folder_name + ".tsv")):
+        df_agg_old = pd.read_csv(os.path.join(settings.EVAL_DIR, "eval_agg_" + content_folder_name + ".tsv"), sep="\t")
+        df_agg = pd.concat([df_agg_old, df_agg], axis=0)
+    df_agg.to_csv(os.path.join(settings.EVAL_DIR, "eval_agg_" + content_folder_name + ".tsv"), sep="\t", index=False)
+
+    # store detailed results
+    settings_dict = get_settings_dictionary("settings.py")
     settings_columns = list(settings_dict.keys())
-    qa_columns = ["question", "ground_truth", "answer", "context"]
-    metric_columns = list(eval_chains.keys())
-    all_columns = admin_columns + settings_columns + qa_columns + metric_columns
-    
+    combined_columns = admin_columns + settings_columns
     # gather all data
-    folder_data = ["verhuismotieven" for _ in range(len(eval_questions))]
-    timestamp_data = [dt.datetime.now() for _ in range(len(eval_questions))]
+    folder_data = [folder for _ in range(len(eval_questions))]
+    timestamp_data = [timestamp for _ in range(len(eval_questions))]
     settings_data = [[list(settings_dict.values())[i] for _ in range(len(eval_questions))] for i in range(len(list(settings_dict.keys())))]
-    all_data = zip(folder_data, timestamp_data, *settings_data, eval_questions, eval_groundtruths, answers, sources, *chains_scores)
-    df = pd.DataFrame(list(all_data), columns=all_columns)
-    logger.info(df[["folder", "question"] + metric_columns])
-    # lines below are necessary as long as ragas package doesn't update metric name "context_relevancy" to "context_precision"
+    combined_data = zip(folder_data, timestamp_data, *settings_data)
+    df_combined = pd.DataFrame(list(combined_data), columns=combined_columns)
+    df_eval = result.to_pandas()
+    df = pd.concat([df_combined, df_eval], axis=1)
+    # line below is necessary as long as ragas package doesn't update metric name "context_relevancy" to "context_precision"
     df.rename(columns={"context_relevancy": "context_precision"}, errors="raise")
     # add result to existing evaluation file (if that exists) and store to disk
-    if os.path.isfile(os.path.join(settings.EVAL_DIR, "eval.csv")):
-        df_old = pd.read_csv(os.path.join(settings.EVAL_DIR, "eval.csv"), sep="\t")
+    if os.path.isfile(os.path.join(settings.EVAL_DIR, "eval_" + content_folder_name + ".tsv")):
+        df_old = pd.read_csv(os.path.join(settings.EVAL_DIR, "eval_" + content_folder_name + ".tsv"), sep="\t")
         df = pd.concat([df_old, df], axis=0)
-    df.to_csv(os.path.join(settings.EVAL_DIR, "eval.csv"), sep="\t", index=False)
+    df.to_csv(os.path.join(settings.EVAL_DIR, "eval_" + content_folder_name + ".tsv"), sep="\t", index=False)
 
-
+    
 if __name__ == "__main__":
     main()
 
