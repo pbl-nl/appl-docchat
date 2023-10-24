@@ -10,6 +10,10 @@ DOC_DIR = "./docs"
 VECDB_DIR = "./vector_stores"
 # folder location of evaluation result
 EVAL_DIR = "./evaluate"
+# header in evaluation user interface
+EVAL_APP_HEADER = "ChatNMDC: evaluation"
+# content for evaluation explanation in evaluation user interface
+EVAL_APP_INFO="./info/evaluation_explanation.txt"
 # filename of json file with question and answer lists
 EVAL_FILE_NAME = "eval.json"
 # CHAIN_VERBOSITY must be boolean. True shows standalone question that is conveyed to LLM
