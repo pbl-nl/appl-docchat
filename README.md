@@ -57,8 +57,20 @@ not only the list of questions but also the related list of desired answers (gro
 Evaluation is done in the activated virtual environment using commandline command:<br>
 <code>python evaluate.py</code>
 
+### Monitoring the evaluation results`througha user interface
+All evaluation results can be viewed by using a dedicated User Interface.<br>
+This evaluation UI can be started by using commandline command:<br>
+<code>streamlit run streamlit_evaluate.py</code><br>
+When this command is used, a browser session will open automatically
+
 ## User Stories for improvements
-todo
+User stories are divided into 2 groups: PREP and BUILD. PREP user stories are not meant to change any code but require research and prepare for an actual BUILD task.
+Furthermore, every user story below has an indication whether it would extend the functionality of the application (FUNC), or is related to optimize the results (EVAL).
+User stories are written from the perspective of either the user of the application, or the developer of the application.
+1. Ingestion (1): As a user I want to synchronize the vector database with the document folder I am using. If the document folder has changed (extra file(s) or deleted file(s)), either add extra documents to the vector database or delete documents from the vector database. FUNC, BUILD
+2. Ingestion (2): As a user I want to query not only PDF’s, but also other file types with text, like Word documents, plain text files, and html pages. FUNC, BUILD
+3. Ingestion (3): As a developer I want to determine the optimal settings for chunking. Current settings are chunksize = 1000 and chunk overlap = 200 (see settings.py). Can we do some tests with evaluation documents and find an optimal chunk size and overlap? EVAL, BUILD
+
 
 ## References
 This repo is mainly inspired by:
