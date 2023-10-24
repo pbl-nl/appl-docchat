@@ -1,0 +1,16 @@
+# Evaluation metrics
+At the level of individual questions, the evaluation metrics are divided into metrics related to the retrieval part of the pipeline, <b><i>context precision</i></b> and <b><i>context recall</i></b>, and metrics related to the generation part of the pipeline, <b><i>faithfulness</i></b> and <b><i>answer relevancy</i></b><br>
+
+* context_precision: This metric gauges the precision of the retrieved context, calculated based on both the question and contexts. It determines how many sentences within the retrieved context are relevant for answering the given question.
+* context_recall: measures the extent to which the retrieved context aligns with the annotated answer, treated as the ground truth
+* faithfulness: measures the factual consistency of the generated answer against the given context. It is calculated from answer and retrieved context. The generated answer is regarded as faithful if all the claims that are made in the answer can be inferred from the given context.
+* answer_relevancy: focuses on assessing how pertinent the generated answer is to the given prompt. A lower score is assigned to answers that are incomplete or contain redundant information.
+
+<br>Furthermore, an aggregated score, the so-called <b>ragas score</b>, is available at dataset level. In the current setup, this is the same as folder level because evaluations are executed per folder.
+The ragas score is the so-called harmonic mean of the scores mentioned above, calculated as the number of scores (4) divided by their reciprocal sum. The scores are averaged over the dataset, which means that each question is equally weighed.
+
+<br>All scores vary between 0 and 1. Higher is better.
+
+<br>To read more about these evaluation metrics and their implementation, see:
+* https://docs.ragas.io/en/latest/concepts/metrics/index.html
+* https://blog.langchain.dev/evaluating-rag-pipelines-with-ragas-langsmith/
