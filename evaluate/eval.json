@@ -1,0 +1,19 @@
+{
+    "pbl_verhuismotieven": {
+        "question": [
+            "Wie zijn de auteurs van deze publicatie?",
+            "Welke databronnen zijn gebruikt voor het onderzoek?",
+            "Naar welke literatuurbronnen wordt in dit onderzoek verwezen?"
+        ],
+        "question_type": [
+            "initial",
+            "followup",
+            "followup"
+        ],
+        "ground_truth": [
+            "Christian Lennartz, Stefan Troost en Frans Schilder", 
+            "CBS microdata en de WoON surveys van 2015, 2018 en 2021",
+            "Coulter (2023), Rossi (1955), Mulder (1993) en Green (2017)"
+        ]
+    }
+}

@@ -33,12 +33,12 @@ def main():
                 # log the question
                 logger.info(f"\nQuestion: {question}")
                 # Generate answer and include sources used to produce that answer
-                answer, source = querier.ask_question(question)
+                response = querier.ask_question(question)
                 # log the answer to the question and the sources used for creating the answer
                 logger.info("\nSources:\n")
-                for document in source:
+                for document in response["source_documents"]:
                     logger.info(f"Page {document.metadata['page_number']} chunk used: {document.page_content}\n")
-                logger.info(f"\nAnswer: {answer}")
+                logger.info(f"\nAnswer: {response['answer']}")
             else:
                 exit_program()
 
