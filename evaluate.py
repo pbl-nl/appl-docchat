@@ -39,6 +39,18 @@ def get_settings_dictionary(file_name):
                 variables_dict[variable_name] = eval(variable_name)
     return variables_dict
 
+
+def store_evaluation_result(df, content_folder_name, type):
+    if type == "aggregated":
+        path = os.path.join(settings.EVAL_DIR, content_folder_name + "_agg.tsv")
+    else:
+        path = os.path.join(settings.EVAL_DIR, content_folder_name + ".tsv")
+    if os.path.isfile(path):
+        df_old = pd.read_csv(path, sep="\t")
+        df = pd.concat([df, df_old], axis=0)
+    df.to_csv(path, sep="\t", index=False)
+
+
 def main():
     # Create instance of Querier
     querier = Querier()
@@ -95,7 +107,7 @@ def main():
     # evaluate
     result = evaluation.evaluate(dataset)
 
-    # store aggregate results including the ragas score
+    # store aggregate results including the ragas score:
     agg_columns = list(result.keys())
     agg_scores = list(result.values())
     admin_columns = ["folder", "timestamp"]
@@ -105,35 +117,33 @@ def main():
     df_agg = df_agg.loc[:, ["folder", "timestamp", "ragas_score", "answer_relevancy", "context_relevancy", "faithfulness", "context_recall"]]
     # line below is necessary as long as ragas package doesn't update metric name "context_relevancy" to "context_precision"
     df_agg = df_agg.rename(columns={"context_relevancy": "context_precision"}, errors="raise")
+    # add settings
+    settings_dict = get_settings_dictionary("settings.py")
+    settings_columns = list(settings_dict.keys())
+    # settings_data = [[list(settings_dict.values())[i] for i in range(len(list(settings_dict.keys())))] for _ in range(len(eval_questions))]
+    settings_data = [list(settings_dict.values())[i] for i in range(len(list(settings_dict.keys())))]
+    print(settings_data)
+    df_settings = pd.DataFrame(data=[settings_data], columns=settings_columns)
+    # combined
+    df_agg = pd.concat([df_agg, df_settings], axis=1)
     # add result to existing evaluation file (if that exists) and store to disk
-    if os.path.isfile(os.path.join(settings.EVAL_DIR, "eval_agg_" + content_folder_name + ".tsv")):
-        df_agg_old = pd.read_csv(os.path.join(settings.EVAL_DIR, "eval_agg_" + content_folder_name + ".tsv"), sep="\t")
-        df_agg = pd.concat([df_agg_old, df_agg], axis=0)
-    df_agg.to_csv(os.path.join(settings.EVAL_DIR, "eval_agg_" + content_folder_name + ".tsv"), sep="\t", index=False)
+    store_evaluation_result(df_agg, content_folder_name, "aggregated")
 
     # store detailed results:
     # administrative data
     folder_data = [content_folder_name for _ in range(len(eval_questions))]
     timestamp_data = [timestamp for _ in range(len(eval_questions))]
     admin_data = zip(folder_data, timestamp_data)
-    df_admin = pd.DataFrame(list(admin_data), columns=admin_columns)
+    df_admin = pd.DataFrame(data=list(admin_data), columns=admin_columns)
     # evaluation results
-    df_result = result.to_pandas().loc[:,["question", "answer_relevancy", "context_relevancy", "faithfulness", "context_recall", 
-                                          "contexts", "answer", "ground_truths"]]
+    df_result = result.to_pandas().loc[:,["question", "answer", "answer_relevancy", "context_relevancy", "faithfulness", "context_recall", 
+                                          "contexts", "ground_truths"]]
     # line below is necessary as long as ragas package doesn't update metric name "context_relevancy" to "context_precision"
     df_result = df_result.rename(columns={"context_relevancy": "context_precision"}, errors="raise")
-    # settings
-    settings_dict = get_settings_dictionary("settings.py")
-    settings_columns = list(settings_dict.keys())
-    settings_data = [[list(settings_dict.values())[i] for i in range(len(list(settings_dict.keys())))] for _ in range(len(eval_questions))]
-    df_settings = pd.DataFrame(list(settings_data), columns=settings_columns)
     # combined
-    df = pd.concat([df_admin, df_result, df_settings], axis=1)
+    df = pd.concat([df_admin, df_result], axis=1)
     # add result to existing evaluation file (if that exists) and store to disk
-    if os.path.isfile(os.path.join(settings.EVAL_DIR, "eval_" + content_folder_name + ".tsv")):
-        df_old = pd.read_csv(os.path.join(settings.EVAL_DIR, "eval_" + content_folder_name + ".tsv"), sep="\t")
-        df = pd.concat([df_old, df], axis=0)
-    df.to_csv(os.path.join(settings.EVAL_DIR, "eval_" + content_folder_name + ".tsv"), sep="\t", index=False)
+    store_evaluation_result(df, content_folder_name, "detail")
 
     
 if __name__ == "__main__":
