@@ -33,7 +33,7 @@ EMBEDDINGS_PROVIDER = "openai"
 # EMBEDDINGS_MODEL must be one of: "text-embedding-ada-002", 
 EMBEDDINGS_MODEL = "text-embedding-ada-002"
 # CHAIN must be one of: "conversationalretrievalchain", 
-CHAIN = "conversationalretrievalchain"
+CHAIN_NAME = "conversationalretrievalchain"
 # CHAIN_TYPE must be one of: "stuff", 
 CHAIN_TYPE = "stuff"
 # SEARCH_TYPE must be one of: "similarity", 
@@ -41,9 +41,9 @@ SEARCH_TYPE = "similarity"
 # VECDB_TYPE must be one of: "chromadb", 
 VECDB_TYPE = "chromadb"
 # CHUNK_SIZE must be integer
-CHUNK_SIZE = 1000
+CHUNK_SIZE = 2000
 # CHUNK_OVERLAP must be integer
 CHUNK_OVERLAP = 200
 # CHUNK_K must be integer (>=1)
-CHUNK_K = 4
+CHUNK_K = 2
 

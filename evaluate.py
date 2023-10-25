@@ -122,7 +122,6 @@ def main():
     settings_columns = list(settings_dict.keys())
     # settings_data = [[list(settings_dict.values())[i] for i in range(len(list(settings_dict.keys())))] for _ in range(len(eval_questions))]
     settings_data = [list(settings_dict.values())[i] for i in range(len(list(settings_dict.keys())))]
-    print(settings_data)
     df_settings = pd.DataFrame(data=[settings_data], columns=settings_columns)
     # combined
     df_agg = pd.concat([df_agg, df_settings], axis=1)
