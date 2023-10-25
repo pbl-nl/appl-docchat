@@ -11,17 +11,24 @@ from .content_iterator import ContentIterator
 
 
 class Ingester:
-
-    def __init__(self, input_folder: str, content_folder: str, vectordb_folder: str):
+    # When parameters are read from settings.py, object is initiated without parameter settings
+    # When parameters are read from GUI, object is initiated with parameter settings listed
+    def __init__(self, input_folder: str, content_folder: str, vectordb_folder: str, 
+                 embeddings_provider=None, embeddings_model=None, vecdb_type=None, chunk_size=None, chunk_overlap=None):
         load_dotenv()
         self.input_folder = input_folder
         self.content_folder = content_folder
         self.vectordb_folder = vectordb_folder
+        self.embeddings_provider = settings.EMBEDDINGS_PROVIDER if embeddings_provider is None else embeddings_provider
+        self.embeddings_model = settings.EMBEDDINGS_MODEL if embeddings_model is None else embeddings_model
+        self.vecdb_type = settings.VECDB_TYPE if vecdb_type is None else vecdb_type
+        self.chunk_size = settings.CHUNK_SIZE if chunk_size is None else chunk_size
+        self.chunk_overlap = settings.CHUNK_OVERLAP if chunk_overlap is None else chunk_overlap
 
     def ingest(self) -> None:
         content_iterator = ContentIterator(self.content_folder)
         # create text chunks with chosen settings of chunk size and chunk overlap
-        pdf_parser = PdfParser(settings.CHUNK_SIZE, settings.CHUNK_OVERLAP)
+        pdf_parser = PdfParser(self.chunk_size, self.chunk_overlap)
 
         chunks: List[docstore.Document] = []
         # for each pdf file that the content_iterator yields
@@ -35,12 +42,12 @@ class Ingester:
             else:
                 logger.info(f"Cannot ingest document {document} because it has extension {document[-4:]}")
         
-        if settings.EMBEDDINGS_PROVIDER == "openai":
-            embeddings = OpenAIEmbeddings(model=settings.EMBEDDINGS_MODEL, client=None)
+        if self.embeddings_provider == "openai":
+            embeddings = OpenAIEmbeddings(model=self.embeddings_model, client=None)
             logger.info("Loaded openai embeddings")
 
         # create vector store with chosen settings of vector store type (e.g. chromadb)
-        if settings.VECDB_TYPE == "chromadb":
+        if self.vecdb_type == "chromadb":
             vector_store = Chroma.from_documents(
                 documents=chunks,
                 embedding=embeddings,
