@@ -70,7 +70,7 @@ User stories are written from the perspective of either the user of the applicat
 1. Ingestion (1): As a user I want to synchronize the vector database with the document folder I am using. If the document folder has changed (extra file(s) or deleted file(s)), either add extra documents to the vector database or delete documents from the vector database. FUNC, BUILD
 2. Ingestion (2): As a user I want to query not only PDF’s, but also other file types with text, like Word documents, plain text files, and html pages. FUNC, BUILD
 3. Ingestion (3): As a developer I want to determine the optimal settings for chunking. Current settings are chunksize = 1000 and chunk overlap = 200 (see settings.py). Can we do some tests with evaluation documents and find an optimal chunk size and overlap? EVAL, BUILD
-4. Ingestion (3): As a developer I want to use an optimal set of chunks. Is it possible to do text chunking based on content, keeping related content together in one chunk. Up to a maximum chunk size.? EVAL, PREP
+4. Ingestion (3): As a developer I want to use an optimal set of chunks. Can we implement content-aware text chunking, keeping related content together in one chunk (up to a maximum chunk size)? EVAL, BUILD. For inspiration: https://github.com/nlmatics/llmsherpa#layoutpdfreader
 5. Ingestion (4) & Retrieval (7): As a developer I want to generate the best answers to the user questions. The application currently uses OpenAI's text-embedding-ada-002 as embedding model. It is not the best one according to huggingface MTEB embedding leaderboard. See https://huggingface.co/spaces/mteb/leaderboard. Implement an alternative embedding model and evaluate any change in performance EVAL, BUILD
 
 ## References
