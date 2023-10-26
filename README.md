@@ -64,8 +64,10 @@ This evaluation UI can be started by using commandline command:<br>
 When this command is used, a browser session will open automatically
 
 ## User Stories for improvements
-User stories are divided into 2 groups: PREP and BUILD. PREP user stories are not meant to change any code but require research and prepare for an actual BUILD task.
-Furthermore, every user story below has an indication whether it would extend the functionality of the application (FUNC), or is related to optimize the results (EVAL).
+User stories are divided into 2 groups:<br> 
+* RESEARCH: RESEARCH user stories are not meant to change any code but require research and prepare for an actual BUILD task.
+* BUILD: BUILD user stories change the code. They add functionality to the application or are performance related
+<br>Furthermore, every user story below has an indication whether it would extend the functionality of the application (FUNC), or is related to optimize the results (EVAL).
 User stories are written from the perspective of either the user of the application, or the developer of the application.
 1. Ingestion (1): As a user I want to synchronize the vector database with the document folder I am using. If the document folder has changed (extra file(s) or deleted file(s)), either add extra documents to the vector database or delete documents from the vector database. FUNC, BUILD
 2. Ingestion (2): As a user I want to query not only PDF’s, but also other file types with text, like Word documents, plain text files, and html pages. FUNC, BUILD
