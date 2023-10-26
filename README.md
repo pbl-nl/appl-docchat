@@ -64,22 +64,26 @@ This evaluation UI can be started by using commandline command:<br>
 When this command is used, a browser session will open automatically
 
 ## User Stories for improvements
-User stories are divided into 2 groups:<br> 
+Every user story below has an indication whether it extends the functionality of the application (FUNC), or is related to optimize the results (EVAL).<br>
+Furthermore, user stories are divided into 2 groups:<br> 
 * RESEARCH: RESEARCH user stories are not meant to change any code but require research and prepare for an actual BUILD task.
 * BUILD: BUILD user stories change the code. They add functionality to the application or are performance related
 
-Furthermore, every user story below has an indication whether it extends the functionality of the application (FUNC), or is related to optimize the results (EVAL).<br>
-User stories are written from the perspective of either the user of the application, or the developer of the application.<br>
-1. For everyone: add your foldername and the list of questions and ground truth answers to eval.json. 
-2. Ingestion (1): As a user I want to synchronize the vector database with the document folder I am using. If the document folder has changed (extra file(s) or deleted file(s)), either add extra documents to the vector database or delete documents from the vector database. FUNC, BUILD
-3. Ingestion (2): As a user I want to query not only PDF’s, but also other file types with text, like Word documents, plain text files, and html pages. FUNC, BUILD
-4. Ingestion (3): As a developer I want to determine the optimal settings for chunking. Current settings are chunksize = 1000 and chunk overlap = 200 (see settings.py). Can we do some tests with evaluation documents and find an optimal chunk size and overlap? EVAL, BUILD
-5. Ingestion (3): As a developer I want to use an optimal set of chunks. Can we implement content-aware text chunking, keeping related content together in one chunk (up to a maximum chunk size)? EVAL, BUILD. For inspiration: https://github.com/nlmatics/llmsherpa#layoutpdfreader
-6. Ingestion (4) & Retrieval (7): As a developer I want to generate the best answers to the user questions. The application currently uses OpenAI's text-embedding-ada-002 as embedding model. It is not the best one according to huggingface MTEB embedding leaderboard. See https://huggingface.co/spaces/mteb/leaderboard. Implement an alternative embedding model and evaluate any change in performance EVAL, BUILD
-7. Retrieval (9): As a user I don’t want the chatbot to hallucinate. Add a lower bound for the similarity score to filter out text chunks. If none of the text chunks reaches the lower bound value, answer “I don’t know” (in the language of the user)? EVAL, BUILD
-8. Retrieval (9): As a user I want to know which returned chunks are the preferred ones. Add the similarity score of each chunk to the sources in the response and rank each chunk according to the similarity score FUNC, BUILD
-9. Retrieval (11): As a developer I want to evaluate the impact of switching from LLM gpt 3.5 to gpt 4 EVAL, BUILD
-10. 
+All user stories have an association with one of the steps (1 - 12) in the pipeline pictured above and are written from the perspective of either the user of the application, or the developer of the application.<br>
+1. EVAL, BUILD, For everyone: add your foldername and the list of questions and ground truth answers to eval.json. 
+2. FUNC, BUILD, Ingestion (1): As a user I want to synchronize the vector database with the document folder I am using. If the document folder has changed (extra file(s) or deleted file(s)), either add extra documents to the vector database or delete documents from the vector database. 
+3. FUNC, BUILD, Ingestion (2): As a user I want to query not only PDF’s, but also other file types with text, like Word documents, plain text files, and html pages. 
+4. EVAL, RESEARCH, Ingestion (3): As a developer I want to determine the optimal settings for chunking. Current settings are chunksize = 1000 and chunk overlap = 200 (see settings.py). Test the application performance of alternative settings of chunk size and overlap
+5. EVAL, BUILD, Ingestion (3): As a developer I want to use an optimal set of chunks. Can we implement content-aware text chunking, keeping related content together in one chunk (up to a maximum chunk size)? For inspiration: https://github.com/nlmatics/llmsherpa#layoutpdfreader
+6. EVAL, RESEARCH, Ingestion (3): As a developer I want to compare the performance of content-aware chunking with fixed-szie chunking
+7. FUNC, BUILD, Ingestion (4) & Retrieval (7): As a developer I want to generate the best answers to the user questions. The application currently uses OpenAI's text-embedding-ada-002 as embedding model. It is not the best one according to huggingface MTEB embedding leaderboard. See https://huggingface.co/spaces/mteb/leaderboard. Implement an alternative open-source, on-premise, embedding model. 
+8. EVAL, RESEARCH, Ingestion (4) & Retrieval (7): As a developer I want to evaluate any change in performance from switching to the implemented open-source on-premise embedding model. 
+9. EVAL, BUILD, Retrieval (9): As a user I don’t want the chatbot to hallucinate. Add a lower bound for the similarity score to filter out text chunks. If none of the text chunks reaches the lower bound value, answer “I don’t know” (in the language of the user)? 
+10. FUNC, BUILD, Retrieval (9): As a user I want to know which returned chunks are the preferred ones. Add the similarity score of each chunk to the sources in the response and rank each chunk according to the similarity score 
+11. EVAL, BUILD, Retrieval (11): As a developer I want to evaluate the impact of switching from LLM gpt 3.5 to gpt 4 
+12. FUNC, BUILD, Retrieval (11): As a developer I want to have the option of using the application for documents that must be kept private, by setting alternative values in settings.py. Implement an alternative downloadable (open source) LLM like Llama 2, Zephyr-7B, Mistral 7B and evaluate the performance 
+13. EVAL, RESEARCH, Retrieval (11): As a developer I want to test the performance of the implemented open-source, on-premise, LLM.
+14. 
 
 ## References
 This repo is mainly inspired by:
