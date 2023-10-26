@@ -72,6 +72,10 @@ User stories are written from the perspective of either the user of the applicat
 3. Ingestion (3): As a developer I want to determine the optimal settings for chunking. Current settings are chunksize = 1000 and chunk overlap = 200 (see settings.py). Can we do some tests with evaluation documents and find an optimal chunk size and overlap? EVAL, BUILD
 4. Ingestion (3): As a developer I want to use an optimal set of chunks. Can we implement content-aware text chunking, keeping related content together in one chunk (up to a maximum chunk size)? EVAL, BUILD. For inspiration: https://github.com/nlmatics/llmsherpa#layoutpdfreader
 5. Ingestion (4) & Retrieval (7): As a developer I want to generate the best answers to the user questions. The application currently uses OpenAI's text-embedding-ada-002 as embedding model. It is not the best one according to huggingface MTEB embedding leaderboard. See https://huggingface.co/spaces/mteb/leaderboard. Implement an alternative embedding model and evaluate any change in performance EVAL, BUILD
+6. Retrieval (9): As a user I don’t want the chatbot to hallucinate. Add a lower bound for the similarity score to filter out text chunks. If none of the text chunks reaches the lower bound value, answer “I don’t know” (in the language of the user)? EVAL, BUILD
+7. Retrieval (9): As a user I want to know which returned chunks are the preferred ones. Add the similarity score of each chunk to the sources in the response and rank each chunk according to the similarity score FUNC, BUILD
+8. Retrieval (11): As a developer I want to evaluate the impact of switching from LLM gpt 3.5 to gpt 4? EVAL, BUILD
+9. 
 
 ## References
 This repo is mainly inspired by:
