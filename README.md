@@ -83,7 +83,7 @@ All user stories have an association with one of the steps (1 - 12) in the pipel
 11. EVAL, BUILD, Retrieval (11): As a developer I want to evaluate the impact of switching from LLM gpt 3.5 to gpt 4 
 12. FUNC, BUILD, Retrieval (11): As a developer I want to have the option of using the application for documents that must be kept private, by setting alternative values in settings.py. Implement an alternative downloadable (open source) LLM like Llama 2, Zephyr-7B, Mistral 7B and evaluate the performance 
 13. EVAL, RESEARCH, Retrieval (11): As a developer I want to test the performance of the implemented open-source, on-premise, LLM.
-14. 
+14. FUNC, BUILD, Ingestion (4) & Retrieval (7) & Retrieval (11): As a user I want to have the option of using the application for documents that must be kept private, by using a checkbox in the user interface. This will make the application use an on-premise embedding model and an on-premise LLM
 
 ## References
 This repo is mainly inspired by:
