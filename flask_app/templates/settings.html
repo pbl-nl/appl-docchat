@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="form-title"><h3>Settings</h3></div>
+<table class="mt-5 table table-hover"><thead><tr><th>Setting</th><th>Machine name</th><th>Value</th><th>Info</th></tr></thead><tbody>
+	<tr>
+		<td>Configuration</td>
+		<td>config.ENV</td>
+		<td>{{ config.ENV }}</td>
+		<td>Environment, either development or production</td>
+	</tr>
+	<tr>
+		<td>Database</td>
+		<td>config.SQLALCHEMY_DATABASE_URI</td>
+		<td>{{ config.SQLALCHEMY_DATABASE_URI }}</td>
+		<td>The database connection string</td>
+	</tr>
+	{% for setting in settings %}
+		<tr>
+			<td><a href="{{ url_for('setting', id=setting['id']) }}">{{ setting.label }}</a></td>
+			<td>{{ setting.setting }}</td>
+			<td>{{ setting.value }}</td>
+			<td>{{ setting.info }}</td>
+		</tr>
+	{% endfor %}
+</table>
+{% endblock %}

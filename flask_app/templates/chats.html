@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div class="form-title"><h3>Chats</h3></div>
+<a href="{{ url_for('chat', id=0) }}" class="btn btn-secondary btn-sm chat-new-button" role="button" aria-pressed="true"><i class="bi-plus" role="img" aria-label="Add"></i>Add new chat</a>
+<table class="table table-hover table-sortable">
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Last used</th>
+            <th>Document set</th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+	{% for chat, docset in chats %}
+		<tr>
+			<td><a href="{{ url_for('chat', id=chat['id']) }}">{{ chat['name'] }}</a></td>
+			<td>{{ chat['last_used'] }}</td>
+			<td>{{ docset['name'] }}</td>
+			<td>
+                <a class="btn btn-primary btn-s" href="{{ url_for('chat_download', id=chat['id']) }}"><i class="bi-download" role="img" aria-label="Download"></i>Download</a>
+                <a class="btn btn-primary btn-s" href="javascript:chat_delete('Delete chat \'{{ chat.name }})\'?', '{{ url_for('chat_delete', id=chat['id']) }}');"><i class="bi-trash" role="img" aria-label="Delete"></i>Delete</a>
+            </td>
+		</tr>
+	{% endfor %}	
+</tbody></table>
+{% endblock %}

@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="form-title"><h3>Help</h3></div>
+<div style="display: flex;">
+    <div style="flex:1 1 50%;">
+        <h6>General</h6>
+        <p>A web-application which offers:<ol>
+            <li>Create document sets<sup>*</sup>:<ul>
+                <li>Specify the model parameters</li>
+                <li>Upload (new) documents</li>
+                <li>See how the chunks (and their overlap) look like</li>
+                <li>Filter chunks by keyword</li>
+            </ul></li>
+            <li>Start a chat on a specific dosument set</li>
+            <li>View the sources on which an answer is based:<ul>
+                <li>The used sources are highlighted</li>
+                <li>See how the chunks (and their overlap) look like</li>
+                <li>Filter chunks by keyword4. User management and authorisation</li>
+            </ul></li>
+            <li>User management<sup>*</sup>:<ul>
+                <li>Default chat-admin and guest user</li>
+                <li>User management</li>
+                <li>Authorisation:<ul>
+                    <li>User can be part of user-groups</li>
+                    <li>User-groups have authorisation on document sets</li>
+                    <li>Login via LDAP</li>
+                </ul></li>
+            </ul></li>
+        </ol></p>
+        <p><sup>*</sup>&nbsp;&nbsp;&nbsp;Administrators only</p>
+    </div>
+    <div style="flex:1 1 50%;">
+        <h6>Chatting</h6>
+        <p>One can select a previously started chat or create a new one:
+            <ol>
+                <li>A new chat is based on a document set. This set contains one or more documents which are set up by the administrator, in combination with a specific model (and parameters).</li>
+                <li>A previously started chat shows all your questions (remakrs) en the models response.</li>
+            </ol>
+            When chatting, it's important to be aware of the fact that all previously entered questions and responses form the context which is taken into account by the model. So if you want to chat about anthor topic, clear the chat contents or start a new one.
+        </p>
+    </div>
+</div>
+
+{% endblock %}

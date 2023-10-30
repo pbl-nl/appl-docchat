@@ -13,10 +13,11 @@ from .content_iterator import ContentIterator
 class Ingester:
     # When parameters are read from settings.py, object is initiated without parameter settings
     # When parameters are read from GUI, object is initiated with parameter settings listed
-    def __init__(self, input_folder: str, content_folder: str, vectordb_folder: str, 
-                 embeddings_provider=None, embeddings_model=None, vecdb_type=None, chunk_size=None, chunk_overlap=None):
+    def __init__(self, collection_name: str, content_folder: str, vectordb_folder: str, 
+                 embeddings_provider=None, embeddings_model=None, vecdb_type=None, chunk_size=None, chunk_overlap=None,
+                 file_no=None):
         load_dotenv()
-        self.input_folder = input_folder
+        self.collection_name = collection_name
         self.content_folder = content_folder
         self.vectordb_folder = vectordb_folder
         self.embeddings_provider = settings.EMBEDDINGS_PROVIDER if embeddings_provider is None else embeddings_provider
@@ -24,11 +25,12 @@ class Ingester:
         self.vecdb_type = settings.VECDB_TYPE if vecdb_type is None else vecdb_type
         self.chunk_size = settings.CHUNK_SIZE if chunk_size is None else chunk_size
         self.chunk_overlap = settings.CHUNK_OVERLAP if chunk_overlap is None else chunk_overlap
+        self.file_no = file_no
 
     def ingest(self) -> None:
         content_iterator = ContentIterator(self.content_folder)
         # create text chunks with chosen settings of chunk size and chunk overlap
-        pdf_parser = PdfParser(self.chunk_size, self.chunk_overlap)
+        pdf_parser = PdfParser(self.chunk_size, self.chunk_overlap, self.file_no)
 
         chunks: List[docstore.Document] = []
         # for each pdf file that the content_iterator yields
@@ -51,7 +53,7 @@ class Ingester:
             vector_store = Chroma.from_documents(
                 documents=chunks,
                 embedding=embeddings,
-                collection_name=self.input_folder,
+                collection_name=self.collection_name,
                 persist_directory=self.vectordb_folder
             )
             vector_store.persist()

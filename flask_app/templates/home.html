@@ -1,0 +1,8 @@
+{% extends "base.html" %}
+{% block include_head_files %}
+    <script type="text/javascript" src="{{ url_for('static', filename='js/page-home.js' )}}"></script>
+{% endblock %}
+{% block content %}
+    <div style="float: left;position: relative;padding-left: 110px;font-size: 72px;font-weight: bold;color: white;z-index: 1;">Chat NMDC</div>
+    <img src="{{ url_for('static', filename='css/chat.png') }}" style="margin: -106px 0 0 0;width: 100%;z-index: 0;position: relative;">
+{% endblock %}
