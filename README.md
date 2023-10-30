@@ -45,11 +45,16 @@ The file query.py can be used to query any folder with documents, provided that 
 Execution is done in the activated virtual environment using commandline command:<br>
 <code>python query.py</code>
 
-### Ingesting and querying documents through a user interface
+### Ingesting and querying documents through a Streamlit User Interface
 The functionalities described above can also be used through a User Interface.<br>
 The UI can be started by using commandline command:<br>
 <code>streamlit run streamlit_app.py</code><br>
 When this command is used, a browser session will open automatically
+
+### Ingesting and querying documents through a Flask User Interface
+The functionalities described above can also be used through a Flask User Interface.<br>
+The Flask UI is tailored for future use in production and contains more insight into the chunks (used) and also contains user admin functionality among others.<br>
+For a more detailed description and installation, see the readme file under flask_app
 
 ### Evaluation of Question Answer results
 The file evaluate.py can be used to evaluate the generated answers for a list of questions, provided that the file eval.json exists, containing 
@@ -57,7 +62,7 @@ not only the list of questions but also the related list of desired answers (gro
 Evaluation is done in the activated virtual environment using commandline command:<br>
 <code>python evaluate.py</code>
 
-### Monitoring the evaluation results through a user interface
+### Monitoring the evaluation results through a Streamlit User Interface
 All evaluation results can be viewed by using a dedicated User Interface.<br>
 This evaluation UI can be started by using commandline command:<br>
 <code>streamlit run streamlit_evaluate.py</code><br>
