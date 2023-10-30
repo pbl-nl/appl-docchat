@@ -40,45 +40,52 @@ class DocSetForm(FlaskForm):
 
 
     # Custom validation    ( See: https://wtforms.readthedocs.io/en/stable/validators/ )
-    def validate_path(form, field):
-        if not re.search(r'^[a-z0-9-]+$', field.data):
-            raise ValidationError('Invalid name; Only lowercase, digits and - allowed.')
+    def validate_name(form, field):
+        if not re.search(r'^[a-zA-Z0-9-_ ]+$', field.data):
+            raise ValidationError('Invalid name; Only letters, digits, spaces, - _ characters allowed.')
+        same_docset = DocSet.query.filter(DocSet.name == field.data.strip(), DocSet.id != form.docset_id_for_validation).all()
+        if len(same_docset) >= 1:
+            raise ValidationError('This name already exists.')
 
 
     # Handle the request (from routes.py) for this form
     def handle_request(self, method, id):
 
+        usergroups, checked, files = [], [], []
+
+        if id > 0:
+            # Get user groups with permission for this docset
+            usergroups = db.session.execute(text('SELECT id, name, docset_' + str(id) + ' FROM ' + UserGroup.__tablename__ + ';')).fetchall()
+            for usergroup in usergroups:
+                if getattr(usergroup, 'docset_' + str(id)) == 1:
+                    checked.append('checked="checked"')
+                else:
+                    checked.append('')
+            files, files_ = [], DocSetFile.query.filter(DocSetFile.docset_id == id).order_by(DocSetFile.no).all()
+            obj = DocSet.query.get(id)
+            for file in files_:
+                file_full_name = path.join(obj.get_doc_path(), file.filename)
+                files.append({
+                    'id': file.id, 
+                    'no': file.no, 
+                    'name': file.filename, 
+                    'dt': datetime.fromtimestamp(path.getctime(file_full_name)).strftime('%d-%m-%Y %H:%M:%S'),
+                    'size': size_to_human(path.getsize(file_full_name)),
+                })
+
         # Show the form
         if method == 'GET':
-            usergroups, checked, files = [], [], []
             if id > 0:
                 # Get record from database and set the form values (if id == 0 the defaults are used)
                 obj = DocSet.query.get(id)
                 obj.fields_to_form(self)
 
-                files, files_ = [], DocSetFile.query.filter(DocSetFile.docset_id == id).order_by(DocSetFile.no).all()
-                for file in files_:
-                    file_full_name = path.join(obj.get_doc_path(), file.filename)
-                    files.append({
-                        'id': file.id, 
-                        'no': file.no, 
-                        'name': file.filename, 
-                        'dt': datetime.fromtimestamp(path.getctime(file_full_name)).strftime('%d-%m-%Y %H:%M:%S'),
-                        'size': size_to_human(path.getsize(file_full_name)),
-                    })
-
-                # Get user groups with permission for this docset
-                usergroups = db.session.execute(text('SELECT id, name, docset_' + str(id) + ' FROM ' + UserGroup.__tablename__ + ';')).fetchall()
-                for usergroup in usergroups:
-                    if getattr(usergroup, 'docset_' + str(id)) == 1:
-                        checked.append('checked="checked"')
-                    else:
-                        checked.append('')
             # Show the form
             return render_chat_template('docset.html', form=self, usergroups = usergroups, checked=checked, files=files)
         
         # Save the form
         if method == 'POST':
+            self.docset_id_for_validation = id
             if self.validate():
                 if id >= 1:
                     # The table needs to be updated with the new values
@@ -106,7 +113,7 @@ class DocSetForm(FlaskForm):
                 return redirect(url_for('docset', id=id))
             
             # Validation failed: Show the form with the errors
-            return render_chat_template('docset.html', form=self)
+            return render_chat_template('docset.html', form=self, usergroups = usergroups, checked=checked, files=files)
 
         # Show the files from the docset
         if method == 'FILES':
