@@ -13,9 +13,10 @@ from ingest.ingest_utils import getattr_or_default
 class PdfParser:
     """A parser for extracting and cleaning text from PDF documents."""
 
-    def __init__(self, chunk_size: int, chunk_overlap: int):
+    def __init__(self, chunk_size: int, chunk_overlap: int, file_no: int):
         self.chunk_size = chunk_size
         self.chunk_overlap = chunk_overlap
+        self.file_no = file_no
 
     def set_pdf_file_path(self, pdf_file_path: str):
         """Set the path to the PDF file."""
@@ -31,6 +32,11 @@ class PdfParser:
             self.fix_newlines,
             self.remove_multiple_newlines,
         ]
+
+        '''
+        if self.file_no > 0:
+            metadata['file_no'] = self.file_no
+        '''
 
         cleaned_text_pdf = self.clean_text(raw_pages, cleaning_functions)
         return self.text_to_docs(cleaned_text_pdf, metadata)
@@ -97,6 +103,7 @@ class PdfParser:
         """Split the text into chunks and return them as Documents."""
         doc_chunks: List[docstore.Document] = []
 
+        chunk_no = 0
         for page_num, page in text:
             logger.info(f"Splitting page {page_num}")
             text_splitter = splitter.RecursiveCharacterTextSplitter(
@@ -106,14 +113,23 @@ class PdfParser:
             )
             chunks = text_splitter.split_text(page)
             for i, chunk in enumerate(chunks):
-                doc = docstore.Document(
-                    page_content=chunk,
-                    metadata={
+                if self.file_no:
+                    metadata_combined = {
+                        "file_no": self.file_no,
+                        "chunk_no": chunk_no,
+                        "source": f"F{self.file_no}-{chunk_no}"
+                    }
+                else:
+                    metadata_combined = {
                         "page_number": page_num,
                         "chunk": i,
                         "source": f"p{page_num}-{i}",
                         **metadata,
-                    },
+                    }
+                doc = docstore.Document(
+                    page_content=chunk,
+                    metadata=metadata_combined
                 )
                 doc_chunks.append(doc)
+                chunk_no += 1
         return doc_chunks

@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% block content %}
+	<div class="form-title"><h3>Usergroups</h3></div>
+    <a href="{{ url_for('usergroup', id=0) }}" class="btn btn-secondary btn-sm chat-new-button" role="button" aria-pressed="true"><i class="bi-plus" role="img" aria-label="New"></i>New usergroup</a>
+    <table class="table table-hover table-sortable"><thead>
+		<tr>
+			<th>Name</th><th></th>
+		</tr></thead><tbody>
+    	{% for usergroup in usergroups %}
+    		<tr>
+    			<td><a href="{{ url_for('usergroup', id=usergroup.id) }}">{{ usergroup.name }}</a></td>
+				<td>
+					<a class="btn btn-primary btn-s" href="javascript:chat_delete('Delete usergroup \'{{ usergroup.name }})\'?', '{{ url_for('usergroup_delete', id=usergroup.id) }}');"><i class="bi-trash" role="img" aria-label="Delete"></i>Delete</a>
+				</td>
+				</tr>
+    	{% endfor %}
+    </table>
+{% endblock %}

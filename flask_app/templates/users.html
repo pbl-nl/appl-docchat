@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% block content %}
+	<div class="form-title"><h3>Users</h3></div>
+    <a href="{{ url_for('user', id=0) }}" class="btn btn-secondary btn-sm chat-new-button" role="button" aria-pressed="true"><i class="bi-plus" role="img" aria-label="New"></i>New user</a>
+    <table class="table table-hover table-sortable"><thead><tr><th>Name</th><th>Login name</th><th>E-mail</th><th></th></tr></thead><tbody>
+    	{% for user in users %}
+    		<tr>
+    			<td><a href="{{ url_for('user', id=user['id']) }}">{{ user.name }}</a></td>
+    			<td>{{ user.username }}</td>
+    			<td>{{ user.email }}</td>
+				<td><a class="btn btn-primary btn-s" href="javascript:chat_delete('Delete user \'{{ user.username }} ({{ user.name }})\'?', '{{ url_for('user_delete', id=user.id) }}');"><i class="bi-trash" role="img" aria-label="Delete"></i>Delete</a></td>
+    		</tr>
+    	{% endfor %}
+    </table>
+{% endblock %}

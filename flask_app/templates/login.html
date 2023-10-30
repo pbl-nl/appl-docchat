@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+{% block content %}
+    <div class="form-title"><h3>Login{% if loginas %} as{% endif %}</h3></div>
+    <form method="POST" class="margin-form">
+        {{ form.hidden_tag() }}
+        <table>
+            {% if logged_in %}
+                <tr><td>Currently logged in as</td><td>{{ current_user.name }}</td></tr>
+                <tr><td>&nbsp;</td></tr>
+            {% endif %}
+            
+        <tr><td>{{ form.username.label }}</td><td>{{ form.username }}
+            {% if form.username.errors %}
+                <ul class="errors list-inline text-danger form-text">
+                {% for error in form.username.errors %}
+                    <li>{{ error }}</li>
+                {% endfor %}
+                </ul>
+            {% endif %}
+        </td></tr>
+        <tr><td>{{ form.password.label }}</td><td>{{ form.password }}
+            {% if form.password.errors %}
+                <ul class="errors list-inline text-danger form-text">
+                {% for error in form.password.errors %}
+                    <li>{{ error }}</li>
+                {% endfor %}
+                </ul>
+            {% endif %}
+        </td></tr>
+        {% if remember_me %}
+            <tr><td>{{ form.remember_me.label }}</td><td>{{ form.remember_me }}
+                {% if form.remember_me.errors %}
+                    <ul class="errors list-inline text-danger form-text">
+                    {% for error in form.remember_me.errors %}
+                        <li>{{ error }}</li>
+                    {% endfor %}
+                    </ul>
+                {% endif %}
+            </td></tr>
+        {% endif %}
+        <tr><td></td><td class="td-submit"><input type="submit" value="Login" class="btn btn-secondary btn-submit">{% if guest_allowed %}<a class="btn btn-secondary" style="margin-left: 40px;" href="javascript:login_guest();">Login as guest</a>{% endif %}</td></tr>
+        </table>
+    </form>
+{% endblock %}

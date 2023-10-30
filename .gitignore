@@ -1,6 +1,10 @@
 # project specific folders
 /dev
 /vector_stores
+/flask_app/instance
+
+# project specific files
+/flask_app/config.py
 
 # backup files
 *.bak
