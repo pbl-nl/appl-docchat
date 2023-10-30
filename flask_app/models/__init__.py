@@ -56,6 +56,7 @@ class DocSet(db.Model):
         return path.join('./docs', 'docset_' + str(self.id))
 
     def create_vectordb_name(self):
+        vectordb_name = "_" + self.vecdb_type + "_" + str(self.chunk_size) + "_" + str(self.chunk_overlap) + "_" + self.embeddings_provider
         return path.join('./vector_stores', 'docset_' + str(self.id) + vectordb_name)
 
     def get_collection_name(self):
