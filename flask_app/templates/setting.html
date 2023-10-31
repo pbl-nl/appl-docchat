@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 {% block content %}
-<div class="form-title"><h3>{% if form.label.data %}Setting {{ form.label.data }}{% else %}New setting{% endif %}</h3></div>
+<div class="form-title"><h3>{% if form.label.data %}Setting:&nbsp;&nbsp;&nbsp;{{ form.label.data }}{% else %}New setting{% endif %}</h3></div>
 <form method="POST" class="margin-form">
         {{ form.hidden_tag() }}
 
