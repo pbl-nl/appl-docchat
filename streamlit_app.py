@@ -44,7 +44,7 @@ def folder_selector(querier, folders):
     folder_path_selected, vectordb_folder_path_selected = utils.create_vectordb_name(folder_name_selected)
 
     logger.info(f"vectordb_folder_path_selected is now {vectordb_folder_path_selected}")
-    # If a folder is chosen that is not equal to the last know source folder
+    # If a folder is chosen that is not equal to the last known source folder
     if folder_name_selected != st.session_state['folder_selected']:
         # set session state of is_folder_selected to False (will be set to True when OK button is clicked)
         st.session_state['is_folder_selected'] = False

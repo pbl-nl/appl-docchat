@@ -1,13 +1,17 @@
 # project specific folders
 /dev
 /vector_stores
+/flask_app/instance
+
+# project specific files
+/flask_app/config.py
 
 # backup files
 *.bak
 
 # output files
 *.csv
-*.tsv
+# *.tsv
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
