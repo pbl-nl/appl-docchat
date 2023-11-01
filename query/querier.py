@@ -2,6 +2,7 @@ from dotenv import load_dotenv
 from langchain.chains import ConversationalRetrievalChain
 from langchain.chat_models import ChatOpenAI
 from langchain.embeddings.openai import OpenAIEmbeddings
+from langchain.embeddings.huggingface import HuggingFaceEmbeddings
 from langchain.schema import AIMessage, HumanMessage
 from langchain.vectorstores.chroma import Chroma
 from loguru import logger
@@ -48,6 +49,9 @@ class Querier:
         if self.embeddings_provider == "openai":
             embeddings = OpenAIEmbeddings(model=self.embeddings_model, client=None)
             logger.info("Loaded openai embeddings")
+
+        if self.embeddings_provider == "hugging_face":
+            embeddings = HuggingFaceEmbeddings(model_name=self.embeddings_model)
 
         if self.vecdb_type == "chromadb":
             vector_store = Chroma(

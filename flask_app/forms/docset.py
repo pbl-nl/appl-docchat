@@ -28,7 +28,7 @@ class DocSetForm(FlaskForm):
     llm_type = SelectField('LLM type', default='chatopenai', choices=['chatopenai'])
     llm_modeltype = SelectField('LLM model type', default='gpt35', choices=['gpt35', 'gpt35_16', 'gpt4'])
     embeddings_provider = SelectField('Embeddings provider', default='openai', choices=['openai', 'hugging_face'])
-    embeddings_model = SelectField('Embeddings model', default='text-embedding-ada-002', choices=['text-embedding-ada-002', 'multilingual-e5-large'])
+    embeddings_model = SelectField('Embeddings model', default='text-embedding-ada-002', choices=['text-embedding-ada-002', 'all-mpnet-base-v2'])
     chain = SelectField('Chain', default='conversationalretrievalchain', choices=['conversationalretrievalchain'])
     chain_type = SelectField('Chain type', default='stuff', choices=['stuff'])
     chain_verbosity = BooleanField('Chain verbosity', default=False, render_kw={'class': 'yes-checkbox'})
