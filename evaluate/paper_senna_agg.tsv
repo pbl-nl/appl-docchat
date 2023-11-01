@@ -1,0 +1,2 @@
+folder	timestamp	ragas_score	answer_relevancy	context_precision	faithfulness	context_recall	LLM_TYPE	LLM_MODEL_TYPE	EMBEDDINGS_PROVIDER	EMBEDDINGS_MODEL	CHAIN_NAME	CHAIN_TYPE	SEARCH_TYPE	VECDB_TYPE	CHUNK_SIZE	CHUNK_OVERLAP	CHUNK_K
+paper_senna	2023-11-01 11:37:13.943358	0.3869992846796845	0.9624714486420783	0.159382430435062	0.7857142857142857	0.5714285714285714	llama2	llama2	openai	text-embedding-ada-002	conversationalretrievalchain	stuff	similarity	chromadb	2000	200	2
