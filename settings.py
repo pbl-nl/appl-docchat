@@ -21,13 +21,13 @@ CHAIN_VERBOSITY = False
 
 #### the settings below can be used for testing ####
 # LLM_TYPE must be one of: "chatopenai", 
-LLM_TYPE = "chatopenai"
+LLM_TYPE = "hugging_face"
 # LLM_MODEL_TYPE must be one of: "gpt35", "gpt35_16", "gpt4", 
 # Context window sizes are currently:
 # "gpt35": 4097 tokens which is equivalent to ~3000 words
 # "gpt35_16": 16385 tokens
 # "gpt4": 8192 tokens
-LLM_MODEL_TYPE = "gpt35"
+LLM_MODEL_TYPE = "GoogleFlan"
 # EMBEDDINGS_PROVIDER must be one of: "openai", 
 EMBEDDINGS_PROVIDER = "openai"
 # EMBEDDINGS_MODEL must be one of: "text-embedding-ada-002", 

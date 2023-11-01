@@ -5,6 +5,7 @@ from langchain.embeddings.openai import OpenAIEmbeddings
 from langchain.schema import AIMessage, HumanMessage
 from langchain.vectorstores.chroma import Chroma
 from loguru import logger
+from langchain.llms import HuggingFaceHub
 # local imports
 import settings
 
@@ -44,6 +45,21 @@ class Querier:
                 model=llm_model_type,
                 temperature=0, 
             )
+        
+        elif self.llm_type == "hugging_face":
+            # default value is llama-2
+            llm_model_type = "meta-llama/Llama-2-7b-chat-hf"
+            if self.llm_model_type == "llama2":
+                llm_model_type = "meta-llama/Llama-2-7b-chat-hf"
+                max_length = 499
+            elif self.llm_model_type == 'GoogleFlan':
+                llm_model_type = 'google/flan-t5-base'
+                max_length = 499
+
+            llm = HuggingFaceHub(repo_id=llm_model_type, 
+                                 model_kwargs={"temperature": 0.1, 
+                                               "max_length": max_length}
+                                )
 
         if self.embeddings_provider == "openai":
             embeddings = OpenAIEmbeddings(model=self.embeddings_model, client=None)
