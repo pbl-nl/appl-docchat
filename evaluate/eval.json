@@ -75,5 +75,22 @@
             "De auteurs achten de omvang van deze categorie als mogelijk probleem. De auteurs herhalen de analyses ook zonder deze categorie en vinden nauwelijks een verbetering van de modellen",
             "de auteurs geven aan dat dit vanwege onzekerheid bevindingen en complexiteit rond woonvoorkeuren en verhuisproces niet eenvoudig mogelijk is"
         ]
+    },
+    "docset_wur": {
+        "question": [
+            "what happens when saturated soil is exposed to free drainage?",
+            "what happens when transpiration losses are down?",
+            "how residual water beyond pF 4.2 can be extracted from the soil?"
+        ],
+        "question_type": [
+            "initial",
+            "followup",
+            "followup"
+        ],
+        "ground_truth": [
+            "gravitation forces will cause the widest pores to drain first, allowing air to enter",
+            "plants under these conditions experience temporary wilting.",
+            "by drying in an oven at 105 ∞C, i.e. beyond the boiling point of water"
+        ]
     }
 }
