@@ -144,5 +144,3 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
-
-docs/docset_1/
