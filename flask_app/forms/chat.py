@@ -1,4 +1,5 @@
 import json
+import re
 from os import makedirs, path
 
 from flask import flash, url_for, redirect, send_file, jsonify
@@ -25,6 +26,13 @@ class ChatForm(FlaskForm):
     submit = SubmitField('Save')
 
     # Custom validation    ( See: https://wtforms.readthedocs.io/en/stable/validators/ )
+    def validate_name(form, field):
+        if not re.search(r'^[a-zA-Z0-9-_ ]+$', field.data):
+            raise ValidationError('Invalid name; Only letters, digits, spaces, - _ characters allowed.')
+        same_chat = Chat.query.filter(Chat.name == field.data.strip(), Chat.id != form.chat_id_for_validation).all()
+        if len(same_chat) >= 1:
+            raise ValidationError('This name already exists.')
+        
     def validate_docset_id(form, field):
         if not field.data >= 1:
             raise ValidationError('Invalid docset.')
@@ -49,6 +57,7 @@ class ChatForm(FlaskForm):
         
         # Save the form
         if method == 'POST':
+            self.chat_id_for_validation = id
             self.docset_id.choices = [(docset.id, docset.name) for docset in DocSet.query.all()]
             if self.validate():
                 if id >= 1:
@@ -69,7 +78,13 @@ class ChatForm(FlaskForm):
                 return redirect(url_for('chat', id=id))
             
             # Validation failed: Show the form with the errors
-            return render_chat_template('chat.html', form=self)
+            if id > 0:
+                # Get record from database and set the form values (if id == 0 the defaults are used)
+                obj = Chat.query.get(id)
+                docset = DocSet.query.filter(DocSet.id == obj.docset_id).first()
+            else:
+                docset = None
+            return render_chat_template('chat.html', form=self, docset=docset)
 
         # Delete the chat
         if method == 'DELETE':
