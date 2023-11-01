@@ -1,3 +1,6 @@
+# documents not to git
+/docs/my_docs/Systematic_eval_TE_full_paper.pdf
+
 # project specific folders
 /dev
 /vector_stores

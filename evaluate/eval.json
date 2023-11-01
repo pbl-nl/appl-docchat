@@ -81,38 +81,26 @@
         "question": [
             "Who are the authors of the paper 'A Scalable Privacy-Preserving Multi-Agent Deep Reinforcement Learning Approach for Large-Scale Peer-to-Peer Transactive Energy Trading'?",
             "Where are the authors based?",
-            "What is coordination mechanism according to the grid-edge coordination taxonomy presented in the paper 'coordination_of_grid_sources' is studied?",
-            "What is the type of study according to the paper 'Systematic evaluation of research methods and reporting types in Transactive Energy?",
-            "What is the purpose of study according to the paper 'Systematic evaluation of research methods and reporting types in Transactive Energy?",
+            "What is coordination mechanism according to the grid-edge coordination taxonomy presented in the paper 'Coordination of resources at the edge of the electricity grid: Systematic review and taxonomy' is studied?",
             "Who are the authors of the paper 'Single-unit and multi-unit auction framework for peer-to-peer transactions'?",
             "Where are the authors based?",
-            "What is coordination mechanism according to the grid-edge coordination taxonomy presented in the paper 'coordination_of_grid_sources' is studied?",
-            "What is the type of study according to the paper 'Systematic evaluation of research methods and reporting types in Transactive Energy?",
-            "What is the purpose of study according to the paper 'Systematic evaluation of research methods and reporting types in Transactive Energy?"
+            "What is coordination mechanism according to the grid-edge coordination taxonomy presented in the paper 'Coordination of resources at the edge of the electricity grid: Systematic review and taxonomy' is studied?"
         ],
         "question_type": [
             "initial",
             "followup",
             "followup",
-            "followup",
-            "followup",
             "initial",
-            "followup",
-            "followup",
             "followup",
             "followup"
         ],
         "ground_truth": [
             "Ye, Y., Tang, Y., Wang, H., Zhang, X.-P., Strbac, G.",
             "China and UK",
-            "bilateral competition",
-            "random experiment",
-            "conceptual proposition and comparison",
+            "bilateral competition"
             "Teixeira, D., Gomes, L., Vale, Z.",
             "Portugal",
-            "mediated competition",
-            "quasi-experiment",
-            "comparison"
+            "mediated competition"
         ]
     }
 }
