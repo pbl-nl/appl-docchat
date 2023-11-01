@@ -75,5 +75,44 @@
             "De auteurs achten de omvang van deze categorie als mogelijk probleem. De auteurs herhalen de analyses ook zonder deze categorie en vinden nauwelijks een verbetering van de modellen",
             "de auteurs geven aan dat dit vanwege onzekerheid bevindingen en complexiteit rond woonvoorkeuren en verhuisproces niet eenvoudig mogelijk is"
         ]
+    },
+
+    "transactive_energy_survey": {
+        "question": [
+            "Who are the authors of the paper 'A_Scalable_Privacy-Preserving_Multi-Agent_Deep_Reinforcement_Learning_Approach_for_Large-Scale_Peer-to-Peer_Transactive_Energy_Trading'?",
+            "Where are the authors based?",
+            "What is coordination mechanism according to the grid-edge coordination taxonomy presented in the paper 'coordination_of_grid_sources' is studied?",
+            "What is the type of study according to the paper 'Systematic_eval_TE_full_paper?",
+            "What is the purpose of study according to the paper 'Systematic_eval_TE_full_paper?",
+            "Who are the authors of the paper 'single_multi_unit_auction'?",
+            "Where are the authors based?",
+            "What is coordination mechanism according to the grid-edge coordination taxonomy presented in the paper 'coordination_of_grid_sources' is studied?",
+            "What is the type of study according to the paper 'Systematic_eval_TE_full_paper?",
+            "What is the purpose of study according to the paper 'Systematic_eval_TE_full_paper?"
+        ],
+        "question_type": [
+            "initial",
+            "followup",
+            "followup",
+            "followup",
+            "followup",
+            "initial",
+            "followup",
+            "followup",
+            "followup",
+            "followup"
+        ],
+        "ground_truth": [
+            "Ye, Y., Tang, Y., Wang, H., Zhang, X.-P., Strbac, G.",
+            "China and UK",
+            "bilateral competition",
+            "random experiment",
+            "conceptual proposition and comparison",
+            "Teixeira, D., Gomes, L., Vale, Z.",
+            "Portugal",
+            "mediated competition",
+            "quasi-experiment",
+            "comparison"
+        ]
     }
 }
