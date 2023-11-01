@@ -6,7 +6,7 @@
             "Uit hoeveel hoofdstukken bestaat de publicatie?",
             "Is er een samenvatting aanwezig?",
             "Hoe lang is deze samenvatting?",
-            "Waanneer is de publicatie verschenen?",
+            "Wanneer is de publicatie verschenen?",
             "Wat is de bronvermelding van de publicatie?",
             "Hoeveel bronnen worden in de publicatie aangehaald?",
             "Worden bepaalde auteurs meerdere keren aangehaald?",
@@ -76,6 +76,37 @@
             "de auteurs geven aan dat dit vanwege onzekerheid bevindingen en complexiteit rond woonvoorkeuren en verhuisproces niet eenvoudig mogelijk is"
         ]
     },
+    "maggy_cv":{
+        "question": [
+            "What is Margarita Korkhmazyan's Citizenship?",
+            "What is Margarita Korkhmazyan's Master Degree?",
+            "What qualification does Margarita Korkhmazyan's have?"
+        ],
+        "question_type":[
+            "initial",
+            "initial",
+            "initial"
+        ],
+        "ground_truth":[
+            "Armenian",
+            "At the Institute of Chemical Physics in Moscow",
+            "UNEP training on International Environmental Law and Diplomacy"
+        ]
+    },
+    "verzamelbrief-luchtvaart": {
+        "question": [
+            "Bestaat er een verbod op korte vluchten tussen Nederland en België?",
+            "Waarom komt er geen verbod?"
+        ],
+        "question_type": [
+            "initial",
+            "followup"
+        ],
+        "ground_truth": [
+            "Nee, er bestaat geen verbod op korte vluchten tussen Nederland en België. Er is een juridische analyse uitgevoerd om de mogelijkheid tot een verbod op korte afstandsvluchten in de Benelux. Uit deze analyse blijkt dat een algeheel verbod op korte afstandsvluchten binnen de Benelux zeer moeilijk te realiseren zal zijn. ",
+            "Voor een eventueel verbod is het EU-recht leidend. Op grond van de EU-verordening 1008/2008 mogen Europese luchtvaartmaatschappijen vrij opereren op alle routes binnen de EU. Omwege ernstige milieuproblemen kan de uitoefening van verkeersrechten tijdelijk worden beperkt of geweigerd op basis van artikel 20 van de verordening, mits een concrete nationale grondslag aanwezig is en mits de Europese Commissie hier toestemming voor geeft. Een concrete wettelijke grondslag voor het tijdelijk verbieden van dergelijke korte vluchten wegens milieuproblemen ontbreekt in de Nederlandse wetgeving. Bovendien kan dit niet eenzijdig door Nederland vastgesteld worden. "
+        ]
+    },
     "docset_wur": {
         "question": [
             "what happens when saturated soil is exposed to free drainage?",
@@ -90,7 +121,105 @@
         "ground_truth": [
             "gravitation forces will cause the widest pores to drain first, allowing air to enter",
             "plants under these conditions experience temporary wilting.",
-            "by drying in an oven at 105 ∞C, i.e. beyond the boiling point of water"
+            "by drying in an oven at 105 C, i.e. beyond the boiling point of water"
+        ]
+    },
+    "deltares_test": {
+        "question": [
+            "Where was the study undertaken?",
+            "What is the title of the paper?",
+            "What were the in situ and ex situ measurement techniques"
+        ],
+        "question_type": [
+            "initial",
+            "initial",
+            "initial"
+        ],
+        "ground_truth": [
+            "Westerschelde, the Netherlands", 
+            "Techniques for monitoring of benthic primary production",
+            "PAM fluorescence, 14C-incubations, O2-electrode and -optode measurements, CO2 chambers"
+        ]
+    },
+    "transactive_energy_survey": {
+        "question": [
+            "Who are the authors of the paper 'A_Scalable_Privacy-Preserving_Multi-Agent_Deep_Reinforcement_Learning_Approach_for_Large-Scale_Peer-to-Peer_Transactive_Energy_Trading'?",
+            "Where are the authors based?",
+            "What is coordination mechanism according to the grid-edge coordination taxonomy presented in the paper 'coordination_of_grid_sources' is studied?",
+            "What is the type of study according to the paper 'Systematic_eval_TE_full_paper?",
+            "What is the purpose of study according to the paper 'Systematic_eval_TE_full_paper?",
+            "Who are the authors of the paper 'single_multi_unit_auction'?",
+            "Where are the authors based?",
+            "What is coordination mechanism according to the grid-edge coordination taxonomy presented in the paper 'coordination_of_grid_sources' is studied?",
+            "What is the type of study according to the paper 'Systematic_eval_TE_full_paper?",
+            "What is the purpose of study according to the paper 'Systematic_eval_TE_full_paper?"
+        ],
+        "question_type": [
+            "initial",
+            "followup",
+            "followup",
+            "followup",
+            "followup",
+            "initial",
+            "followup",
+            "followup",
+            "followup",
+            "followup"
+        ],
+        "ground_truth": [
+            "Ye, Y., Tang, Y., Wang, H., Zhang, X.-P., Strbac, G.",
+            "China and UK",
+            "bilateral competition",
+            "random experiment",
+            "conceptual proposition and comparison",
+            "Teixeira, D., Gomes, L., Vale, Z.",
+            "Portugal",
+            "mediated competition",
+            "quasi-experiment",
+            "comparison"
+        ]
+    },
+    "KNMI_werkinstructies_selectie": {
+        "question": [
+            "Moet in het weerbulletin van 15/21 de maximumtemperatuur worden ingevuld?",
+            "Zo niet, wat dan wel?",
+            "Vanaf welke windsnelheid kan de thermiek verwaaid zijn?",
+            "In de verwachtingen staat een zicht van 3-5 km genoemd; actueel worden op meerdere plaatsen zichtwaarden van 2000 m waargenomen. Moet ik een AIRMET uitgeven?",
+            "In de verwachtingen staat een zicht van 3-5 km genoemd; actueel worden op meerdere plaatsen zichtwaarden van 500 m waargenomen. Moet ik een AIRMET uitgeven?"
+        ],
+        "question_type": [
+            "initial",
+            "followup",
+            "initial",
+            "initial",
+            "initial"
+        ],
+        "ground_truth": [
+            "De maximumtemperatuur moet in het 15/21 weerbulletin worden weggelaten.", 
+            "In het weerbulletin van 15/21 wordt bij de maximumtemperatuur een streepje (‘-‘) ingevuld.",
+            "Vanaf 15 kn kan de thermiek verwaaid zijn.",
+            "Nee, dat hoeft niet. Wanneer een zicht van 3-5 km wordt genoemd, hoeft pas een AIRMET worden uitgegeven wanneer het zicht onder 1500 m komt.",
+            "Ja, dat moet. Wanneer een zicht van 3-5 km wordt genoemd, moet een AIRMET worden uitgegeven wanneer het zicht onder 1500 m komt."
+        ]
+    },
+    "FLEUR": {
+        "question": [
+            "Why did Peru's fifth health minister resign?",
+            "How many malaria cases were confirmed to have been acquired in one Florida county?",
+            "Who is Noud Hermans?",
+            "In which states did malaria return?"
+        ],
+        "question_type": [
+            "initial",
+            "initial",
+            "initial",
+            "initial"
+        ],
+        "ground_truth": [
+            "Cases of dengue fever have increased.",
+            "Six.",
+            "PhD candidate at KNCV Tuberculosefonds.",
+            "Texas and Florida."
         ]
     }
 }
