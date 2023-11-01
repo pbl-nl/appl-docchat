@@ -42,7 +42,7 @@ class Querier:
             llm = ChatOpenAI(
                 client=None,
                 model=llm_model_type,
-                temperature=0,
+                temperature=0, 
             )
 
         if self.embeddings_provider == "openai":
