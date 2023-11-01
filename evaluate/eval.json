@@ -76,6 +76,23 @@
             "de auteurs geven aan dat dit vanwege onzekerheid bevindingen en complexiteit rond woonvoorkeuren en verhuisproces niet eenvoudig mogelijk is"
         ]
     },
+    "maggy_cv":{
+        "question": [
+            "What is Margarita Korkhmazyan's Citizenship?",
+            "What is Margarita Korkhmazyan's Master Degree?",
+            "What qualification does Margarita Korkhmazyan's have?"
+        ],
+        "question_type":[
+            "initial",
+            "initial",
+            "initial"
+        ],
+        "ground_truth":[
+            "Armenian",
+            "At the Institute of Chemical Physics in Moscow",
+            "UNEP training on International Environmental Law and Diplomacy"
+        ]
+    },
     "verzamelbrief-luchtvaart": {
         "question": [
             "Bestaat er een verbod op korte vluchten tussen Nederland en België?",
