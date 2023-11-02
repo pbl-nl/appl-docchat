@@ -1,3 +1,5 @@
+import re
+
 from flask import flash, url_for, redirect
 from flask_wtf import FlaskForm
 from wtforms import HiddenField, StringField, BooleanField, SubmitField
@@ -23,15 +25,15 @@ class UserForm(FlaskForm):
     docsets = StringField('Document sets')
     email = StringField('E-mail', default='', render_kw={'disabled': 'disabled'}, validators=[Length(min=0, max=64)])
     department = StringField('Department', render_kw={'disabled': 'disabled'}, default='', validators=[Length(min=0, max=64)])
-    name = StringField('Name', default='', validators=[Length(min=0, max=64)])
+    name = StringField('Name', default='', validators=[Length(min=3, max=64)])
     user_auth = StringField('Auths')
     submit = SubmitField('Opslaan')
 
     # Custom validation    ( See: https://wtforms.readthedocs.io/en/stable/validators/ )
 
     def validate_username(form, field):
-        if form.username.data.strip() == '':
-            raise ValidationError('Invalid username')
+        if not re.search(r'^[a-zA-Z0-9-_]+$', field.data):
+            raise ValidationError('Invalid name; Only letters, digits, - _ characters allowed.')
         else:
             same_username = User.query.filter(User.username == field.data.strip(), User.id != form.user_id_for_validation).all()
             if len(same_username) >= 1:
@@ -43,24 +45,25 @@ class UserForm(FlaskForm):
 
         # Show the form
         usergroups = UserGroup.query.all()
+        if id > 0:
+            # Get all authorisations (= groups where user is a member of) for this user
+            userauths = UserAuth.query.filter(UserAuth.user_id == id).all()
+
+            for usergroup in usergroups:
+                setattr(usergroup, 'checked', '')
+                for usertauth in userauths:
+                    # if the user is member of this user group: checked
+                    if usertauth.usergroup_id == usergroup.id:
+                        setattr(usergroup, 'checked', ' checked="checked"')
+        else:
+            # New users are not member of any group
+            for usergroup in usergroups:
+                setattr(usergroup, 'checked', '')
         if method == 'GET':
             if id > 0:
                 # Get record from database and set the form values (if id == 0 the defaults are used)
                 obj = User.query.get(id)
                 obj.fields_to_form(self)
-                # Get all authorisations (= groups where user is a member of) for this user
-                userauths = UserAuth.query.filter(UserAuth.user_id == id).all()
-
-                for usergroup in usergroups:
-                    setattr(usergroup, 'checked', '')
-                    for usertauth in userauths:
-                        # if the user is member of this user group: checked
-                        if usertauth.usergroup_id == usergroup.id:
-                            setattr(usergroup, 'checked', ' checked="checked"')
-            else:
-                # New users are not member of any group
-                for usergroup in usergroups:
-                    setattr(usergroup, 'checked', '')
 
             # Show the form
             return render_chat_template('user.html', form=self, usergroups = usergroups)
@@ -115,7 +118,7 @@ class UserForm(FlaskForm):
                 return redirect(url_for('users'))
             
             # Validation failed: Show the form with the errors
-            return render_chat_template('user.html', form=self)
+            return render_chat_template('user.html', form=self, usergroups = usergroups)
 
         # Delete the user
         if method == 'DELETE':

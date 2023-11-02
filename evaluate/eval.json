@@ -124,45 +124,73 @@
             "by drying in an oven at 105 C, i.e. beyond the boiling point of water"
         ]
     },
-    "deltares_test": {
+    "deltares": {
         "question": [
-            "Where was the study undertaken?",
-            "What is the title of the paper?",
-            "What were the in situ and ex situ measurement techniques"
+            "What is the title of the document?",
+            "What year was the document published?",
+            "Was the airborne survey undertaken using an aeroplane?",
+            "What inversion method was used in the study?",
+            "Were the inversions assessed using ground-truth data, if so - which ones?",
+            "What are the vertical and horizontal cell-sizes of the model?",
+            "What part of Europe was the study undertaken?",
+            "What province?",
+            "Who are the authors of the document?",
+            "What were the formation factors that were used in the study?",
+            "And how were these formation factors obtained?",
+            "What instruments were used to do the ground truthing?",
+            "What was the flight speed of the helicopter?",
+            "What was found to be the largest contributor of uncertainty for the 3D salinity model?",
+            "Did the study produce the desired result?"
         ],
         "question_type": [
+            "initial",
+            "initial",
+            "initial",
+            "initial",
+            "initial",
+            "initial",
+            "initial",
+            "followup",
+            "initial",
+            "initial",
+            "followup",
+            "initial",
             "initial",
             "initial",
             "initial"
         ],
         "ground_truth": [
-            "Westerschelde, the Netherlands", 
-            "Techniques for monitoring of benthic primary production",
-            "PAM fluorescence, 14C-incubations, O2-electrode and -optode measurements, CO2 chambers"
+            "FRESHEM Zeeland Technical report",
+            "The document was published in 2018",
+            "No, the survey was undertaken using a helicopter",
+            "A smooth, multilayer, deterministic style inversion was used. More specifically a laterally constrained inversion (LCI).",
+            "Yes. The inversions were assessed using ERT and slimflex data.",
+            "The model cell-sizes are 50 by 50 metres horizontal and half metre vertical.",
+            "The study was undertaken in the Netherlands in Western Europe.",
+            "The study was in the Province of Zeeland.",
+            "The authors are: Esther van Baaren, Perry de Louw, Otto de Keizer, Joost Delsman, Marios Karaoulis, Pieter Pauw, Tommer Vermaas, Huite Bootsma, Gualbert Oude Essink, Willem Dabekausen, Jan Gunnink, Wim Dubelaar, Armin Menkovic, Bernhard Siemon, Annika Steuer, Uwe Meyer",
+            "The formation factors were (for each lithology): Peat: 2.66, Clay: 4.1, Sandy Clay: 4.53, Fine sand: 5.98, medium coarse sand: 6.6, Coarse sand: 5.0, Gravel: 6.5, Shells: 5",
+            "The formation factors were obtained by collecting ground samples and sending to a lab.",
+            "TEC probes (Temperature - Electrical Conductivity), Cone penetration tests (CPT), Open hole geo-electrical borehole logging, Vertical electrical sounding (VES), Continuous Vertical Electrical Sounding (CVES), EM-Slimflex, Chloride analyses of groundwater.",
+            "Helicopter flew at around 150km/h",
+            "The inversions were the largest contributor to uncertainty.",
+            "Yes, the study was found to be a success."
         ]
     },
     "transactive_energy_survey": {
         "question": [
-            "Who are the authors of the paper 'A_Scalable_Privacy-Preserving_Multi-Agent_Deep_Reinforcement_Learning_Approach_for_Large-Scale_Peer-to-Peer_Transactive_Energy_Trading'?",
+            "Who are the authors of the paper 'A Scalable Privacy-Preserving Multi-Agent Deep Reinforcement Learning Approach for Large-Scale Peer-to-Peer Transactive Energy Trading'?",
             "Where are the authors based?",
-            "What is coordination mechanism according to the grid-edge coordination taxonomy presented in the paper 'coordination_of_grid_sources' is studied?",
-            "What is the type of study according to the paper 'Systematic_eval_TE_full_paper?",
-            "What is the purpose of study according to the paper 'Systematic_eval_TE_full_paper?",
-            "Who are the authors of the paper 'single_multi_unit_auction'?",
+            "What is coordination mechanism according to the grid-edge coordination taxonomy presented in the paper 'Coordination of resources at the edge of the electricity grid: Systematic review and taxonomy' is studied?",
+            "Who are the authors of the paper 'Single-unit and multi-unit auction framework for peer-to-peer transactions'?",
             "Where are the authors based?",
-            "What is coordination mechanism according to the grid-edge coordination taxonomy presented in the paper 'coordination_of_grid_sources' is studied?",
-            "What is the type of study according to the paper 'Systematic_eval_TE_full_paper?",
-            "What is the purpose of study according to the paper 'Systematic_eval_TE_full_paper?"
+            "What is coordination mechanism according to the grid-edge coordination taxonomy presented in the paper 'Coordination of resources at the edge of the electricity grid: Systematic review and taxonomy' is studied?"
         ],
         "question_type": [
             "initial",
             "followup",
             "followup",
-            "followup",
-            "followup",
             "initial",
-            "followup",
-            "followup",
             "followup",
             "followup"
         ],
@@ -170,13 +198,9 @@
             "Ye, Y., Tang, Y., Wang, H., Zhang, X.-P., Strbac, G.",
             "China and UK",
             "bilateral competition",
-            "random experiment",
-            "conceptual proposition and comparison",
             "Teixeira, D., Gomes, L., Vale, Z.",
             "Portugal",
-            "mediated competition",
-            "quasi-experiment",
-            "comparison"
+            "mediated competition"
         ]
     },
     "KNMI_werkinstructies_selectie": {
@@ -185,41 +209,100 @@
             "Zo niet, wat dan wel?",
             "Vanaf welke windsnelheid kan de thermiek verwaaid zijn?",
             "In de verwachtingen staat een zicht van 3-5 km genoemd; actueel worden op meerdere plaatsen zichtwaarden van 2000 m waargenomen. Moet ik een AIRMET uitgeven?",
-            "In de verwachtingen staat een zicht van 3-5 km genoemd; actueel worden op meerdere plaatsen zichtwaarden van 500 m waargenomen. Moet ik een AIRMET uitgeven?"
+            "In de verwachtingen staat een zicht van 3-5 km genoemd; actueel worden op meerdere plaatsen zichtwaarden van 500 m waargenomen. Moet ik een AIRMET uitgeven?",
+			"Van welk weermodel is de wind in de ballonvaartverwachting afkomstig?",
+			"Wanneer moet de wind in de ballonvaartverwachting tekstueel worden aangepast?",
+			"In welke tijdsresolutie moet het einde van de thermiek worden aangegeven in de ballonvaartverwachting?",
+			"Welke handelingen moet er worden utgevoerd na het uitgeven van een AIRMET?",
+			"Wat zijn de telefoonnummers van de regionale vliegbelden?",
+			"Als de TAF van Schiphol wordt geamendeerd, moet de Schipholkansverwachting dan ook worden geamendeerd?",
+			"Voor welke locatie geldt de zichtverwachting in de Schipholkansverwachting?",
+			"Tot welke hoogte moeten de hoogtes waarop ijsaanzetting voorkomt worden gegeven in vt?",
+			"In welke eenheid moet de hoogte hieroven worden aangegeven?"
         ],
         "question_type": [
             "initial",
             "followup",
             "initial",
             "initial",
-            "initial"
+            "initial",
+			"initial",
+			"initial",
+			"initial",
+			"initial",
+			"initial",
+			"initial",
+			"initial",
+			"initial",
+			"followup"
         ],
         "ground_truth": [
             "De maximumtemperatuur moet in het 15/21 weerbulletin worden weggelaten.", 
             "In het weerbulletin van 15/21 wordt bij de maximumtemperatuur een streepje (‘-‘) ingevuld.",
             "Vanaf 15 kn kan de thermiek verwaaid zijn.",
             "Nee, dat hoeft niet. Wanneer een zicht van 3-5 km wordt genoemd, hoeft pas een AIRMET worden uitgegeven wanneer het zicht onder 1500 m komt.",
-            "Ja, dat moet. Wanneer een zicht van 3-5 km wordt genoemd, moet een AIRMET worden uitgegeven wanneer het zicht onder 1500 m komt."
+            "Ja, dat moet. Wanneer een zicht van 3-5 km wordt genoemd, moet een AIRMET worden uitgegeven wanneer het zicht onder 1500 m komt.",
+			"Deze is afkomstig van het ECMWF-model.",
+			"Wanneer de windsnelheid in een gebied 3 knopen of meer, en de windrichting 40 graden of meer afwijkt van de modeluitvoer.",
+			"Dit moet worden aangegeven met een resolutie van 15 minuten.",
+			"1. Op de hoogte stellen van de FIC van de LVNL. 2. Op de hoogte stellen van de havenmeesters van de relevante groene velden. 3. Op de hoogte stellen van de LVNL van de regionale velden (EHRD, EHGG, EHBK en EHLE) en eventueel de MAS. 4. Amenderen Weerbulletin en GLLFC.",
+			"EHRD: 010-4411112; EHGG: 050-1119248; EHBK: 043-3511181; EHLE: 0320-211191",
+			"De Schipholkansverwachting moet worden geamendeerd als ook de corresponderende TAF geamendeerd wordt, tenzij de elementen op basis waarvan de TAF geamendeerd wordt niet in de Schipholkansverwachting voorkomen.",
+			"De windverwachting in de Schipholkansverwachting is geldig voor baan 27.",
+			"Tot 5000 vt.",
+			"Boven 5000 vt moet dit worden gegeven in FL."
         ]
     },
-    "FLEUR": {
+    "news_articles": {
         "question": [
             "Why did Peru's fifth health minister resign?",
+            "Did the number of dengue cases also increase in Bangladesh?",
+            "How many people died from an anthrax outbreak in Indonesia?",
+            "How did more than 90 people get infected with anthrax?",
+            "In which states did malaria return?",
             "How many malaria cases were confirmed to have been acquired in one Florida county?",
+            "How many USD is the global malaria diagnostics market size projected to reach by 2030?",
             "Who is Noud Hermans?",
-            "In which states did malaria return?"
+            "What is the slogan of the KNCV project?",
+            "Which animals are most affected by the avian flu?",
+            "What is a potentially 'looming pandemic', driven by according to animal welfare organisations?",
+            "How many countries across different regions in Africa are set to receive 18 million doses of the first-ever malaria vaccine over the next two years?",
+            "Which country was not selected to receive the vaccin in the next two years?",
+            "Can you give an example of an analogue technique that was prominent at the start of the COVID-19 pandemic?",
+            "Why is the first clinical trial of a three-month tuberculosis (TB) treatment regimen is closing enrollment?"
         ],
         "question_type": [
             "initial",
+            "followup",
             "initial",
+            "followup",
+            "initial",
+            "followup",
+            "followup",
+            "followup",
+            "initial",
+            "initial",
+            "initial",
+            "followup",
             "initial",
             "initial"
         ],
         "ground_truth": [
             "Cases of dengue fever have increased.",
-            "Six.",
+            "Yes, the number of dengue cases has been increasing in Bangladesh.",
+            "Three people have died of an anthrax outbreak in Indonesia.",
+            "More than 90 people got infected after consuming contaminated meat.",
+            "Texas and Florida.",
+            "Six confirmed malaria cases.",
+            "The global malaria diagnostics market size is projected to reach USD 1.17 billion by 2030.",
             "PhD candidate at KNCV Tuberculosefonds.",
-            "Texas and Florida."
+            "Nooit meer een pandemie",
+            "Poultry (chickens, ducks and turkeys) and other birds. Ferrets and foxes can be affected as well.",
+            "Potentially 'looming pandemic', driven by the expansion of intensive farming according to the animal welfare organisation at World Zoonosis Day.",
+            "Twelve countries.",
+            "Rwanda",
+            "At the start of the coronavirus disease 2019 (COVID-19) pandemic, analog techniques like nasopharyngeal swab specimens for polymerase chain reaction (PCR) testing were prominent.",
+            "The first clinical trial of a three-month tuberculosis (TB) treatment regimen is closing enrollment because of a high rate of unfavorable outcomes with the investigational course of treatment."
         ]
     }
 }

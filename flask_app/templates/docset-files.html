@@ -3,7 +3,7 @@
     <script type="text/javascript" src="{{ url_for('static', filename='js/page-docset-files.js' )}}"></script>
 {% endblock %}
 {% block content %}
-    <div class="form-title"><h3>Document set {{ form.name.data }}</h3></div>
+    <div class="form-title"><h3>Document set:&nbsp;&nbsp;&nbsp;{{ form.name.data }}</h3></div>
     <div class="margin-form">
         {{ form.hidden_tag() }}
         <table>
