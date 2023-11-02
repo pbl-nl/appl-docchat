@@ -124,21 +124,57 @@
             "by drying in an oven at 105 C, i.e. beyond the boiling point of water"
         ]
     },
-    "deltares_test": {
+    "deltares": {
         "question": [
-            "Where was the study undertaken?",
-            "What is the title of the paper?",
-            "What were the in situ and ex situ measurement techniques"
+            "What is the title of the document?",
+            "What year was the document published?",
+            "Was the airborne survey undertaken using an aeroplane?",
+            "What inversion method was used in the study?",
+            "Were the inversions assessed using ground-truth data, if so - which ones?",
+            "What are the vertical and horizontal cell-sizes of the model?",
+            "What part of Europe was the study undertaken?",
+            "What province?",
+            "Who are the authors of the document?",
+            "What were the formation factors that were used in the study?",
+            "And how were these formation factors obtained?",
+            "What instruments were used to do the ground truthing?",
+            "What was the flight speed of the helicopter?",
+            "What was found to be the largest contributor of uncertainty for the 3D salinity model?",
+            "Did the study produce the desired result?"
         ],
         "question_type": [
+            "initial",
+            "initial",
+            "initial",
+            "initial",
+            "initial",
+            "initial",
+            "initial",
+            "followup",
+            "initial",
+            "initial",
+            "followup",
+            "initial",
             "initial",
             "initial",
             "initial"
         ],
         "ground_truth": [
-            "Westerschelde, the Netherlands", 
-            "Techniques for monitoring of benthic primary production",
-            "PAM fluorescence, 14C-incubations, O2-electrode and -optode measurements, CO2 chambers"
+            "FRESHEM Zeeland Technical report",
+            "The document was published in 2018",
+            "No, the survey was undertaken using a helicopter",
+            "A smooth, multilayer, deterministic style inversion was used. More specifically a laterally constrained inversion (LCI).",
+            "Yes. The inversions were assessed using ERT and slimflex data.",
+            "The model cell-sizes are 50 by 50 metres horizontal and half metre vertical.",
+            "The study was undertaken in the Netherlands in Western Europe.",
+            "The study was in the Province of Zeeland.",
+            "The authors are: Esther van Baaren, Perry de Louw, Otto de Keizer, Joost Delsman, Marios Karaoulis, Pieter Pauw, Tommer Vermaas, Huite Bootsma, Gualbert Oude Essink, Willem Dabekausen, Jan Gunnink, Wim Dubelaar, Armin Menkovic, Bernhard Siemon, Annika Steuer, Uwe Meyer",
+            "The formation factors were (for each lithology): Peat: 2.66, Clay: 4.1, Sandy Clay: 4.53, Fine sand: 5.98, medium coarse sand: 6.6, Coarse sand: 5.0, Gravel: 6.5, Shells: 5",
+            "The formation factors were obtained by collecting ground samples and sending to a lab.",
+            "TEC probes (Temperature - Electrical Conductivity), Cone penetration tests (CPT), Open hole geo-electrical borehole logging, Vertical electrical sounding (VES), Continuous Vertical Electrical Sounding (CVES), EM-Slimflex, Chloride analyses of groundwater.",
+            "Helicopter flew at around 150km/h",
+            "The inversions were the largest contributor to uncertainty.",
+            "Yes, the study was found to be a success."
         ]
     },
     "transactive_energy_survey": {
