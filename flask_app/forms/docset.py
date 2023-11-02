@@ -65,12 +65,18 @@ class DocSetForm(FlaskForm):
             obj = DocSet.query.get(id)
             for file in files_:
                 file_full_name = path.join(obj.get_doc_path(), file.filename)
+                if path.exists(file_full_name):
+                    dt = datetime.fromtimestamp(path.getctime(file_full_name)).strftime('%d-%m-%Y %H:%M:%S')
+                    sz = size_to_human(path.getsize(file_full_name))
+                else:
+                    dt = '<deleted>'
+                    sz = '<deleted>'
                 files.append({
                     'id': file.id, 
                     'no': file.no, 
                     'name': file.filename, 
-                    'dt': datetime.fromtimestamp(path.getctime(file_full_name)).strftime('%d-%m-%Y %H:%M:%S'),
-                    'size': size_to_human(path.getsize(file_full_name)),
+                    'dt': dt,
+                    'size': sz,
                 })
 
         # Show the form
