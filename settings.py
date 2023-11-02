@@ -33,9 +33,10 @@ LLM_TYPE = "chatopenai"
 # "GoogleFlan": ? tokens
 # "llama2": ? tokens
 LLM_MODEL_TYPE = "gpt35"
-# EMBEDDINGS_PROVIDER must be one of: "openai", 
+# EMBEDDINGS_PROVIDER must be one of: "openai", "huggingface"
 EMBEDDINGS_PROVIDER = "openai"
-# EMBEDDINGS_MODEL must be one of: "text-embedding-ada-002", 
+# EMBEDDINGS_MODEL must be one of: "text-embedding-ada-002", "all-mpnet-base-v2"
+# If EMBEDDINGS_MODEL is "all-mpnet-base-v2" then EMBEDDINGS_PROVIDER must be "huggingface"
 EMBEDDINGS_MODEL = "text-embedding-ada-002"
 # CHAIN_NAME must be one of: "conversationalretrievalchain", 
 CHAIN_NAME = "conversationalretrievalchain"
