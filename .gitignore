@@ -2,6 +2,7 @@
 /dev
 /vector_stores
 /flask_app/instance
+/docs/docset_*
 
 # project specific files
 /flask_app/config.py

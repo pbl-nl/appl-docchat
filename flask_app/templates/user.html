@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 {% block content %}
-    <div class="form-title"><h3>User {{ form.name.data }}</h3></div>
+    <div class="form-title"><h3>{% if form.name.data %}User:&nbsp;&nbsp;&nbsp;{{ form.name.data }}{% else %}New user{% endif %}</h3></div>
     <form method="POST" class="margin-form">
         <div id="buttonbar-1"></div>
         {{ form.hidden_tag() }}
