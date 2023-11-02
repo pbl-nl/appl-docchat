@@ -6,6 +6,10 @@ from langchain.schema import AIMessage, HumanMessage
 from langchain.vectorstores.chroma import Chroma
 from loguru import logger
 from langchain.llms import HuggingFaceHub
+from langchain.llms import Ollama
+from langchain.callbacks.manager import CallbackManager
+from langchain.callbacks.streaming_stdout import StreamingStdOutCallbackHandler
+
 # local imports
 import settings
 
@@ -55,6 +59,15 @@ class Querier:
                                  model_kwargs={"temperature": 0.1,
                                                "max_length": max_length}
                                 )
+        
+        if self.llm_type == "local_llm":
+            logger.info("Use Local LLM")
+            logger.info("Retrieving " + self.llm_model_type)
+            llm = Ollama(
+                model=self.llm_model_type, 
+                callback_manager=CallbackManager([StreamingStdOutCallbackHandler()])
+            )
+            logger.info("Retrieved " + self.llm_model_type)
 
         if self.embeddings_provider == "openai":
             embeddings = OpenAIEmbeddings(model=self.embeddings_model, client=None)

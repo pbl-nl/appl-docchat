@@ -3,6 +3,7 @@ from typing import List
 from langchain.embeddings import OpenAIEmbeddings
 from langchain.vectorstores import Chroma
 import langchain.docstore.document as docstore
+from langchain.embeddings import OllamaEmbeddings
 from loguru import logger
 # local imports
 import settings
@@ -47,6 +48,10 @@ class Ingester:
         if self.embeddings_provider == "openai":
             embeddings = OpenAIEmbeddings(model=self.embeddings_model, client=None)
             logger.info("Loaded openai embeddings")
+
+        if self.embeddings_provider == "local_embeddings":
+            embeddings = OllamaEmbeddings(model = self.embeddings_model)
+            logger.info("Loaded local embeddings: " + self.embeddings_model)
 
         # create vector store with chosen settings of vector store type (e.g. chromadb)
         if self.vecdb_type == "chromadb":
