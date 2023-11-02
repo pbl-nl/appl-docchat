@@ -5,6 +5,7 @@ from langchain.embeddings.openai import OpenAIEmbeddings
 from langchain.schema import AIMessage, HumanMessage
 from langchain.vectorstores.chroma import Chroma
 from loguru import logger
+from langchain.llms import HuggingFaceHub
 # local imports
 import settings
 
@@ -33,9 +34,8 @@ class Querier:
         self.vectordb_folder = vectordb_folder
 
         if self.llm_type == "chatopenai":
-            if self.llm_model_type == "gpt35":
-                llm_model_type = "gpt-3.5-turbo"
-            elif self.llm_model_type == "gpt35_16":
+            llm_model_type = "gpt-3.5-turbo"
+            if self.llm_model_type == "gpt35_16":
                 llm_model_type = "gpt-3.5-turbo-16k"
             elif self.llm_model_type == "gpt4":
                 llm_model_type = "gpt-4"
@@ -44,6 +44,17 @@ class Querier:
                 model=llm_model_type,
                 temperature=0,
             )
+        elif self.llm_type == "huggingface":
+            # default value is llama-2, with maximum output length 512
+            llm_model_type = "meta-llama/Llama-2-7b-chat-hf"
+            max_length = 512
+            if self.llm_model_type == 'GoogleFlan':
+                llm_model_type = 'google/flan-t5-base'
+                max_length = 512
+            llm = HuggingFaceHub(repo_id=llm_model_type,
+                                 model_kwargs={"temperature": 0.1,
+                                               "max_length": max_length}
+                                )
 
         if self.embeddings_provider == "openai":
             embeddings = OpenAIEmbeddings(model=self.embeddings_model, client=None)
@@ -57,7 +68,6 @@ class Querier:
             )
             retriever = vector_store.as_retriever(search_type=self.search_type, search_kwargs={"k": self.chunk_k})
             logger.info(f"Loaded chromadb from folder {self.vectordb_folder}")
-
 
         if self.chain_name == "conversationalretrievalchain":
             self.chain = ConversationalRetrievalChain.from_llm(
