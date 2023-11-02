@@ -14,8 +14,7 @@ class Querier:
     # When parameters are read from settings.py, object is initiated without parameter settings
     # When parameters are read from GUI, object is initiated with parameter settings listed
     def __init__(self, llm_type=None, llm_model_type=None, embeddings_provider=None, embeddings_model=None,
-                 vecdb_type=None, chain_name=None, chain_type=None, chain_verbosity=None, search_type=None,
-                 chunk_k=None):
+                 vecdb_type=None, chain_name=None, chain_type=None, chain_verbosity=None, search_type=None, chunk_k=None):
         load_dotenv()
         self.llm_type = settings.LLM_TYPE if llm_type is None else llm_type
         self.llm_model_type = settings.LLM_MODEL_TYPE if llm_model_type is None else llm_model_type
@@ -97,6 +96,7 @@ class Querier:
             )
 
         logger.info("Executed Querier.make_chain(self, input_folder, vectordb_folder)")
+
 
     def ask_question(self, question: str):
         logger.info(f"current chat history: {self.chat_history}")
