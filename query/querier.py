@@ -9,6 +9,7 @@ from langchain.llms import HuggingFaceHub
 from langchain.llms import Ollama
 from langchain.callbacks.manager import CallbackManager
 from langchain.callbacks.streaming_stdout import StreamingStdOutCallbackHandler
+from langchain.embeddings import OllamaEmbeddings
 
 # local imports
 import settings
@@ -72,6 +73,10 @@ class Querier:
         if self.embeddings_provider == "openai":
             embeddings = OpenAIEmbeddings(model=self.embeddings_model, client=None)
             logger.info("Loaded openai embeddings")
+
+        if self.embeddings_provider == "local_embeddings":
+            embeddings = OllamaEmbeddings(model=self.embeddings_model)
+            logger.info("Loaded local embeddings: " + self.embeddings_model)
 
         if self.vecdb_type == "chromadb":
             vector_store = Chroma(
