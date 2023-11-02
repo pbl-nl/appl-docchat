@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 {% block content %}
-    <div class="form-title"><h3>{% if form.name.data %}Usergroup {{ form.name.data }}{% else %}New usergroup{% endif %}</h3></div>
+    <div class="form-title"><h3>{% if form.name.data %}Usergroup:&nbsp;&nbsp;&nbsp;{{ form.name.data }}{% else %}New usergroup{% endif %}</h3></div>
     <form method="POST" class="margin-form">
         {{ form.hidden_tag() }}
         <table>
