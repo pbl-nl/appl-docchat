@@ -9,6 +9,7 @@ function page_ready() {
         $('#name,.btn-submit').removeAttr('disabled');
         var dz = $('#dropzone').dropzone({ 
             url: '/docset-upload-file/' + $('#id').val(),
+            maxFiles: 1,
             withCredentials: true,
             maxFilesize: 16384,
             chunking: true,
