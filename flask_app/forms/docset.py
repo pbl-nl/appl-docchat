@@ -14,6 +14,7 @@ from flask_app.helpers import render_chat_template, size_to_human, upload_file
 
 from langchain.vectorstores import Chroma
 from langchain.embeddings.openai import OpenAIEmbeddings
+from langchain.embeddings.huggingface import HuggingFaceEmbeddings
 
 '''
 This form contains all for inserting, updating and deleting a docset
@@ -26,8 +27,8 @@ class DocSetForm(FlaskForm):
     name = StringField('Name', default='', validators=[Length(min=3, max=64)], render_kw={'size': 40})
     llm_type = SelectField('LLM type', default='chatopenai', choices=['chatopenai'])
     llm_modeltype = SelectField('LLM model type', default='gpt35', choices=['gpt35', 'gpt35_16', 'gpt4'])
-    embeddings_provider = SelectField('Embeddings provider', default='openai', choices=['openai'])
-    embeddings_model = SelectField('Embeddings model', default='text-embedding-ada-002', choices=['text-embedding-ada-002'])
+    embeddings_provider = SelectField('Embeddings provider', default='openai', choices=['openai', 'hugging_face'])
+    embeddings_model = SelectField('Embeddings model', default='text-embedding-ada-002', choices=['text-embedding-ada-002', 'all-mpnet-base-v2'])
     chain = SelectField('Chain', default='conversationalretrievalchain', choices=['conversationalretrievalchain'])
     chain_type = SelectField('Chain type', default='stuff', choices=['stuff'])
     chain_verbosity = BooleanField('Chain verbosity', default=False, render_kw={'class': 'yes-checkbox'})
