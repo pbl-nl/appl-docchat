@@ -360,7 +360,7 @@
             "Imagine you are a banana farmer. At what depth in the soil would you like the soil survey to concentrate?",
             "Soil surveys made a long time ago may have become outdated and no longer be valid. Why?",
             "Digital soil mapping makes use of maps of environmental covariates representing the soil-forming factors. For instance, climate may be represented by mean annual temperature and rainfall derived from remote sensing images. Name examples of environmental covariates that represent the soil-forming factors parent material, topography and organisms.",
-            "Name at least five concrete examples of covariate maps that represent the soil-forming factor “terrain”.",
+            "Name at least five concrete examples of covariate maps that represent the soil-forming factor ‘terrain’.",
             "Define effective rooting depth"
         ],
         "question_type": [
