@@ -70,10 +70,9 @@ class IngestUtils:
         chunk_no = 0
         for page_num, page in text:
             logger.info(f"Splitting page {page_num}")
-            text_splitter = splitter.RecursiveCharacterTextSplitter(
+            text_splitter = splitter.NLTKTextSplitter(
                 chunk_size=self.chunk_size,
-                separators=["\n\n", "\n", ".", "!", "?", ",", " ", ""],
-                chunk_overlap=self.chunk_overlap,
+                chunk_overlap=self.chunk_overlap
             )
             chunks = text_splitter.split_text(page)
             for i, chunk in enumerate(chunks):
