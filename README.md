@@ -106,6 +106,8 @@ All user stories have an association with one of the steps (1 - 12) in the pipel
 25. FUNC, BUILD, Retrieval (11) (SoilWise): As a developer I want to add a Tool to access the soilgrids API, allowing the LLM to access more detailed soil information for locations, in order to generate an improved response.
 26. EVAL, RESEARCH, Retrieval (11): As a developer I want to evaluate the impact and costs of using Agents and Tools with various LLMs (open and closed models).
 
+
+
 User stories to work on after the pressure cooker session:
 User Interface:
 As a user I want to have the option of using the application for documents that must be kept private, by using a checkbox in the user interface. This will make the application use an implemented on-premise embedding model and an implemented on-premise LLM.
