@@ -105,7 +105,8 @@ All user stories have an association with one of the steps (1 - 12) in the pipel
 24. FUNC, BUILD, Retrieval (11) (SoilWise): As a developer I want to add a Tool for geocoding, allowing the LLM to work with spatial coordinates and precise locations (other than what it might have seen during training).
 25. FUNC, BUILD, Retrieval (11) (SoilWise): As a developer I want to add a Tool to access the soilgrids API, allowing the LLM to access more detailed soil information for locations, in order to generate an improved response.
 26. EVAL, RESEARCH, Retrieval (11): As a developer I want to evaluate the impact and costs of using Agents and Tools with various LLMs (open and closed models).
-
+27. FUNC, BUILD : As a developer I want to be able to chat with multiple documents at the same time and and also be able to cross communicate between different documents.
+28. FUNC, BUILD : As a develope I should be able to fine tune the LLM model to generate the better and improved response.
 
 
 User stories to work on after the pressure cooker session:
