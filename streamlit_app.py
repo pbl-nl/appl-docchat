@@ -74,12 +74,14 @@ def handle_query(querier, prompt: str):
     # Generate a response
     response = querier.ask_question(prompt)
     # Display the response in chat message container
+    answer = "answer" if "answer" in response else "output"
     with st.chat_message("assistant"):
-        st.markdown(response["answer"])
+        st.markdown(response[answer])
     # Add the response to chat history
-    st.session_state['messages'].append({"role": "assistant", "content": response["answer"]})
+    st.session_state['messages'].append({"role": "assistant", "content": response[answer]})
+    source_documents = "source_documents" if "source_documents" in response else "intermediate_steps"
     with st.expander("Show sources used for answer"):
-        st.write(response["source_documents"])
+        st.write(response[source_documents])
     logger.info("Executed handle_query(querier, prompt)")
 
 
