@@ -32,6 +32,7 @@ LLM_TYPE = "chatopenai"
 # "gpt4": 8192 tokens
 # "GoogleFlan": ? tokens
 # "llama2": ? tokens
+# LLM_MODEL_TYPE must be one of "llama2", "GoogleFlan"
 LLM_MODEL_TYPE = "gpt35"
 # EMBEDDINGS_PROVIDER must be one of: "openai", "huggingface"
 EMBEDDINGS_PROVIDER = "openai"
