@@ -96,13 +96,15 @@ All user stories have an association with one of the steps (1 - 12) in the pipel
 16. FUNC, BUILD, Ingestion (4) & Retrieval (7) & Retrieval (11): As a user I want the option of starting a conversation with a summary of the document(s) in the folder. For inspiration, see https://python.langchain.com/docs/use_cases/summarization
 17. FUNC, RESEARCH: Retrieval (6) & Retrieval (10) & Retrieval (11) & Retrieval (12): As a developer I want to know if the currently implemented loguru logger is suitable for logging all questions, retrieved contexts and generated answers to disk per session, with indication of which source folder was used. 
 18. FUNC, BUILD, Retrieval (6) & Retrieval (10) & Retrieval (11) & Retrieval (12): As a developer I want to log all questions, retrieved contexts and generated answers to disk per session, with indication of which source folder was used.
-19. FUNC, RESEARCH, evaluation: As a developer I want to know if we are missing other valuable performance metrics. Research added value of additional metrics like ROUGE and BLEU and what is needed to implement them. For inspiration, see for example https://medium.com/@raphael.mansuy/evaluating-the-performance-of-natural-language-processing-nlp-models-can-be-challenging-ce6f62c07c35
-20. FUNC, BUILD, Retrieval (11): As a user I want the application to use tools to interact with the world (e.g. use service APIs) if it is needed to generate a more reliable response and avoid hallucinations.
-21. FUNC, RESEARCH, Retrieval (11): As a developer I want to learn how to use Agents and Tools functionality and how to add it to the existing code to create more powerful and flexible LLM based applications.
-22. FUNC, BUILD, Retrieval (11): As a developer I want to add Agents and Tools functionality to the code, that can use Agents based on various LLMs, and Tools selectable from a predefined set.
-23. FUNC, BUILD, Retrieval (11) (SoilWise): As a developer I want to add a Tool for geocoding, allowing the LLM to work with spatial coordinates and precise locations (other than what it might have seen during training).
-24. FUNC, BUILD, Retrieval (11) (SoilWise): As a developer I want to add a Tool to access the soilgrids API, allowing the LLM to access more detailed soil information for locations, in order to generate an improved response.
-25. EVAL, RESEARCH, Retrieval (11): As a developer I want to evaluate the impact and costs of using Agents and Tools with various LLMs (open and closed models).
+19. FUNC, RESEARCH, evaluation: As a developer I want to know if we are missing other valuable performance metrics. Research added value of additional metrics like ROUGE and BLEU and what is needed to implement them. For inspiration:, see<br>
+* https://medium.com/@raphael.mansuy/evaluating-the-performance-of-natural-language-processing-nlp-models-can-be-challenging-ce6f62c07c35
+* https://medium.com/towards-data-science/how-to-validate-openai-gpt-model-performance-with-text-summarization-298978fea764
+21. FUNC, BUILD, Retrieval (11): As a user I want the application to use tools to interact with the world (e.g. use service APIs) if it is needed to generate a more reliable response and avoid hallucinations.
+22. FUNC, RESEARCH, Retrieval (11): As a developer I want to learn how to use Agents and Tools functionality and how to add it to the existing code to create more powerful and flexible LLM based applications.
+23. FUNC, BUILD, Retrieval (11): As a developer I want to add Agents and Tools functionality to the code, that can use Agents based on various LLMs, and Tools selectable from a predefined set.
+24. FUNC, BUILD, Retrieval (11) (SoilWise): As a developer I want to add a Tool for geocoding, allowing the LLM to work with spatial coordinates and precise locations (other than what it might have seen during training).
+25. FUNC, BUILD, Retrieval (11) (SoilWise): As a developer I want to add a Tool to access the soilgrids API, allowing the LLM to access more detailed soil information for locations, in order to generate an improved response.
+26. EVAL, RESEARCH, Retrieval (11): As a developer I want to evaluate the impact and costs of using Agents and Tools with various LLMs (open and closed models).
 
 User stories to work on after the pressure cooker session:
 User Interface:
