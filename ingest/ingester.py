@@ -1,6 +1,7 @@
 from dotenv import load_dotenv
 from typing import List
 from langchain.embeddings import OpenAIEmbeddings
+from langchain.embeddings import HuggingFaceEmbeddings
 from langchain.vectorstores import Chroma
 import langchain.docstore.document as docstore
 from loguru import logger
@@ -8,6 +9,7 @@ from loguru import logger
 import settings
 from .pdf_parser import PdfParser
 from .content_iterator import ContentIterator
+from ingest.ingest_utils import IngestUtils
 
 
 class Ingester:
@@ -31,22 +33,31 @@ class Ingester:
         content_iterator = ContentIterator(self.content_folder)
         # create text chunks with chosen settings of chunk size and chunk overlap
         pdf_parser = PdfParser(self.chunk_size, self.chunk_overlap, self.file_no)
+        ingestutils = IngestUtils(self.chunk_size, self.chunk_overlap, self.file_no)
+        # txt_parser = 
 
         chunks: List[docstore.Document] = []
         # for each pdf file that the content_iterator yields
         for document in content_iterator:
             if document.endswith(".pdf"):
-                # convert the pdf text to cleaned text chunks
+                # check document path
                 pdf_parser.set_pdf_file_path(document)
-                document_chunks = pdf_parser.clean_text_to_docs()
-                chunks.extend(document_chunks)
-                logger.info(f"Extracted {len(chunks)} chunks from {document}")
+                raw_pages, metadata = pdf_parser.parse_pdf()
+
             else:
                 logger.info(f"Cannot ingest document {document} because it has extension {document[-4:]}")
-        
+
+            # convert the raw text to cleaned text chunks
+            document_chunks = ingestutils.clean_text_to_docs(raw_pages, metadata)
+            chunks.extend(document_chunks)
+            logger.info(f"Extracted {len(chunks)} chunks from {document}")
+
         if self.embeddings_provider == "openai":
             embeddings = OpenAIEmbeddings(model=self.embeddings_model, client=None)
             logger.info("Loaded openai embeddings")
+        
+        if self.embeddings_provider == "huggingface":
+            embeddings = HuggingFaceEmbeddings(model_name=self.embeddings_model)
 
         # create vector store with chosen settings of vector store type (e.g. chromadb)
         if self.vecdb_type == "chromadb":
