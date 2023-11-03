@@ -61,7 +61,7 @@ class Querier:
             embeddings = OpenAIEmbeddings(model=self.embeddings_model, client=None)
             logger.info("Loaded openai embeddings")
 
-        if self.embeddings_provider == "hugging_face":
+        if self.embeddings_provider == "huggingface":
             embeddings = HuggingFaceEmbeddings(model_name=self.embeddings_model)
 
         if self.vecdb_type == "chromadb":
