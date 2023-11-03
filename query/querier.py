@@ -19,7 +19,8 @@ class Querier:
     # When parameters are read from settings.py, object is initiated without parameter settings
     # When parameters are read from GUI, object is initiated with parameter settings listed
     def __init__(self, llm_type=None, llm_model_type=None, embeddings_provider=None, embeddings_model=None, 
-                 vecdb_type=None, chain_name=None, chain_type=None, chain_verbosity=None, search_type=None, chunk_k=None):
+                 vecdb_type=None, chain_name=None, chain_type=None, chain_verbosity=None, search_type=None, 
+                 chunk_k=None, local_api_url=None):
         load_dotenv()
         self.llm_type = settings.LLM_TYPE if llm_type is None else llm_type
         self.llm_model_type = settings.LLM_MODEL_TYPE if llm_model_type is None else llm_model_type
@@ -31,6 +32,7 @@ class Querier:
         self.chain_verbosity = settings.CHAIN_VERBOSITY if chain_verbosity is None else chain_verbosity
         self.search_type = settings.SEARCH_TYPE if search_type is None else search_type
         self.chunk_k = settings.CHUNK_K if chunk_k is None else chunk_k
+        self.local_api_url = settings.LOCAL_API_URL if local_api_url is None and settings.LOCAL_API_URL is not None else local_api_url
         self.chat_history = []
 
 
@@ -64,10 +66,17 @@ class Querier:
         if self.llm_type == "local_llm":
             logger.info("Use Local LLM")
             logger.info("Retrieving " + self.llm_model_type)
-            llm = Ollama(
-                model=self.llm_model_type, 
-                callback_manager=CallbackManager([StreamingStdOutCallbackHandler()])
-            )
+            if self.local_api_url is not None: # If API URL is defined, use it
+                llm = Ollama(
+                    model=self.llm_model_type, 
+                    base_url = self.local_api_url,
+                    callback_manager=CallbackManager([StreamingStdOutCallbackHandler()])
+                )
+            else:
+                llm = Ollama(
+                    model=self.llm_model_type,
+                    callback_manager=CallbackManager([StreamingStdOutCallbackHandler()])
+                )
             logger.info("Retrieved " + self.llm_model_type)
 
         if self.embeddings_provider == "openai":
@@ -75,7 +84,13 @@ class Querier:
             logger.info("Loaded openai embeddings")
 
         if self.embeddings_provider == "local_embeddings":
-            embeddings = OllamaEmbeddings(model=self.embeddings_model)
+            if self.local_api_url is not None: # If API URL is defined, use it
+                embeddings = OllamaEmbeddings(
+                    base_url=self.local_api_url,
+                    model=self.embeddings_model)
+            else:
+                embeddings = OllamaEmbeddings( # Otherwise, use localhost
+                    model=self.embeddings_model)
             logger.info("Loaded local embeddings: " + self.embeddings_model)
 
         if self.vecdb_type == "chromadb":

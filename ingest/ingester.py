@@ -16,7 +16,7 @@ class Ingester:
     # When parameters are read from GUI, object is initiated with parameter settings listed
     def __init__(self, collection_name: str, content_folder: str, vectordb_folder: str, 
                  embeddings_provider=None, embeddings_model=None, vecdb_type=None, chunk_size=None, chunk_overlap=None,
-                 file_no=None):
+                 local_api_url=None, file_no=None):
         load_dotenv()
         self.collection_name = collection_name
         self.content_folder = content_folder
@@ -26,6 +26,7 @@ class Ingester:
         self.vecdb_type = settings.VECDB_TYPE if vecdb_type is None else vecdb_type
         self.chunk_size = settings.CHUNK_SIZE if chunk_size is None else chunk_size
         self.chunk_overlap = settings.CHUNK_OVERLAP if chunk_overlap is None else chunk_overlap
+        self.local_api_url = settings.LOCAL_API_URL if local_api_url is None and settings.LOCAL_API_URL is not None else local_api_url
         self.file_no = file_no
 
     def ingest(self) -> None:
@@ -50,7 +51,13 @@ class Ingester:
             logger.info("Loaded openai embeddings")
 
         if self.embeddings_provider == "local_embeddings":
-            embeddings = OllamaEmbeddings(model = self.embeddings_model)
+            if self.local_api_url is not None:
+                embeddings = OllamaEmbeddings(
+                    base_url = self.local_api_url,
+                    model = self.embeddings_model)
+            else:
+                embeddings = OllamaEmbeddings(
+                    model = self.embeddings_model)
             logger.info("Loaded local embeddings: " + self.embeddings_model)
 
         # create vector store with chosen settings of vector store type (e.g. chromadb)
