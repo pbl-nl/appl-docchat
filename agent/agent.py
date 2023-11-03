@@ -1,13 +1,44 @@
 import sys
 from langchain.chat_models import ChatOpenAI
-from langchain.agents import initialize_agent
-from langchain.agents import AgentType
-from langchain.agents import load_tools
+from langchain.agents import initialize_agent, AgentType, load_tools
+from langchain.utilities import SerpAPIWrapper
+from langchain.tools import BaseTool, StructuredTool, Tool
+from langchain.utilities import TextRequestsWrapper
 from dotenv import load_dotenv
 from loguru import logger
+import requests
 # local imports
 import settings
 
+
+def get_geocode_address(query):
+    username = "masoume"
+    url = f"http://api.geonames.org/geoCodeAddressJSON?q={query}&username={username}"
+    response = requests.get(url, verify=False)
+    if response.status_code == 200:
+        return response.json()
+    else:
+        return None
+class CustomTool(BaseTool):
+    name = "CustomTool"
+    description = "useful for when you need to answer questions about the coordinates of an address"
+    def _run(self, query: str) -> str:
+        """Use the tool."""
+        return get_geocode_address(query)
+
+    async def _arun(self, query: str) -> str:
+        """Use the tool asynchronously."""
+        raise NotImplementedError("API does not support async")
+
+tools = [
+    Tool(
+        name="GeoCodeAddress",
+        func=CustomTool.run,
+        description="useful for when you need to answer questions about the coordinates of an address"
+    )
+    ]
+
+tools = [CustomTool()]
 
 class AgentChain():
     def __init__(self, llm_type=None, llm_model_type=None):
@@ -44,22 +75,31 @@ class AgentChain():
                 model=llm_model_type,
                 temperature=0,
             )
-        # Using multiple tools (wikipedia and if it does not know the answer it will ask from user)
-        tools = load_tools(["human", "wikipedia"], llm=llm, input_func=self.get_input, return_dict=True)
-        self.wiki_agent = initialize_agent(tools,
-                                           llm,
-                                           agent=AgentType.ZERO_SHOT_REACT_DESCRIPTION,
-                                           verbose=True,
-                                           return_intermediate_steps=True,
-                                           )
 
+        self.geo_agent = initialize_agent(tools, llm, agent=AgentType.ZERO_SHOT_REACT_DESCRIPTION, verbose=True)
+
+        # self.wiki_agent = initialize_agent(tools,
+        #                                    llm,
+        #                                    agent=AgentType.ZERO_SHOT_REACT_DESCRIPTION,
+        #                                    verbose=True,
+        #                                    return_intermediate_steps=True,
+        #                                    )
+
+    def get_nearby_location(self, lat, lng, username):
+        url = f"https://api.geonames.org/extendedFindNearby?lat={lat}&lng={lng}&username={username}"
+        response = requests.get(url, verify=False)
+        if response.status_code == 200:
+            return response.json()
+        else:
+            return None
 
     def ask_question(self, question: str):
         logger.info(f"current chat history: {self.chat_history}")
         # response = self.agent_executor.invoke({"input": question, "chat_history": self.chat_history})
-        response = self.wiki_agent(question)
+        # response = self.wiki_agent(question)
+        response = self.geo_agent(question)
         final_answer = response["output"]
-        logger.info(f"intermediate steps: {response['intermediate_steps']}")
+        # logger.info(f"intermediate steps: {response['intermediate_steps']}")
         logger.info(f"question: {question}")
         logger.info(f"answer: {final_answer}")
         # self.chat_history.append(HumanMessage(content=question))
