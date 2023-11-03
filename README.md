@@ -53,14 +53,17 @@ When this command is used, a browser session will open automatically
 
 ### Ingesting and querying documents through a Flask User Interface
 The functionalities described above can also be used through a Flask User Interface.<br>
+The flask UI can be started in the activated virtual environment using commandline command:<br>
+<code>python flask_app.py</code>
 The Flask UI is tailored for future use in production and contains more insight into the chunks (used) and also contains user admin functionality among others.<br>
-For a more detailed description and installation, see the readme file under flask_app
+For a more detailed description and installation, see the readme file in the  flask_app folder
 
 ### Evaluation of Question Answer results
 The file evaluate.py can be used to evaluate the generated answers for a list of questions, provided that the file eval.json exists, containing 
 not only the list of questions but also the related list of desired answers (ground truth).<br>
-Evaluation is done in the activated virtual environment using commandline command:<br>
-<code>python evaluate.py</code>
+Evaluation is done at folder level in the activated virtual environment using commandline command:<br>
+<code>python evaluate.py</code><br>
+It is also possible to run an evaluation over all folders with <code>python evaluate_all.py</code>
 
 ### Monitoring the evaluation results through a Streamlit User Interface
 All evaluation results can be viewed by using a dedicated User Interface.<br>
