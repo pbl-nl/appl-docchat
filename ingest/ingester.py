@@ -10,6 +10,7 @@ from loguru import logger
 import settings
 from .pdf_parser import PdfParser
 from .txt_parser import TxtParser
+from .html_parser import HtmlParser
 from .content_iterator import ContentIterator
 from ingest.ingest_utils import IngestUtils
 
@@ -37,6 +38,7 @@ class Ingester:
         pdf_parser = PdfParser(self.chunk_size, self.chunk_overlap, self.file_no)
         ingestutils = IngestUtils(self.chunk_size, self.chunk_overlap, self.file_no)
         txt_parser = TxtParser(self.chunk_size, self.chunk_overlap, self.file_no)
+        html_parser = HtmlParser(self.chunk_size, self.chunk_overlap, self.file_no)
 
         chunks: List[docstore.Document] = []
         # for each file that the content_iterator yields
@@ -53,6 +55,14 @@ class Ingester:
             elif document.endswith(".txt"):
                 # parse txt file
                 raw_pages, metadata = txt_parser.parse_txt(self.file_path)
+
+            elif document.endswith(".md"):
+                # parse md file
+                raw_pages, metadata = txt_parser.parse_txt(self.file_path)
+
+            elif document.endswith(".html"):
+                # parse html file
+                raw_pages, metadata = html_parser.parse_html(self.file_path)
 
             else:
                 logger.info(f"Cannot ingest document {document} because it has extension {document[-4:]}")
