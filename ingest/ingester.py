@@ -16,7 +16,8 @@ class Ingester:
     # When parameters are read from settings.py, object is initiated without parameter settings
     # When parameters are read from GUI, object is initiated with parameter settings listed
     def __init__(self, collection_name: str, content_folder: str, vectordb_folder: str, 
-                 embeddings_provider=None, embeddings_model=None, vecdb_type=None, chunk_size=None, chunk_overlap=None,
+                 embeddings_provider=None, embeddings_model=None, text_splitter_method=None,
+                 vecdb_type=None, chunk_size=None, chunk_overlap=None,
                  file_no=None):
         load_dotenv()
         self.collection_name = collection_name
@@ -24,6 +25,7 @@ class Ingester:
         self.vectordb_folder = vectordb_folder
         self.embeddings_provider = settings.EMBEDDINGS_PROVIDER if embeddings_provider is None else embeddings_provider
         self.embeddings_model = settings.EMBEDDINGS_MODEL if embeddings_model is None else embeddings_model
+        self.text_splitter_method = settings.TEXT_SPLITTER_METHOD if text_splitter_method is None else text_splitter_method
         self.vecdb_type = settings.VECDB_TYPE if vecdb_type is None else vecdb_type
         self.chunk_size = settings.CHUNK_SIZE if chunk_size is None else chunk_size
         self.chunk_overlap = settings.CHUNK_OVERLAP if chunk_overlap is None else chunk_overlap
@@ -32,8 +34,11 @@ class Ingester:
     def ingest(self) -> None:
         content_iterator = ContentIterator(self.content_folder)
         # create text chunks with chosen settings of chunk size and chunk overlap
-        pdf_parser = PdfParser(self.chunk_size, self.chunk_overlap, self.file_no)
-        ingestutils = IngestUtils(self.chunk_size, self.chunk_overlap, self.file_no)
+        pdf_parser = PdfParser(self.chunk_size, self.chunk_overlap, self.file_no, self.text_splitter_method)
+        ingestutils = IngestUtils(self.chunk_size, 
+                                  self.chunk_overlap, 
+                                  self.file_no, 
+                                  self.text_splitter_method)
         # txt_parser = 
 
         chunks: List[docstore.Document] = []

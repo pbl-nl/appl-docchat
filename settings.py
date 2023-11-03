@@ -39,6 +39,10 @@ EMBEDDINGS_PROVIDER = "openai"
 # EMBEDDINGS_MODEL must be one of: "text-embedding-ada-002", "all-mpnet-base-v2"
 # If EMBEDDINGS_MODEL is "all-mpnet-base-v2" then EMBEDDINGS_PROVIDER must be "huggingface"
 EMBEDDINGS_MODEL = "text-embedding-ada-002"
+# TEXT_SPLITTER_METHOD, one of: 
+# "RecursiveCharacterTextSplitter" (cut words/sentences to achieve chunk size) or 
+# "NLTKTextSplitter" (keep full sentences even if chunk size is exceeded)
+TEXT_SPLITTER_METHOD = "NLTKTextSplitter"
 # CHAIN_NAME must be one of: "conversationalretrievalchain", 
 CHAIN_NAME = "conversationalretrievalchain"
 # CHAIN_TYPE must be one of: "stuff", 

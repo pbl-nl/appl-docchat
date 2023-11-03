@@ -14,10 +14,11 @@ from ingest.ingest_utils import IngestUtils
 class PdfParser:
     """A parser for extracting text from PDF documents."""
 
-    def __init__(self, chunk_size: int, chunk_overlap: int, file_no: int):
+    def __init__(self, chunk_size: int, chunk_overlap: int, file_no: int, text_splitter_method: None):
         self.chunk_size = chunk_size
         self.chunk_overlap = chunk_overlap
         self.file_no = file_no
+        self.text_splitter_method = text_splitter_method
 
     def set_pdf_file_path(self, pdf_file_path: str):
         """Set the path to the PDF file."""
@@ -34,7 +35,7 @@ class PdfParser:
     def extract_metadata_from_pdf(self) -> Dict[str, str]:
         """Extract and return the metadata from the PDF."""
         logger.info("Extracting metadata")
-        ingestutils = IngestUtils(self.chunk_size, self.chunk_overlap, self.file_no)
+        ingestutils = IngestUtils(self.chunk_size, self.chunk_overlap, self.file_no, self.text_splitter_method)
 
         with open(self.pdf_file_path, "rb") as pdf_file:
             reader = PdfReader(pdf_file)
