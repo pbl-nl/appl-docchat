@@ -31,7 +31,7 @@ class Querier:
         self.chain_verbosity = settings.CHAIN_VERBOSITY if chain_verbosity is None else chain_verbosity
         self.search_type = settings.SEARCH_TYPE if search_type is None else search_type
         self.chunk_k = settings.CHUNK_K if chunk_k is None else chunk_k
-        self.use_agent = settings.USE_AGENT if use_agent is None else use_agent
+        self.use_agent = settings.USE_AGENT if use_agent is None and hasattr(settings, 'USE_AGENT') else use_agent
         self.chat_history = []
 
     def make_chain(self, input_folder, vectordb_folder):
