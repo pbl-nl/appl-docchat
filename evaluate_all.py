@@ -51,9 +51,9 @@ def store_evaluation_result(df, content_folder_name, type):
     df.to_csv(path, sep="\t", index=False)
 
 
-def main():
+def main(chunk_size=None, chunk_overlap=None, chunk_k=None):
     # Create instance of Querier
-    querier = Querier()
+    querier = Querier(chunk_k=chunk_k)
 
     # only now import ragas evaluation related modules because ragas requires the openai api key to be set on beforehand
     from ragas import evaluation
@@ -67,11 +67,12 @@ def main():
         
         # content_folder_name = input("Source folder of evaluation documents (without path): ")
         # get associated source folder path and vectordb path
-        content_folder_path, vectordb_folder_path = utils.create_vectordb_name(content_folder_name)
+        content_folder_path, vectordb_folder_path = utils.create_vectordb_name(content_folder_name, chunk_size, chunk_overlap)
         # if documents in source folder path are not ingested yet
         if not os.path.exists(vectordb_folder_path):
             # ingest documents
-            ingester = Ingester(content_folder_name, content_folder_path, vectordb_folder_path)
+            ingester = Ingester(content_folder_name, content_folder_path, vectordb_folder_path,
+                                chunk_size=chunk_size, chunk_overlap=chunk_overlap)
             ingester.ingest()
             logger.info(f"Created vector store in folder {vectordb_folder_path}")
         else:
@@ -110,7 +111,11 @@ def main():
         dataset = Dataset.from_dict(dataset_dict)
         # evaluate
         result = evaluation.evaluate(dataset)
-    
+
+        #update location for results
+        if chunk_size:
+            content_folder_name = "{}_size_{}_overlap_{}_k_{}".format(folder, chunk_size, chunk_overlap, chunk_k)
+
         # store aggregate results including the ragas score:
         agg_columns = list(result.keys())
         agg_scores = list(result.values())
@@ -148,7 +153,7 @@ def main():
         # add result to existing evaluation file (if that exists) and store to disk
         store_evaluation_result(df, content_folder_name, "detail")
 
-    
+
 if __name__ == "__main__":
     main()
 
