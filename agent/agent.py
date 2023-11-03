@@ -12,7 +12,8 @@ import settings
 
 
 def get_geocode_address(query):
-    username = "masoume"
+    #make a account in geonames website and change the username into your account
+    username = "demo"
     url = f"http://api.geonames.org/geoCodeAddressJSON?q={query}&username={username}"
     response = requests.get(url, verify=False)
     if response.status_code == 200:
