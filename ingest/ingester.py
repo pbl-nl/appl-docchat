@@ -1,3 +1,4 @@
+import os
 from dotenv import load_dotenv
 from typing import List
 from langchain.embeddings import OpenAIEmbeddings
@@ -8,6 +9,7 @@ from loguru import logger
 # local imports
 import settings
 from .pdf_parser import PdfParser
+from .txt_parser import TxtParser
 from .content_iterator import ContentIterator
 from ingest.ingest_utils import IngestUtils
 
@@ -34,15 +36,23 @@ class Ingester:
         # create text chunks with chosen settings of chunk size and chunk overlap
         pdf_parser = PdfParser(self.chunk_size, self.chunk_overlap, self.file_no)
         ingestutils = IngestUtils(self.chunk_size, self.chunk_overlap, self.file_no)
-        # txt_parser = 
+        txt_parser = TxtParser(self.chunk_size, self.chunk_overlap, self.file_no)
 
         chunks: List[docstore.Document] = []
-        # for each pdf file that the content_iterator yields
+        # for each file that the content_iterator yields
         for document in content_iterator:
+            # check and set document path
+            if not os.path.isfile(document):
+                raise FileNotFoundError(f"File not found: {document}")
+            self.file_path = document
+
             if document.endswith(".pdf"):
-                # check document path
-                pdf_parser.set_pdf_file_path(document)
-                raw_pages, metadata = pdf_parser.parse_pdf()
+                # parse pdf 
+                raw_pages, metadata = pdf_parser.parse_pdf(self.file_path)
+
+            elif document.endswith(".txt"):
+                # parse txt file
+                raw_pages, metadata = txt_parser.parse_txt(self.file_path)
 
             else:
                 logger.info(f"Cannot ingest document {document} because it has extension {document[-4:]}")

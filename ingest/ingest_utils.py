@@ -34,8 +34,8 @@ class IngestUtils:
             metadata['file_no'] = self.file_no
         '''
 
-        cleaned_text_pdf = self.clean_text(raw_pages, cleaning_functions)
-        return self.text_to_docs(cleaned_text_pdf, metadata)
+        cleaned_text = self.clean_text(raw_pages, cleaning_functions)
+        return self.text_to_docs(cleaned_text, metadata)
 
     def clean_text(self,
                    pages: List[Tuple[int, str]],
