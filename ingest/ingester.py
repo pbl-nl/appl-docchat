@@ -1,3 +1,4 @@
+import os
 from dotenv import load_dotenv
 from typing import List
 from langchain.embeddings import OpenAIEmbeddings
@@ -37,12 +38,16 @@ class Ingester:
         # txt_parser = 
 
         chunks: List[docstore.Document] = []
-        # for each pdf file that the content_iterator yields
+        # for each file that the content_iterator yields
         for document in content_iterator:
+            # check and set document path
+            if not os.path.isfile(document):
+                raise FileNotFoundError(f"File not found: {document}")
+            self.file_path = document
+
             if document.endswith(".pdf"):
-                # check document path
-                pdf_parser.set_pdf_file_path(document)
-                raw_pages, metadata = pdf_parser.parse_pdf()
+                # parse pdf 
+                raw_pages, metadata = pdf_parser.parse_pdf(self.file_path)
 
             else:
                 logger.info(f"Cannot ingest document {document} because it has extension {document[-4:]}")
