@@ -61,6 +61,6 @@ for folder in eval:
         result = int("".join([i for i in result if i.isdigit()]))
         categories.append(result)
         print(question)
-        print("Question cateogry:", result)
+        print("Question category:", result)
     query['question_category'] = categories
     query.to_csv(path, sep="\t", index=False)
