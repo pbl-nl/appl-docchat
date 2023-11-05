@@ -9,7 +9,6 @@ function page_ready() {
         $('#name,.btn-submit').removeAttr('disabled');
         var dz = $('#dropzone').dropzone({ 
             url: '/docset-upload-file/' + $('#id').val(),
-            maxFiles: 1,
             withCredentials: true,
             maxFilesize: 16384,
             chunking: true,
@@ -53,6 +52,6 @@ function page_ready() {
 
 function docset_delete_file(file_id) {
     msg='Delete file \'' + $('#file_name_' + file_id).html() + '\'?';
-    url = location.origin + '/docset-delete-file/' + file_id;
+    url = location.origin + '/docset-delete-file/' + $('#id').val() + '/' + file_id;
     chat_delete(msg, url);
 }
