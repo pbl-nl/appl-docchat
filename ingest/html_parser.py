@@ -1,14 +1,9 @@
-import os
-import re
 # from datetime import date
-from typing import Callable, Dict, List, Tuple
-import langchain.docstore.document as docstore
-import langchain.text_splitter as splitter
+from typing import Dict, List, Tuple
 from loguru import logger
 from langchain.document_loaders import BSHTMLLoader
-import settings
 # local imports
-from ingest.ingest_utils import IngestUtils
+from ingest_utils import IngestUtils
 
 
 class HtmlParser:
