@@ -80,16 +80,17 @@ def main():
         # create the query chain
         querier.make_chain(content_folder_name, vectordb_folder_path)
         
-        # Get questions and ground_truth from json file
-        eval_questions = eval[content_folder_name]["question"]
-        eval_groundtruths = eval[content_folder_name]["ground_truth"]
+        # Get question types, questions and ground_truth from json file
+        eval_question_types = [el["question_type"] for el in eval[content_folder_name]]
+        eval_questions = [el["question"] for el in eval[content_folder_name]]
+        eval_groundtruths = [el["ground_truth"] for el in eval[content_folder_name]]
     
         # Iterate over the questions and generate the answers
         answers = []
         sources = []
         for i, question in enumerate(eval_questions):
-            logger.info(f"i = {i}, question_type = {eval[content_folder_name]['question_type'][i]}")
-            if eval[content_folder_name]["question_type"][i] == "initial":
+            logger.info(f"i = {i}, question_type = {eval_question_types[i]}")
+            if eval_question_types[i] == "initial":
                 querier.clear_history()
             response = querier.ask_question(question)
             answers.append(response["answer"])
@@ -124,7 +125,6 @@ def main():
         # add settings
         settings_dict = get_settings_dictionary("settings.py")
         settings_columns = list(settings_dict.keys())
-        # settings_data = [[list(settings_dict.values())[i] for i in range(len(list(settings_dict.keys())))] for _ in range(len(eval_questions))]
         settings_data = [list(settings_dict.values())[i] for i in range(len(list(settings_dict.keys())))]
         df_settings = pd.DataFrame(data=[settings_data], columns=settings_columns)
         # combined
