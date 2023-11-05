@@ -50,7 +50,7 @@ class DocSetForm(FlaskForm):
 
 
     # Handle the request (from routes.py) for this form
-    def handle_request(self, method, id):
+    def handle_request(self, method, id, file_id=0):
 
         usergroups, checked, files = [], [], []
 
@@ -169,15 +169,13 @@ class DocSetForm(FlaskForm):
 
         # Delete a file from the docset
         if method == 'DELETE-FILE':
-            obj = DocSetFile.query.get(id)
+            obj = DocSetFile.query.get(file_id)
             if obj:
                 docset = DocSet.query.get(obj.docset_id)
                 if docset:
-                    embeddings = OpenAIEmbeddings()
                     vectordb_folder = docset.create_vectordb_name()
                     vector_store = Chroma(
                                     collection_name=docset.get_collection_name(),
-                                    embedding_function=embeddings,
                                     persist_directory=vectordb_folder,
                                 )
                     sources = vector_store.get()
@@ -187,6 +185,7 @@ class DocSetForm(FlaskForm):
                             ids_to_delete.append(vec_id)
                         i += 1
                     vector_store.delete(ids=ids_to_delete)
+                    vector_store.persist()
                     remove(path.join(docset.get_doc_path(), obj.filename))
                     flash('The file \'' + obj.filename + '\' is deleted.', 'success')
                     DocSetFile.query.filter(DocSetFile.id == obj.id).delete()

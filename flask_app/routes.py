@@ -183,10 +183,10 @@ def init_app(app):
         form = DocSetForm()
         return permission.chat_admin(form.handle_request, 'UPLOAD-FILE', id)
 
-    @app.route('/docset-delete-file/<int:file_id>')
-    def docset_delete_file(file_id):
+    @app.route('/docset-delete-file/<int:id>/<int:file_id>')
+    def docset_delete_file(id, file_id):
         form = DocSetForm()
-        return permission.chat_admin(form.handle_request, 'DELETE-FILE', file_id)
+        return permission.chat_admin(form.handle_request, 'DELETE-FILE', id, file_id)
 
     @app.route('/docset-delete/<int:id>')
     def docset_delete(id):
