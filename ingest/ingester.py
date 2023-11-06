@@ -40,9 +40,9 @@ class Ingester:
         # create text chunks with chosen settings of chunk size and chunk overlap
         pdf_parser = PdfParser(self.chunk_size, self.chunk_overlap, self.file_no, self.text_splitter_method)
         ingestutils = IngestUtils(self.chunk_size, self.chunk_overlap, self.file_no, self.text_splitter_method)
-        txt_parser = TxtParser(self.chunk_size, self.chunk_overlap, self.file_no)
-        html_parser = HtmlParser(self.chunk_size, self.chunk_overlap, self.file_no)
-        word_parser = WordParser(self.chunk_size, self.chunk_overlap, self.file_no)
+        txt_parser = TxtParser(self.chunk_size, self.chunk_overlap, self.file_no, self.text_splitter_method)
+        html_parser = HtmlParser(self.chunk_size, self.chunk_overlap, self.file_no, self.text_splitter_method)
+        word_parser = WordParser(self.chunk_size, self.chunk_overlap, self.file_no, self.text_splitter_method)
 
         chunks: List[docstore.Document] = []
         # for each file that the content_iterator yields
@@ -55,23 +55,18 @@ class Ingester:
             if document.endswith(".pdf"):
                 # parse pdf 
                 raw_pages, metadata = pdf_parser.parse_pdf(self.file_path)
-
             elif document.endswith(".txt"):
                 # parse txt file
                 raw_pages, metadata = txt_parser.parse_txt(self.file_path)
-
             elif document.endswith(".md"):
                 # parse md file
                 raw_pages, metadata = txt_parser.parse_txt(self.file_path)
-
             elif document.endswith(".html"):
                 # parse html file
                 raw_pages, metadata = html_parser.parse_html(self.file_path)
-
             elif document.endswith(".docx"):
                 # parse word document (as one; not separated into pages)
                 raw_pages, metadata = word_parser.parse_word(self.file_path)
-
             else:
                 logger.info(f"Cannot ingest document {document} because it has extension {document[-4:]}")
 

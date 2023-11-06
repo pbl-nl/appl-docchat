@@ -9,7 +9,7 @@ class IngestUtils:
     """Utils for ingesting different types of documents. 
     This includes cutting text into chunks and cleaning text."""
 
-    def __init__(self, chunk_size: int, chunk_overlap: int, file_no: int, text_splitter_method: None):
+    def __init__(self, chunk_size: int, chunk_overlap: int, file_no: int, text_splitter_method: str):
         self.chunk_size = chunk_size
         self.chunk_overlap = chunk_overlap
         self.file_no = file_no
@@ -74,12 +74,13 @@ class IngestUtils:
                     chunk_size=self.chunk_size,
                     chunk_overlap=self.chunk_overlap
                 )
-            if self.text_splitter_method == "RecursiveCharacterTextSplitter":
+            elif self.text_splitter_method == "RecursiveCharacterTextSplitter":
                 text_splitter = splitter.RecursiveCharacterTextSplitter(
                     chunk_size=self.chunk_size,
                     separators=["\n\n", "\n", ".", "!", "?", ",", " ", ""],
                     chunk_overlap=self.chunk_overlap
                 )
+            
             chunks = text_splitter.split_text(page)
             for i, chunk in enumerate(chunks):
                 if self.file_no:

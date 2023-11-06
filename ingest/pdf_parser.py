@@ -8,7 +8,7 @@ from ingest.ingest_utils import IngestUtils
 class PdfParser:
     """A parser for extracting text from PDF documents."""
 
-    def __init__(self, chunk_size: int, chunk_overlap: int, file_no: int, text_splitter_method: None):
+    def __init__(self, chunk_size: int, chunk_overlap: int, file_no: int, text_splitter_method: str):
         self.chunk_size = chunk_size
         self.chunk_overlap = chunk_overlap
         self.file_no = file_no
