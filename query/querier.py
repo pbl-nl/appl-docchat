@@ -14,7 +14,7 @@ import settings
 class Querier:
     # When parameters are read from settings.py, object is initiated without parameter settings
     # When parameters are read from GUI, object is initiated with parameter settings listed
-    def __init__(self, llm_type=None, llm_model_type=None, embeddings_provider=None, embeddings_model=None, 
+    def __init__(self, llm_type=None, llm_model_type=None, embeddings_provider=None, embeddings_model=None,
                  vecdb_type=None, chain_name=None, chain_type=None, chain_verbosity=None, search_type=None, chunk_k=None):
         load_dotenv()
         self.llm_type = settings.LLM_TYPE if llm_type is None else llm_type
@@ -29,6 +29,23 @@ class Querier:
         self.chunk_k = settings.CHUNK_K if chunk_k is None else chunk_k
         self.chat_history = []
 
+    def make_agent(self, input_folder, vectordb_folder):
+        """Create a langchain agent with selected llm and tools"""
+        #
+        # TODO
+        #   - generalise code from make_chain
+        #   - implement sample tools (wikipedia (standard), geocoder, soilgrids)
+        #       see:
+        #           https://python.langchain.com/docs/integrations/tools/wikipedia
+        #           https://python.langchain.com/docs/integrations/tools/requests
+        #           https://python.langchain.com/docs/modules/agents/tools/custom_tools (<-)
+        #   - implement dynamic tool selection mechanism
+        #   - create llm, tools, and initialise agent
+        #   - add __init__ parameters for agent (maybe rename some chain related params?)
+        #   - see usages of make_chain where to select between using chain and agent
+        #   - add evaluation questions and answers, e.g. based on detailed spatial location context
+        #
+        return
 
     def make_chain(self, input_folder, vectordb_folder):
         self.input_folder = input_folder
@@ -94,7 +111,7 @@ class Querier:
         self.chat_history.append(HumanMessage(content=question))
         self.chat_history.append(AIMessage(content=answer))
         return response
-    
+
     def clear_history(self):
         # used by "Clear Conversation" button
         self.chat_history = []

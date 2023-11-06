@@ -9,35 +9,7 @@ from datasets import Dataset
 from ingest.ingester import Ingester
 from query.querier import Querier
 import settings
-import utils
-
-
-def get_settings_dictionary(file_name):
-    # Initialize an empty dictionary to store the variables and their values
-    variables_dict = {}
-    # Open and read the file
-    with open(file_name, 'r') as file:
-        lines = file.readlines()
-    start_reading = False
-    # Process each line in the file
-    for line in lines:
-        # start reading below the line with ####
-        if line.startswith("####"):
-            start_reading = True
-        # ignore comment lines
-        if start_reading and not line.startswith("#"):
-            # Remove leading and trailing whitespace and split the line by '='
-            parts = line.strip().split('=')
-            # Check if the line can be split into two parts
-            if len(parts) == 2:
-                # Extract the variable name and value
-                variable_name = parts[0].strip()
-                variable_value = parts[1].strip()
-                # Use exec() to assign the value to the variable name
-                exec(f'{variable_name} = {variable_value}')
-                # Add the variable and its value to the dictionary
-                variables_dict[variable_name] = eval(variable_name)
-    return variables_dict
+import utils as ut
 
 
 def store_evaluation_result(df, content_folder_name, type):
@@ -61,7 +33,7 @@ def main():
     # Get source folder with evaluation documents from user
     content_folder_name = input("Source folder of evaluation documents (without path): ")
     # get associated source folder path and vectordb path
-    content_folder_path, vectordb_folder_path = utils.create_vectordb_name(content_folder_name)
+    content_folder_path, vectordb_folder_path = ut.create_vectordb_name(content_folder_name)
     # if documents in source folder path are not ingested yet
     if not os.path.exists(vectordb_folder_path):
         # ingest documents
@@ -74,18 +46,19 @@ def main():
     # create the query chain
     querier.make_chain(content_folder_name, vectordb_folder_path)
     
-    # Get questions and ground_truth from json file
+    # Get question types, questions and ground_truth from json file
     with open(os.path.join(settings.EVAL_DIR, settings.EVAL_FILE_NAME), 'r') as eval_file:
         eval = json.load(eval_file)
-    eval_questions = eval[content_folder_name]["question"]
-    eval_groundtruths = eval[content_folder_name]["ground_truth"]
+    eval_question_types = [el["question_type"] for el in eval[content_folder_name]]
+    eval_questions = [el["question"] for el in eval[content_folder_name]]
+    eval_groundtruths = [el["ground_truth"] for el in eval[content_folder_name]]
 
     # Iterate over the questions and generate the answers
     answers = []
     sources = []
     for i, question in enumerate(eval_questions):
-        logger.info(f"i = {i}, question_type = {eval[content_folder_name]['question_type'][i]}")
-        if eval[content_folder_name]["question_type"][i] == "initial":
+        logger.info(f"i = {i}, question_type = {eval_question_types[i]}")
+        if eval_question_types[i] == "initial":
             querier.clear_history()
         response = querier.ask_question(question)
         answers.append(response["answer"])
@@ -118,9 +91,8 @@ def main():
     # line below is necessary as long as ragas package doesn't update metric name "context_relevancy" to "context_precision"
     df_agg = df_agg.rename(columns={"context_relevancy": "context_precision"}, errors="raise")
     # add settings
-    settings_dict = get_settings_dictionary("settings.py")
+    settings_dict = ut.get_settings_as_dictionary("settings.py")
     settings_columns = list(settings_dict.keys())
-    # settings_data = [[list(settings_dict.values())[i] for i in range(len(list(settings_dict.keys())))] for _ in range(len(eval_questions))]
     settings_data = [list(settings_dict.values())[i] for i in range(len(list(settings_dict.keys())))]
     df_settings = pd.DataFrame(data=[settings_data], columns=settings_columns)
     # combined

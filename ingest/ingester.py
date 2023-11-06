@@ -1,3 +1,4 @@
+import os
 from dotenv import load_dotenv
 from typing import List
 from langchain.embeddings import OpenAIEmbeddings
@@ -8,6 +9,9 @@ from loguru import logger
 # local imports
 import settings
 from .pdf_parser import PdfParser
+from .txt_parser import TxtParser
+from .html_parser  import HtmlParser
+from .word_parser import WordParser
 from .content_iterator import ContentIterator
 from ingest.ingest_utils import IngestUtils
 
@@ -35,19 +39,38 @@ class Ingester:
         content_iterator = ContentIterator(self.content_folder)
         # create text chunks with chosen settings of chunk size and chunk overlap
         pdf_parser = PdfParser(self.chunk_size, self.chunk_overlap, self.file_no, self.text_splitter_method)
-        ingestutils = IngestUtils(self.chunk_size, 
-                                  self.chunk_overlap, 
-                                  self.file_no, 
-                                  self.text_splitter_method)
-        # txt_parser = 
+        ingestutils = IngestUtils(self.chunk_size, self.chunk_overlap, self.file_no, self.text_splitter_method)
+        txt_parser = TxtParser(self.chunk_size, self.chunk_overlap, self.file_no)
+        html_parser = HtmlParser(self.chunk_size, self.chunk_overlap, self.file_no)
+        word_parser = WordParser(self.chunk_size, self.chunk_overlap, self.file_no)
 
         chunks: List[docstore.Document] = []
-        # for each pdf file that the content_iterator yields
+        # for each file that the content_iterator yields
         for document in content_iterator:
+            # check and set document path
+            if not os.path.isfile(document):
+                raise FileNotFoundError(f"File not found: {document}")
+            self.file_path = document
+
             if document.endswith(".pdf"):
-                # check document path
-                pdf_parser.set_pdf_file_path(document)
-                raw_pages, metadata = pdf_parser.parse_pdf()
+                # parse pdf 
+                raw_pages, metadata = pdf_parser.parse_pdf(self.file_path)
+
+            elif document.endswith(".txt"):
+                # parse txt file
+                raw_pages, metadata = txt_parser.parse_txt(self.file_path)
+
+            elif document.endswith(".md"):
+                # parse md file
+                raw_pages, metadata = txt_parser.parse_txt(self.file_path)
+
+            elif document.endswith(".html"):
+                # parse html file
+                raw_pages, metadata = html_parser.parse_html(self.file_path)
+
+            elif document.endswith(".docx"):
+                # parse word document (as one; not separated into pages)
+                raw_pages, metadata = word_parser.parse_word(self.file_path)
 
             else:
                 logger.info(f"Cannot ingest document {document} because it has extension {document[-4:]}")

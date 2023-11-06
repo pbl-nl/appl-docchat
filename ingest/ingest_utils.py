@@ -1,6 +1,4 @@
-import os
 import re
-# from datetime import date
 from typing import Callable, Dict, List, Tuple
 import langchain.docstore.document as docstore
 import langchain.text_splitter as splitter
@@ -35,8 +33,8 @@ class IngestUtils:
             metadata['file_no'] = self.file_no
         '''
 
-        cleaned_text_pdf = self.clean_text(raw_pages, cleaning_functions)
-        return self.text_to_docs(cleaned_text_pdf, metadata)
+        cleaned_text = self.clean_text(raw_pages, cleaning_functions)
+        return self.text_to_docs(cleaned_text, metadata)
 
     def clean_text(self,
                    pages: List[Tuple[int, str]],
