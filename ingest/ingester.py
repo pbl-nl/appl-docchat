@@ -8,11 +8,11 @@ import langchain.docstore.document as docstore
 from loguru import logger
 # local imports
 import settings
-from .pdf_parser import PdfParser
-from .txt_parser import TxtParser
-from .html_parser  import HtmlParser
-from .word_parser import WordParser
-from .content_iterator import ContentIterator
+from ingest.pdf_parser import PdfParser
+from ingest.txt_parser import TxtParser
+from ingest.html_parser  import HtmlParser
+from ingest.word_parser import WordParser
+from ingest.content_iterator import ContentIterator
 from ingest.ingest_utils import IngestUtils
 
 
