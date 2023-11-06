@@ -3,8 +3,8 @@ from os import path, remove, utime
 from flask import current_app, Markup, render_template, request, jsonify, send_file
 from flask_login import current_user
 
-from ingest.ingester import Ingester
 from flask_app.models import db, DocSetFile, Setting
+from flask_app.background_jobs import background_jobs
 
 
 def form_fields_from_object(form, obj, fields):
@@ -90,34 +90,15 @@ def upload_file(docset):
             utime(to_file, (dt, dt))
         '''
 
-        files = DocSetFile.query.filter(DocSetFile.docset_id == docset.id).all()
-        if files:
-            file_no = len(files) + 1
-        else:
-            file_no = 1
         docsetfile = DocSetFile()
         docsetfile.docset_id = docset.id
-        docsetfile.no = file_no
+        docsetfile.no = 0
         docsetfile.filename = filename
         db.session.add(docsetfile)
         db.session.commit()
-        ingest(docset, filename, file_no)
+        background_jobs.new_job('ingest', docsetfile.id, docset_id=docset.id, filename=filename)
+        #ingest(docset, filename, file_no)
     else:
         status = 'Uploading chunk ' + str(1 + current_chunk) + '/' + request.form['dztotalchunkcount']
     
     return jsonify({'id': docset.id, 'status': status})
-
-
-def ingest(docset, filename, file_no):
-    ingester = Ingester(
-        docset.get_collection_name(), 
-        path.join(docset.get_doc_path(), filename),
-        docset.create_vectordb_name(), 
-        embeddings_provider=docset.embeddings_provider, 
-        embeddings_model=docset.embeddings_model, 
-        vecdb_type=docset.vecdb_type,
-        chunk_size=docset.chunk_size,
-        chunk_overlap=docset.chunk_overlap,
-        file_no=file_no
-    )
-    ingester.ingest()

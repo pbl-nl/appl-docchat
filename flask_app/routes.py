@@ -1,5 +1,6 @@
 
 import json
+from time import sleep
 
 from flask import request, flash, jsonify, current_app
 from flask_login import current_user, login_user
@@ -29,7 +30,6 @@ def auto_login():
             login_user(user, remember_me)
 
 def init_app(app):
-
     '''
     General routes, no permissions required
     '''
@@ -178,6 +178,11 @@ def init_app(app):
         form = DocSetForm()
         return permission.chat_admin(form.handle_request, 'FILES', id)
 
+    @app.route('/docset-chunks/<int:id>')
+    def docset_chunks(id):
+        form = DocSetForm()
+        return permission.chat_admin(form.handle_request, 'CHUNKS', id)
+
     @app.route('/docset-upload-file/<int:id>', methods=['POST'])
     def docset_upload_file(id):
         form = DocSetForm()
@@ -192,6 +197,11 @@ def init_app(app):
     def docset_delete(id):
         form = DocSetForm()
         return permission.chat_admin(form.handle_request, 'DELETE', id)
+
+    @app.route('/docset-status/<int:id>', methods=['POST'])
+    def docset_status(id):
+        form = DocSetForm()
+        return permission.chat_admin(form.handle_request, 'STATUS', id)
 
     # Miscellaneous
     @app.route('/settings')

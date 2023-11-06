@@ -2,14 +2,14 @@ import re
 from os import remove, path, makedirs
 from datetime import datetime
 from shutil import rmtree
-from flask import url_for, redirect, flash, Markup
+from flask import url_for, redirect, flash, Markup, jsonify
 from sqlalchemy import text
 
 from flask_wtf import FlaskForm
 from wtforms import HiddenField, StringField, SubmitField, IntegerField, SelectField, BooleanField
 from wtforms.validators import Length, ValidationError
 
-from flask_app.models import db, Chat, ChatQuestion, DocSet, DocSetFile, UserGroup
+from flask_app.models import db, Chat, ChatQuestion, DocSet, DocSetFile, UserGroup, Job
 from flask_app.helpers import render_chat_template, size_to_human, upload_file
 
 from langchain.vectorstores import Chroma
@@ -62,23 +62,6 @@ class DocSetForm(FlaskForm):
                     checked.append('checked="checked"')
                 else:
                     checked.append('')
-            files, files_ = [], DocSetFile.query.filter(DocSetFile.docset_id == id).order_by(DocSetFile.no).all()
-            obj = DocSet.query.get(id)
-            for file in files_:
-                file_full_name = path.join(obj.get_doc_path(), file.filename)
-                if path.exists(file_full_name):
-                    dt = datetime.fromtimestamp(path.getctime(file_full_name)).strftime('%d-%m-%Y %H:%M:%S')
-                    sz = size_to_human(path.getsize(file_full_name))
-                else:
-                    dt = '<deleted>'
-                    sz = '<deleted>'
-                files.append({
-                    'id': file.id, 
-                    'no': file.no, 
-                    'name': file.filename, 
-                    'dt': dt,
-                    'size': sz,
-                })
 
         # Show the form
         if method == 'GET':
@@ -88,7 +71,7 @@ class DocSetForm(FlaskForm):
                 obj.fields_to_form(self)
 
             # Show the form
-            return render_chat_template('docset.html', form=self, usergroups = usergroups, checked=checked, files=files)
+            return render_chat_template('docset.html', form=self, id=id, usergroups = usergroups, checked=checked)
         
         # Save the form
         if method == 'POST':
@@ -120,10 +103,10 @@ class DocSetForm(FlaskForm):
                 return redirect(url_for('docset', id=id))
             
             # Validation failed: Show the form with the errors
-            return render_chat_template('docset.html', form=self, usergroups = usergroups, checked=checked, files=files)
+            return render_chat_template('docset.html', form=self, id=id, usergroups = usergroups, checked=checked)
 
-        # Show the files from the docset
-        if method == 'FILES':
+        # Show the chunks from the docset
+        if method == 'CHUNKS':
             obj = DocSet.query.get(id)
             obj.fields_to_form(self)
             doc_dir = obj.get_doc_path()
@@ -160,12 +143,36 @@ class DocSetForm(FlaskForm):
                 chunks.append({'chunk1': chunk1, 'chunk2': chunk2, 'chunk3': chunk3, 'metadata': metadata})
                 i += 1
             chunks.sort(key=lambda x: 10000 * x['metadata']['file_no'] + x['metadata']['chunk_no'])
-            return render_chat_template('docset-files.html', form=self, files=files, chunks=chunks)
+            return render_chat_template('docset-chunks.html', form=self, files=files, chunks=chunks)
+
+        # Show the files from the docset
+        if method == 'FILES':
+            return render_chat_template('docset-files.html', form=self, docset_id=id)
 
         # Upload a file to the docset
         if method == 'UPLOAD-FILE':
             obj = DocSet.query.get(id)
             return upload_file(obj)
+
+        # Get file statusses for the docset
+        if method == 'STATUS':
+            obj = DocSet.query.filter(DocSet.id == id).first()
+            if obj:
+                files, files_ = [], DocSetFile.query.outerjoin(Job, Job.bind_to_id == DocSetFile.id).with_entities(DocSetFile.id, DocSetFile.no, DocSetFile.filename, Job.status, Job.status_msg).filter(DocSetFile.docset_id == id).order_by(DocSetFile.no).all()
+                if files_:
+                    for file in files_:
+                        file_full_name = path.join(obj.get_doc_path(), file.filename)
+                        if path.exists(file_full_name):
+                            dt = datetime.fromtimestamp(path.getctime(file_full_name)).strftime('%d-%m-%Y %H:%M:%S')
+                            sz = size_to_human(path.getsize(file_full_name))
+                        else:
+                            dt = '<deleted>'
+                            sz = '<deleted>'
+                        files.append({'id': file[0], 'no': file[1], 'filename': file[2], 'status': file[3] if file[3] else '', 'status_msg': file[4] if file[4] else '', 'dt': dt, 'size': sz})
+                status = {'error': False, 'files': files}
+            else:
+                status = {'error': True, 'msg': 'Document set does not exists (anymore).'}
+            return jsonify(status)
 
         # Delete a file from the docset
         if method == 'DELETE-FILE':

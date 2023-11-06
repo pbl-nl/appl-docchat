@@ -1,125 +1,111 @@
-function page_ready() {
-    var i, srcs = location.search;
-    if (srcs.substring(0, 5) == '?src=') {
-        srcs = srcs.substring(5).split(',');
-    } else {
-        srcs = [];
-        $('#unused-chunks').hide();
-    }
-    for (i = 0; i < srcs.length; i++) {
-        $('[source=' + srcs[i] + ']').addClass('chunk-highlight').click();
-    }
+var status_polling=false;
 
-    // Set vars for 'init search' and 'find overlap'
-    var chunks=$('.chunk'), l = chunks.length, i, chunk_parts = [], chunk_parts_txt = [];
-    for (i = 0; i < chunks.length; i++) {
-        tmp = $(chunks[i]).children();
-        chunk_parts[i] = [$(tmp[0]), $(tmp[1]), $(tmp[2])];
-        chunk_parts_txt[i] = [chunk_parts[i][0].html(), chunk_parts[i][1].html(), chunk_parts[i][2].html()];
-    }
-
-    // init search
-    $('#chunk-search').on('keyup', function(e) {
-        var txt, search = $('#chunk-search').val().toLowerCase();
-
-        e.stopPropagation();
-        for (i = 0; i < l; i++) {
-            txt = (chunk_parts_txt[i][0] + chunk_parts_txt[i][1] + chunk_parts_txt[i][2]).toLowerCase();
-            if (txt.indexOf(search) >= 0) {
-                $(chunks[i]).parent().removeClass('chunk-hide-all');
+function pol_status() {
+    status_polling = true;
+    var url = location.origin + '/docset-status/' + $('#id').val();
+    $.ajax({
+        type: "POST",
+        url: url,
+        success: function (data) {
+            if (data.error) {
+                chat_dialog('Error', data.msg, ['Ok', function() {window.location.reload();}]);
             } else {
-                $(chunks[i]).parent().addClass('chunk-hide-all');
+                var i, file, tr;
+                var pol_again = false, pol_count = 0;
+            
+                $('[id^=file-tr-]').addClass('mark-as-deleted');
+                for (i = 0; i < data.files.length; i++) {
+                    file = data.files[i];
+                    tr = $('#file-tr-' + file.id);
+                    if (tr.length == 0) {
+                        $('#file-table').append('<tr id="file-tr-' + file.id + '"><td id="f-' + file.id + '"></td><td id="file_name_' + file.id + '">' + file.filename + '</td><td style="white-space: nowrap;">' + file.dt + '</td><td>' + file.size + '</td><td id="status-' + file.id + '"></td><td><a href="javascript:docset_delete_file(' + file.id + ');" class="btn btn-secondary btn-sm">Delete</a></td></tr>');
+                        tr = $('#file-tr-' + file.id);
+                    }
+                    // Set F column
+                    $('#f-' + file.id).html('F' + file.no);
+                    // Set Status column
+                    $('#status-' + file.id).html(file.status);
+                    if (file.status == 'Chunking') {
+                        $('#status-' + file.id).addClass('blink');
+                    } else {
+                        $('#status-' + file.id).removeClass('blink');
+                    }
+
+                    if (file.status == 'Pending' || file.status == 'Chunking') {
+                        pol_again = true;
+                        pol_count++;
+                    }
+                }
+
+                if (pol_again) {
+                    $('#page-message').html(pol_count + ' File' + (pol_count == 1 ? ' is':'s are') +' being processed in the background.');
+                    $('#flash-message-container').show();
+                    setTimeout(pol_status, 2000);
+                } else {
+                    status_polling = false;
+                    $('#flash-message-container').hide();
+                }
             }
+        },
+        error: function(e) {
+            chat_dialog('Error', 'Error in server-connection', ['Ok', function() {}]);
         }
-        return false;
     });
+}
 
-    // find overlap
-    var j, prev_chunk_txt, this_chunk_txt
-    for (i = 1; i < l; i++) { // start at 1: Find overlap between i - 1 and i
-        j = 1;
-        prev_chunk_txt = chunk_parts_txt[i - 1][0] + chunk_parts_txt[i - 1][1] + chunk_parts_txt[i - 1][2];
-        this_chunk_txt = chunk_parts_txt[i][0] + chunk_parts_txt[i][1] + chunk_parts_txt[i][2];
-        while (j < prev_chunk_txt.length && j < this_chunk_txt.length) {
-            if (prev_chunk_txt.slice(-j) == this_chunk_txt.substring(0, j)) {
-                // There is an overlap of j characters
-
-                // Handle the previous chunk
-                if (j <= chunk_parts_txt[i - 1][2].length) { // Overlap within right span
-                    chunk_parts[i - 1][2].html(chunk_parts_txt[i - 1][2].substring(0, chunk_parts_txt[i - 1][2].length - j) + '<span class="chunk-overlap-end">' + chunk_parts_txt[i - 1][2].slice(-j) + '</span>');
-                } else if (j <= chunk_parts_txt[i - 1][1].length + chunk_parts_txt[i - 1][2].length) { // overlap in middle and right span
-                    jj = j - chunk_parts_txt[i - 1][2].length;
-                    chunk_parts[i - 1][1].html(chunk_parts_txt[i - 1][1].substring(0, chunk_parts_txt[i - 1][1].length - jj) + '<span class="chunk-overlap-end">' + chunk_parts_txt[i - 1][1].slice(-jj) + '</span>');
-                    chunk_parts[i - 1][2].html('<span class="chunk-overlap-end">' + chunk_parts_txt[i - 1][2] + '</span>');
-                } else { // Overlap in all spans
-                    jj = j - chunk_parts_txt[i - 1][1].length - chunk_parts_txt[i - 1][2].length;
-                    chunk_parts[i - 1][0].html(chunk_parts_txt[i - 1][0].substring(0, chunk_parts_txt[i - 1][0].length - jj) + '<span class="chunk-overlap-end">' + chunk_parts_txt[i - 1][0].slice(-jj) + '</span>');
-                    chunk_parts[i - 1][1].html('<span class="chunk-overlap-end">' + chunk_parts_txt[i - 1][1] + '</span>');
-                    chunk_parts[i - 1][2].html('<span class="chunk-overlap-end">' + chunk_parts_txt[i - 1][2] + '</span>');
-                }
-
-                // handle this chunk
-                if (j <= chunk_parts_txt[i][0].length) { // Overlap within left span
-                    chunk_parts[i][0].html('<span class="chunk-overlap-start chunk-overlap-show">' + chunk_parts_txt[i][0].substring(0, j) + '</span>' + chunk_parts_txt[i][0].slice(-j));
-                } else if (j <= chunk_parts_txt[i][0].length + chunk_parts_txt[i][1].length) { // overlap in left and middle span
-                    jj = j - chunk_parts_txt[i][0].length;
-                    chunk_parts[i][0].html('<span class="chunk-overlap-start chunk-overlap-show">' + chunk_parts_txt[i][0] + '</span>');
-                    chunk_parts[i][1].html('<span class="chunk-overlap-start chunk-overlap-show">' + chunk_parts_txt[i][1].substring(0, jj) + '</span>' + chunk_parts_txt[i][1].slice(-jj));
-                } else { // Overlap in all spans
-                    jj = j - chunk_parts_txt[i][0].length - chunk_parts_txt[i][1].length;
-                    chunk_parts[i][0].html('<span class="chunk-overlap-start chunk-overlap-show">' + chunk_parts_txt[i][0] + '</span>');
-                    chunk_parts[i][1].html('<span class="chunk-overlap-start chunk-overlap-show">' + chunk_parts_txt[i][1] + '</span>');
-                    chunk_parts[i][2].html('<span class="chunk-overlap-start chunk-overlap-show">' + chunk_parts_txt[i][2].substring(0, jj) + '</span>' + chunk_parts_txt[i][2].slice(-jj));
-                }
-                break;
-            }
-            j++;
-        }
+function page_ready() {
+    if (parseInt($('#id').val()) >= 1) {
+        var dz = $('#dropzone').dropzone({ 
+            url: '/docset-upload-file/' + $('#id').val(),
+            withCredentials: true,
+            maxFilesize: 16384,
+            chunking: true,
+            forceChunking: true,
+            chunkSize: 500000,
+            retryChunks: true,
+            retryChunksLimit: 3,
+            parallelChunkUploads: false, // Very important! If set to true, the upload on larger files fails.
+            renameFile: function(f) {
+                return f.lastModified+'-'+f.name;
+            },
+            init: function() {
+                var that = this;
+                that.on('uploadprogress', function(file, progress, bytesSent) {
+                    if (progress == 100) {
+                        // $(file.previewElement).find('.dz-progress').css('opacity', 0);
+                        // $(file.previewElement).find('.dz-success-mark').css({'opacity': 1, 'margin': '22px 0 0 -42px', 'font-size': '20px', 'color': 'black'}).addClass('blink').html('Chunking');
+                        if (!status_polling) {
+                            pol_status();
+                        }
+                    }
+                });
+                that.on('success', function(file, response) {
+                    // remove visible file/element in dropzone container
+                    that.removeFile(file);
+                    if (that.files.length == 0) { // All files are uploaded
+                        /*
+                        chat_dialog('Upload', 'Upload completed.',['View chunks', function() {
+                                url = location.origin + '/docset-files/' + $('#id').val();
+                                location.assign(url);
+                            }], ['Ok', function(){
+                                location.reload();
+                            }]);
+                        */
+                    }
+                });
+                that.on('error', function(file, response) {
+                    // remove visible file/element in dropzone container
+                    that.removeFile(file);
+                    chat_dialog('Upload', 'Error during upload.',['Ok', function() {}]);
+                });
+            },
+        }).addClass('dropzone');
+        pol_status();
     }
 }
 
-function chunk_search_clear() {
-    $('#chunk-search').val('');
-    $('.chunk-outer').removeClass('chunk-hide-all');
-}
-
-function unused_chunks() {
-    $('.chunk-outer:not(.chunk-highlight)').toggle();
-    var el = $('#unused-chunks-hide');
-    if (el.attr('chunk_hide') == 'hide') {
-        el.attr('chunk_hide','show').html('Visible');
-    } else {
-        el.attr('chunk_hide','hide').html('Hidden');
-    }    
-}
-
-function middle_sections() {
-    var el = $('#middle-sections-hide');
-    if (el.attr('middle_hide') == 'show') {
-        $('.chunk-outer').addClass('chunk-hide');
-        el.attr('middle_hide','hide').html('Hidden');
-    } else {
-        $('.chunk-outer').removeClass('chunk-hide');
-        el.attr('middle_hide','show').html('Visible');
-    }    
-}
-
-function show_overlap() {
-    var el = $('#show_overlap'), show = el.attr('show_overlap'), first=false, last=false, txt;
-    switch (show) {
-        case 'start': txt='End';   show='end';   last=true;             break;
-        case 'end':   txt='Both';  show='both';  first=true; last=true; break;
-        case 'both':  txt='Start'; show='start'; first=true;            break;
-    }
-    el.html(txt).attr('show_overlap', show);
-    if (first) {
-        $('.chunk-overlap-start').addClass('chunk-overlap-show');
-    } else {
-        $('.chunk-overlap-start').removeClass('chunk-overlap-show');
-    }
-    if (last) {
-        $('.chunk-overlap-end').addClass('chunk-overlap-show');
-    } else {
-        $('.chunk-overlap-end').removeClass('chunk-overlap-show');
-    }
+function docset_delete_file(file_id) {
+    msg='Delete file \'' + $('#file_name_' + file_id).html() + '\'?';
+    url = location.origin + '/docset-delete-file/' + file_id;
+    chat_delete(msg, url);
 }

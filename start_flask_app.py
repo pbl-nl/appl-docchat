@@ -5,7 +5,7 @@ from flask_login import LoginManager
 
 from flask_app import routes
 from flask_app.models import db, Setting, User
-
+from flask_app.background_jobs import background_jobs
 
 if __name__ == '__main__':
     
@@ -27,9 +27,11 @@ if __name__ == '__main__':
     print('Starting NMDC chat:\nEnvironment:\t\t' + app.config['ENV'] + '\nDatabase connection string:\t' + app.config['SQLALCHEMY_DATABASE_URI'], flush=True)
 
     app.app_context().push()
-
+    
     db.init_app(app)
     db.create_all()
+
+    background_jobs.init_app(app)
     
     # Set required settings if they do not exists, or update (without value) if they do exist.
     defaults = [
