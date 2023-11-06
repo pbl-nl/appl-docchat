@@ -2,7 +2,7 @@ from typing import Dict, List, Tuple
 from loguru import logger
 from pypdf import PdfReader
 # local imports
-from ingest_utils import IngestUtils
+from ingest.ingest_utils import IngestUtils
 
 
 class PdfParser:
