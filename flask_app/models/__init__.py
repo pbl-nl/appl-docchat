@@ -183,6 +183,7 @@ class Job(db.Model):
     bind_to_id = Column(Integer, default=0)
     dt = Column(DateTime, default=func.now())
     dt_last = Column(DateTime, default=func.now(), onupdate=func.now())
+    status_system = db.Column(db.String(16), nullable=True)
     status = db.Column(db.String(16), nullable=True)
     status_msg = db.Column(db.String(128), nullable=True)
     job_type = db.Column(db.String(16), nullable=True)

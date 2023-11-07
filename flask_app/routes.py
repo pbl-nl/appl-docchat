@@ -12,7 +12,7 @@ from flask_app.forms.usergroup import UserGroupForm
 from flask_app.forms.docset import DocSetForm
 from flask_app.forms.setting import SettingForm
 from flask_app.forms.chat import ChatForm
-from flask_app.models import db, User, UserGroup, DocSet, Setting
+from flask_app.models import db, User, UserGroup, DocSet, Setting, Job
 from flask_app.helpers import render_chat_template, getSetting
 
 
@@ -204,6 +204,11 @@ def init_app(app):
         return permission.chat_admin(form.handle_request, 'STATUS', id)
 
     # Miscellaneous
+    @app.route('/jobs')
+    def jobs():
+        jobs = Job.query.order_by(Job.id).all()
+        return permission.chat_admin(render_chat_template, 'jobs.html', jobs=jobs)
+
     @app.route('/settings')
     def settings():
         settings = Setting.query.all()

@@ -24,7 +24,7 @@ if __name__ == '__main__':
         print('Error: Unable to start; Invalid ENV specified in flask_app\\config.py.')
         exit()
 
-    print('Starting NMDC chat:\nEnvironment:\t\t' + app.config['ENV'] + '\nDatabase connection string:\t' + app.config['SQLALCHEMY_DATABASE_URI'], flush=True)
+    print('Starting NMDC chat:\nEnvironment:\t\t\t' + app.config['ENV'] + '\nDatabase connection string:\t' + app.config['SQLALCHEMY_DATABASE_URI'], flush=True)
 
     app.app_context().push()
     

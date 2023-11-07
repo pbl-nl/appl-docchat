@@ -17,7 +17,7 @@
                     {% endfor %}
                     </ul>
                 {% endif %}
-            </td><td><a href="{{ url_for('docset_files', id=id) }}" class="btn btn-primary btn-sm" style="margin-left: 40px;">Files</a><a href="{{ url_for('docset_chunks', id=id) }}" class="btn btn-primary btn-sm" style="margin-left: 40px;">Chunks</a></td></tr>
+            </td>{% if form.name.data %}<td><a href="{{ url_for('docset_files', id=id) }}" class="btn btn-primary btn-sm" style="margin-left: 40px;">Files</a><a href="{{ url_for('docset_chunks', id=id) }}" class="btn btn-primary btn-sm" style="margin-left: 40px;">Chunks</a></td>{% endif %}</tr>
             <tr><td colspan="2"><h6>Model parameters</h6></td></tr>
             <tr><td>{{ form.llm_type.label }}</td><td>{{ form.llm_type }}
                 {% if form.llm_type.errors %}

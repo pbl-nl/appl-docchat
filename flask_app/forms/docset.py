@@ -1,5 +1,5 @@
 import re
-from os import remove, path, makedirs
+from os import path, makedirs
 from datetime import datetime
 from shutil import rmtree
 from flask import url_for, redirect, flash, Markup, jsonify
@@ -11,10 +11,11 @@ from wtforms.validators import Length, ValidationError
 
 from flask_app.models import db, Chat, ChatQuestion, DocSet, DocSetFile, UserGroup, Job
 from flask_app.helpers import render_chat_template, size_to_human, upload_file
+from flask_app.background_jobs import background_jobs
 
 from langchain.vectorstores import Chroma
-from langchain.embeddings.openai import OpenAIEmbeddings
-from langchain.embeddings.huggingface import HuggingFaceEmbeddings
+#from langchain.embeddings.openai import OpenAIEmbeddings
+#from langchain.embeddings.huggingface import HuggingFaceEmbeddings
 
 '''
 This form contains all for inserting, updating and deleting a docset
@@ -124,11 +125,11 @@ class DocSetForm(FlaskForm):
                 #f = open(file_full_name, 'r')
                 #to_document += f.read().replace('\r\n', '\n')
                 #f.close()
-            embeddings = OpenAIEmbeddings()
+            #embeddings = OpenAIEmbeddings()
             vectordb_folder = obj.create_vectordb_name()
             vector_store = Chroma(
                             collection_name=obj.get_collection_name(),
-                            embedding_function=embeddings,
+                            # embedding_function=embeddings,
                             persist_directory=vectordb_folder,
                         )
             sources = vector_store.get()
@@ -158,7 +159,7 @@ class DocSetForm(FlaskForm):
         if method == 'STATUS':
             obj = DocSet.query.filter(DocSet.id == id).first()
             if obj:
-                files, files_ = [], DocSetFile.query.outerjoin(Job, Job.bind_to_id == DocSetFile.id).with_entities(DocSetFile.id, DocSetFile.no, DocSetFile.filename, Job.status, Job.status_msg).filter(DocSetFile.docset_id == id).order_by(DocSetFile.no).all()
+                files, files_ = [], DocSetFile.query.outerjoin(Job, Job.bind_to_id == DocSetFile.id).with_entities(DocSetFile.id, DocSetFile.no, DocSetFile.filename, Job.status_system, Job.status, Job.status_msg).filter(DocSetFile.docset_id == id).order_by(DocSetFile.no).all()
                 if files_:
                     for file in files_:
                         file_full_name = path.join(obj.get_doc_path(), file.filename)
@@ -166,9 +167,9 @@ class DocSetForm(FlaskForm):
                             dt = datetime.fromtimestamp(path.getctime(file_full_name)).strftime('%d-%m-%Y %H:%M:%S')
                             sz = size_to_human(path.getsize(file_full_name))
                         else:
-                            dt = '<deleted>'
-                            sz = '<deleted>'
-                        files.append({'id': file[0], 'no': file[1], 'filename': file[2], 'status': file[3] if file[3] else '', 'status_msg': file[4] if file[4] else '', 'dt': dt, 'size': sz})
+                            dt = '- deleted -'
+                            sz = '- deleted -'
+                        files.append({'id': file[0], 'no': file[1], 'filename': file[2], 'status_system': file[3] if file[3] else 'Done', 'status': file[4] if file[4] else '', 'status_msg': file[5] if file[5] else '', 'dt': dt, 'size': sz})
                 status = {'error': False, 'files': files}
             else:
                 status = {'error': True, 'msg': 'Document set does not exists (anymore).'}
@@ -176,33 +177,8 @@ class DocSetForm(FlaskForm):
 
         # Delete a file from the docset
         if method == 'DELETE-FILE':
-            obj = DocSetFile.query.get(file_id)
-            if obj:
-                docset = DocSet.query.get(obj.docset_id)
-                if docset:
-                    vectordb_folder = docset.create_vectordb_name()
-                    vector_store = Chroma(
-                                    collection_name=docset.get_collection_name(),
-                                    persist_directory=vectordb_folder,
-                                )
-                    sources = vector_store.get()
-                    i, ids_to_delete = 0, []
-                    for vec_id in sources['ids']:
-                        if sources['metadatas'][i]['file_no'] == obj.no:
-                            ids_to_delete.append(vec_id)
-                        i += 1
-                    vector_store.delete(ids=ids_to_delete)
-                    vector_store.persist()
-                    remove(path.join(docset.get_doc_path(), obj.filename))
-                    flash('The file \'' + obj.filename + '\' is deleted.', 'success')
-                    DocSetFile.query.filter(DocSetFile.id == obj.id).delete()
-                    db.session.commit()
-                    flash('The file is deleted.', 'success')
-                    return redirect(url_for('docset', id=docset.id))
-                flash('Error: The document set is no longer in the database.', 'danger')
-                return redirect(url_for('docset', id=obj.docset_id))
-            flash('Error: The file is no longer in the database.', 'danger')
-            return redirect(url_for('docsets'))
+            background_jobs.new_job('Delete file', file_id)
+            return jsonify({'start_polling': True}) #redirect(url_for('docsets'))
 
         # Delete the docset
         if method == 'DELETE':
