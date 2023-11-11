@@ -115,6 +115,7 @@ def ingest(docset, filename, file_no):
         docset.create_vectordb_name(), 
         embeddings_provider=docset.embeddings_provider, 
         embeddings_model=docset.embeddings_model, 
+        text_splitter_method=docset.text_splitter_method,
         vecdb_type=docset.vecdb_type,
         chunk_size=docset.chunk_size,
         chunk_overlap=docset.chunk_overlap,

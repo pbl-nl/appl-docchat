@@ -52,6 +52,6 @@ function page_ready() {
 
 function docset_delete_file(file_id) {
     msg='Delete file \'' + $('#file_name_' + file_id).html() + '\'?';
-    url = location.origin + '/docset-delete-file/' + file_id;
+    url = location.origin + '/docset-delete-file/' + $('#id').val() + '/' + file_id;
     chat_delete(msg, url);
 }

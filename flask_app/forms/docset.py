@@ -14,6 +14,7 @@ from flask_app.helpers import render_chat_template, size_to_human, upload_file
 
 from langchain.vectorstores import Chroma
 from langchain.embeddings.openai import OpenAIEmbeddings
+from langchain.embeddings.huggingface import HuggingFaceEmbeddings
 
 '''
 This form contains all for inserting, updating and deleting a docset
@@ -26,8 +27,9 @@ class DocSetForm(FlaskForm):
     name = StringField('Name', default='', validators=[Length(min=3, max=64)], render_kw={'size': 40})
     llm_type = SelectField('LLM type', default='chatopenai', choices=['chatopenai'])
     llm_modeltype = SelectField('LLM model type', default='gpt35', choices=['gpt35', 'gpt35_16', 'gpt4'])
-    embeddings_provider = SelectField('Embeddings provider', default='openai', choices=['openai'])
-    embeddings_model = SelectField('Embeddings model', default='text-embedding-ada-002', choices=['text-embedding-ada-002'])
+    embeddings_provider = SelectField('Embeddings provider', default='openai', choices=['openai', 'hugging_face'])
+    embeddings_model = SelectField('Embeddings model', default='text-embedding-ada-002', choices=['text-embedding-ada-002', 'all-mpnet-base-v2'])
+    text_splitter_method = SelectField('Text splitter method', default='NLTKTextSplitter', choices=['NLTKTextSplitter', 'RecursiveCharacterTextSplitter'])
     chain = SelectField('Chain', default='conversationalretrievalchain', choices=['conversationalretrievalchain'])
     chain_type = SelectField('Chain type', default='stuff', choices=['stuff'])
     chain_verbosity = BooleanField('Chain verbosity', default=False, render_kw={'class': 'yes-checkbox'})
@@ -49,7 +51,7 @@ class DocSetForm(FlaskForm):
 
 
     # Handle the request (from routes.py) for this form
-    def handle_request(self, method, id):
+    def handle_request(self, method, id, file_id=0):
 
         usergroups, checked, files = [], [], []
 
@@ -65,12 +67,18 @@ class DocSetForm(FlaskForm):
             obj = DocSet.query.get(id)
             for file in files_:
                 file_full_name = path.join(obj.get_doc_path(), file.filename)
+                if path.exists(file_full_name):
+                    dt = datetime.fromtimestamp(path.getctime(file_full_name)).strftime('%d-%m-%Y %H:%M:%S')
+                    sz = size_to_human(path.getsize(file_full_name))
+                else:
+                    dt = '<deleted>'
+                    sz = '<deleted>'
                 files.append({
                     'id': file.id, 
                     'no': file.no, 
                     'name': file.filename, 
-                    'dt': datetime.fromtimestamp(path.getctime(file_full_name)).strftime('%d-%m-%Y %H:%M:%S'),
-                    'size': size_to_human(path.getsize(file_full_name)),
+                    'dt': dt,
+                    'size': sz,
                 })
 
         # Show the form
@@ -162,15 +170,13 @@ class DocSetForm(FlaskForm):
 
         # Delete a file from the docset
         if method == 'DELETE-FILE':
-            obj = DocSetFile.query.get(id)
+            obj = DocSetFile.query.get(file_id)
             if obj:
                 docset = DocSet.query.get(obj.docset_id)
                 if docset:
-                    embeddings = OpenAIEmbeddings()
                     vectordb_folder = docset.create_vectordb_name()
                     vector_store = Chroma(
                                     collection_name=docset.get_collection_name(),
-                                    embedding_function=embeddings,
                                     persist_directory=vectordb_folder,
                                 )
                     sources = vector_store.get()
@@ -180,6 +186,7 @@ class DocSetForm(FlaskForm):
                             ids_to_delete.append(vec_id)
                         i += 1
                     vector_store.delete(ids=ids_to_delete)
+                    vector_store.persist()
                     remove(path.join(docset.get_doc_path(), obj.filename))
                     flash('The file \'' + obj.filename + '\' is deleted.', 'success')
                     DocSetFile.query.filter(DocSetFile.id == obj.id).delete()

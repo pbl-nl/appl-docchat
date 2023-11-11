@@ -27,6 +27,7 @@ dependencies:
     - blinker==1.6.2
     - cachetools==5.3.1
     - certifi==2023.5.7
+    - chardet==5.2.0
     - charset-normalizer==3.2.0
     - chromadb==0.3.29
     - click==8.1.6
@@ -38,8 +39,10 @@ dependencies:
     - decorator==5.1.1
     - dill==0.3.7
     - duckdb==0.8.1
+    - emoji==2.8.0
     - fastapi==0.85.1
     - filelock==3.12.4
+    - filetype==1.2.0
     - flatbuffers==23.5.26
     - frozenlist==1.4.0
     - fsspec==2023.6.0
@@ -60,8 +63,10 @@ dependencies:
     - jsonschema==4.18.4
     - jsonschema-specifications==2023.7.1
     - langchain==0.0.306
+    - langdetect==1.0.9
     - langsmith==0.0.41
     - loguru==0.7.0
+    - lxml==4.9.3
     - lz4==4.3.2
     - markdown-it-py==3.0.0
     - markupsafe==2.1.3
@@ -95,11 +100,15 @@ dependencies:
     - pyreadline3==3.4.1
     - pysbd==0.3.4
     - python-dateutil==2.8.2
+    - python-docx==1.1.0
     - python-dotenv==1.0.0
+    - python-iso639==2023.6.15
+    - python-magic==0.4.27
     - pytz==2023.3
     - pytz-deprecation-shim==0.1.0.post0
     - pyyaml==6.0.1
     - ragas==0.0.16
+    - rapidfuzz==3.5.2
     - referencing==0.30.0
     - regex==2023.6.3
     - requests==2.31.0
@@ -117,6 +126,7 @@ dependencies:
     - starlette==0.20.4
     - streamlit==1.24.1
     - sympy==1.12
+    - tabulate==0.9.0
     - tenacity==8.2.2
     - threadpoolctl==3.2.0
     - tiktoken==0.4.0
@@ -132,6 +142,7 @@ dependencies:
     - typing-inspect==0.9.0
     - tzdata==2023.3
     - tzlocal==4.3.1
+    - unstructured==0.10.28
     - urllib3==2.0.3
     - uvicorn==0.23.1
     - validators==0.20.0

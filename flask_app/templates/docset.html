@@ -57,6 +57,15 @@
                             </ul>
                         {% endif %}
                     </td></tr>
+                    <tr><td>{{ form.text_splitter_method.label }}</td><td>{{ form.text_splitter_method }}
+                        {% if form.text_splitter_method.errors %}
+                            <ul class="errors list-inline text-danger form-text">
+                            {% for error in form.text_splitter_method.errors %}
+                                <li>{{ error }}</li>
+                            {% endfor %}
+                            </ul>
+                        {% endif %}
+                    </td></tr>
                     <tr><td>{{ form.chain.label }}</td><td>{{ form.chain }}
                         {% if form.chain.errors %}
                             <ul class="errors list-inline text-danger form-text">

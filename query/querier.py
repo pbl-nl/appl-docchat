@@ -2,6 +2,7 @@ from dotenv import load_dotenv
 from langchain.chains import ConversationalRetrievalChain
 from langchain.chat_models import ChatOpenAI
 from langchain.embeddings.openai import OpenAIEmbeddings
+from langchain.embeddings.huggingface import HuggingFaceEmbeddings
 from langchain.schema import AIMessage, HumanMessage
 from langchain.vectorstores.chroma import Chroma
 from loguru import logger
@@ -35,6 +36,23 @@ class Querier:
         self.local_api_url = settings.LOCAL_API_URL if local_api_url is None and settings.LOCAL_API_URL is not None else local_api_url
         self.chat_history = []
 
+    def make_agent(self, input_folder, vectordb_folder):
+        """Create a langchain agent with selected llm and tools"""
+        #
+        # TODO
+        #   - generalise code from make_chain
+        #   - implement sample tools (wikipedia (standard), geocoder, soilgrids)
+        #       see:
+        #           https://python.langchain.com/docs/integrations/tools/wikipedia
+        #           https://python.langchain.com/docs/integrations/tools/requests
+        #           https://python.langchain.com/docs/modules/agents/tools/custom_tools (<-)
+        #   - implement dynamic tool selection mechanism
+        #   - create llm, tools, and initialise agent
+        #   - add __init__ parameters for agent (maybe rename some chain related params?)
+        #   - see usages of make_chain where to select between using chain and agent
+        #   - add evaluation questions and answers, e.g. based on detailed spatial location context
+        #
+        return
 
     def make_chain(self, input_folder, vectordb_folder):
         self.input_folder = input_folder
@@ -83,6 +101,7 @@ class Querier:
             embeddings = OpenAIEmbeddings(model=self.embeddings_model, client=None)
             logger.info("Loaded openai embeddings")
 
+<<<<<<< HEAD
         if self.embeddings_provider == "local_embeddings":
             if self.local_api_url is not None: # If API URL is defined, use it
                 embeddings = OllamaEmbeddings(
@@ -92,6 +111,10 @@ class Querier:
                 embeddings = OllamaEmbeddings( # Otherwise, use localhost
                     model=self.embeddings_model)
             logger.info("Loaded local embeddings: " + self.embeddings_model)
+=======
+        if self.embeddings_provider == "huggingface":
+            embeddings = HuggingFaceEmbeddings(model_name=self.embeddings_model)
+>>>>>>> origin/main
 
         if self.vecdb_type == "chromadb":
             vector_store = Chroma(
@@ -123,7 +146,7 @@ class Querier:
         self.chat_history.append(HumanMessage(content=question))
         self.chat_history.append(AIMessage(content=answer))
         return response
-    
+
     def clear_history(self):
         # used by "Clear Conversation" button
         self.chat_history = []

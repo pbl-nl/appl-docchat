@@ -32,11 +32,17 @@ LLM_TYPE = "chatopenai"
 # "gpt4": 8192 tokens
 # "GoogleFlan": ? tokens
 # "llama2": ? tokens
+# LLM_MODEL_TYPE must be one of "llama2", "GoogleFlan"
 LLM_MODEL_TYPE = "gpt35"
-# EMBEDDINGS_PROVIDER must be one of: "openai", 
+# EMBEDDINGS_PROVIDER must be one of: "openai", "huggingface"
 EMBEDDINGS_PROVIDER = "openai"
-# EMBEDDINGS_MODEL must be one of: "text-embedding-ada-002", 
+# EMBEDDINGS_MODEL must be one of: "text-embedding-ada-002", "all-mpnet-base-v2"
+# If EMBEDDINGS_MODEL is "all-mpnet-base-v2" then EMBEDDINGS_PROVIDER must be "huggingface"
 EMBEDDINGS_MODEL = "text-embedding-ada-002"
+# TEXT_SPLITTER_METHOD, one of: 
+# "RecursiveCharacterTextSplitter" (cut words/sentences to achieve chunk size) or 
+# "NLTKTextSplitter" (keep full sentences even if chunk size is exceeded)
+TEXT_SPLITTER_METHOD = "NLTKTextSplitter"
 # CHAIN_NAME must be one of: "conversationalretrievalchain", 
 CHAIN_NAME = "conversationalretrievalchain"
 # CHAIN_TYPE must be one of: "stuff", 
