@@ -101,20 +101,18 @@ class Querier:
             embeddings = OpenAIEmbeddings(model=self.embeddings_model, client=None)
             logger.info("Loaded openai embeddings")
 
-<<<<<<< HEAD
         if self.embeddings_provider == "local_embeddings":
             if self.local_api_url is not None: # If API URL is defined, use it
                 embeddings = OllamaEmbeddings(
-                    base_url=self.local_api_url,
-                    model=self.embeddings_model)
+                    base_url = self.local_api_url,
+                    model = self.embeddings_model)
             else:
                 embeddings = OllamaEmbeddings( # Otherwise, use localhost
-                    model=self.embeddings_model)
+                    model = self.embeddings_model)
             logger.info("Loaded local embeddings: " + self.embeddings_model)
-=======
+
         if self.embeddings_provider == "huggingface":
             embeddings = HuggingFaceEmbeddings(model_name=self.embeddings_model)
->>>>>>> origin/main
 
         if self.vecdb_type == "chromadb":
             vector_store = Chroma(

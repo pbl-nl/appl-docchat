@@ -20,10 +20,11 @@ EVAL_FILE_NAME = "eval.json"
 CHAIN_VERBOSITY = False
 
 #### the settings below can be used for testing ####
-# LLM_TYPE must be one of: "chatopenai", "huggingface"
+# LLM_TYPE must be one of: "chatopenai", "huggingface", "local_llm"
 LLM_TYPE = "chatopenai"
 # if LLM_TYPE is "chatopenai" then LLM_MODEL_TYPE must be one of: "gpt35", "gpt35_16", "gpt4"
 # if LLM_TYPE is "huggingface" then LLM_MODEL_TYPE must be one of "llama2", "GoogleFlan"
+# if LLM_TYPE is "local_llm" then LLM_MODEL_TYPE must be one of the local models, e.g. "llama2"
 # "llama2" requires Huggingface Pro Account and access to the llama2 model https://huggingface.co/meta-llama/Llama-2-7b-chat-hf
 # note: llama2 is not fully tested, the last step was not undertaken, because no HF Pro account was available for the developer
 # Context window sizes are currently:
@@ -34,7 +35,7 @@ LLM_TYPE = "chatopenai"
 # "llama2": ? tokens
 # LLM_MODEL_TYPE must be one of "llama2", "GoogleFlan"
 LLM_MODEL_TYPE = "gpt35"
-# EMBEDDINGS_PROVIDER must be one of: "openai", "huggingface"
+# EMBEDDINGS_PROVIDER must be one of: "openai", "huggingface", "local_embeddings"
 EMBEDDINGS_PROVIDER = "openai"
 # EMBEDDINGS_MODEL must be one of: "text-embedding-ada-002", "all-mpnet-base-v2"
 # If EMBEDDINGS_MODEL is "all-mpnet-base-v2" then EMBEDDINGS_PROVIDER must be "huggingface"
