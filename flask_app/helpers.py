@@ -102,3 +102,22 @@ def upload_file(docset):
         status = 'Uploading chunk ' + str(1 + current_chunk) + '/' + request.form['dztotalchunkcount']
     
     return jsonify({'id': docset.id, 'status': status})
+<<<<<<< HEAD
+=======
+
+
+def ingest(docset, filename, file_no):
+    ingester = Ingester(
+        docset.get_collection_name(), 
+        path.join(docset.get_doc_path(), filename),
+        docset.create_vectordb_name(), 
+        embeddings_provider=docset.embeddings_provider, 
+        embeddings_model=docset.embeddings_model, 
+        text_splitter_method=docset.text_splitter_method,
+        vecdb_type=docset.vecdb_type,
+        chunk_size=docset.chunk_size,
+        chunk_overlap=docset.chunk_overlap,
+        file_no=file_no
+    )
+    ingester.ingest()
+>>>>>>> main

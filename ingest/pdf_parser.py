@@ -1,12 +1,6 @@
-import os
-import re
-# from datetime import date
-from typing import Callable, Dict, List, Tuple
-import langchain.docstore.document as docstore
-import langchain.text_splitter as splitter
+from typing import Dict, List, Tuple
 from loguru import logger
 from pypdf import PdfReader
-import settings
 # local imports
 from ingest.ingest_utils import IngestUtils
 
@@ -14,10 +8,11 @@ from ingest.ingest_utils import IngestUtils
 class PdfParser:
     """A parser for extracting text from PDF documents."""
 
-    def __init__(self, chunk_size: int, chunk_overlap: int, file_no: int):
+    def __init__(self, chunk_size: int, chunk_overlap: int, file_no: int, text_splitter_method: str):
         self.chunk_size = chunk_size
         self.chunk_overlap = chunk_overlap
         self.file_no = file_no
+        self.text_splitter_method = text_splitter_method
 
     def parse_pdf(self, pdf_file_path: str) -> Tuple[List[Tuple[int, str]], Dict[str, str]]:
         """Extract and return the pages and metadata from the PDF."""
@@ -28,7 +23,7 @@ class PdfParser:
     def extract_metadata_from_pdf(self, pdf_file_path: str) -> Dict[str, str]:
         """Extract and return the metadata from the PDF."""
         logger.info("Extracting metadata")
-        ingestutils = IngestUtils(self.chunk_size, self.chunk_overlap, self.file_no)
+        ingestutils = IngestUtils(self.chunk_size, self.chunk_overlap, self.file_no, self.text_splitter_method)
 
         with open(pdf_file_path, "rb") as pdf_file:
             reader = PdfReader(pdf_file)

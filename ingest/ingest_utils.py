@@ -1,6 +1,4 @@
-import os
 import re
-# from datetime import date
 from typing import Callable, Dict, List, Tuple
 import langchain.docstore.document as docstore
 import langchain.text_splitter as splitter
@@ -11,10 +9,11 @@ class IngestUtils:
     """Utils for ingesting different types of documents. 
     This includes cutting text into chunks and cleaning text."""
 
-    def __init__(self, chunk_size: int, chunk_overlap: int, file_no: int):
+    def __init__(self, chunk_size: int, chunk_overlap: int, file_no: int, text_splitter_method: str):
         self.chunk_size = chunk_size
         self.chunk_overlap = chunk_overlap
         self.file_no = file_no
+        self.text_splitter_method = text_splitter_method
     
     def getattr_or_default(self, obj, attr, default=None):
         """Get an attribute from an object, returning a default value if the attribute """
@@ -70,11 +69,18 @@ class IngestUtils:
         chunk_no = 0
         for page_num, page in text:
             logger.info(f"Splitting page {page_num}")
-            text_splitter = splitter.RecursiveCharacterTextSplitter(
-                chunk_size=self.chunk_size,
-                separators=["\n\n", "\n", ".", "!", "?", ",", " ", ""],
-                chunk_overlap=self.chunk_overlap,
-            )
+            if self.text_splitter_method == "NLTKTextSplitter":
+                text_splitter = splitter.NLTKTextSplitter(
+                    chunk_size=self.chunk_size,
+                    chunk_overlap=self.chunk_overlap
+                )
+            elif self.text_splitter_method == "RecursiveCharacterTextSplitter":
+                text_splitter = splitter.RecursiveCharacterTextSplitter(
+                    chunk_size=self.chunk_size,
+                    separators=["\n\n", "\n", ".", "!", "?", ",", " ", ""],
+                    chunk_overlap=self.chunk_overlap
+                )
+            
             chunks = text_splitter.split_text(page)
             for i, chunk in enumerate(chunks):
                 if self.file_no:
