@@ -2,7 +2,7 @@ import json
 from os import path, remove
 from time import sleep
 import datetime
-from sqlalchemy.sql import func
+from sqlalchemy.sql import func, or_
 from concurrent.futures import ThreadPoolExecutor
 from flask import current_app
 
@@ -80,10 +80,12 @@ class BackgroundJobs:
                             docsetfile = DocSetFile.query.filter(DocSetFile.id == job.bind_to_id).first()
                             if docsetfile:
                                 docsetfiles = DocSetFile.query.filter(DocSetFile.docset_id == docsetfile.docset_id, DocSetFile.no >= 1).all()
+                                no = 1
                                 if docsetfiles:
-                                    docsetfile.no = len(docsetfiles) + 1
-                                else:
-                                    docsetfile.no = 1
+                                    for docsetfile_ in docsetfiles:
+                                        if docsetfile_.no >= no:
+                                            no = docsetfile_.no + 1
+                                docsetfile.no = no
                                 db.session.commit()
                                 ok, msg = self.job_ingest(parms['docset_id'], parms['filename'], docsetfile.no)
                             else:
@@ -116,6 +118,7 @@ class BackgroundJobs:
                     docset.create_vectordb_name(), 
                     embeddings_provider=docset.embeddings_provider, 
                     embeddings_model=docset.embeddings_model, 
+                    text_splitter_method=docset.text_splitter_method, 
                     vecdb_type=docset.vecdb_type,
                     chunk_size=docset.chunk_size,
                     chunk_overlap=docset.chunk_overlap,
@@ -151,6 +154,8 @@ class BackgroundJobs:
                 if path.exists(full_filename):
                     remove(full_filename)
                 ok, msg = True, 'The file \'' + obj.filename + '\' is deleted.'
+                # Delete all related jobs
+                Job.query.filter(Job.bind_to_id == obj.id, or_(Job.job_type == 'Ingest', Job.job_type == 'Delete file')).delete()
                 DocSetFile.query.filter(DocSetFile.id == obj.id).delete()
                 db.session.commit()
             else:

@@ -26,8 +26,8 @@ class DocSetForm(FlaskForm):
     # Field definitions
     id = HiddenField('ID', default=0)
     name = StringField('Name', default='', validators=[Length(min=3, max=64)], render_kw={'size': 40})
-    llm_type = SelectField('LLM type', default='chatopenai', choices=['chatopenai'])
-    llm_modeltype = SelectField('LLM model type', default='gpt35', choices=['gpt35', 'gpt35_16', 'gpt4'])
+    llm_type = SelectField('LLM type', default='chatopenai', choices=['chatopenai', 'huggingface'])
+    llm_modeltype = SelectField('LLM model type', default='gpt35', choices=['gpt35', 'gpt35_16', 'gpt4', 'llama2', 'GoogleFlan'])
     embeddings_provider = SelectField('Embeddings provider', default='openai', choices=['openai', 'hugging_face'])
     embeddings_model = SelectField('Embeddings model', default='text-embedding-ada-002', choices=['text-embedding-ada-002', 'all-mpnet-base-v2'])
     text_splitter_method = SelectField('Text splitter method', default='NLTKTextSplitter', choices=['NLTKTextSplitter', 'RecursiveCharacterTextSplitter'])
@@ -43,12 +43,51 @@ class DocSetForm(FlaskForm):
 
 
     # Custom validation    ( See: https://wtforms.readthedocs.io/en/stable/validators/ )
+    '''
+    # if LLM_TYPE is "chatopenai" then LLM_MODEL_TYPE must be one of: "gpt35", "gpt35_16", "gpt4"
+# if LLM_TYPE is "huggingface" then LLM_MODEL_TYPE must be one of "llama2", "GoogleFlan"
+# "llama2" requires Huggingface Pro Account and access to the llama2 model https://huggingface.co/meta-llama/Llama-2-7b-chat-hf
+# note: llama2 is not fully tested, the last step was not undertaken, because no HF Pro account was available for the developer
+# Context window sizes are currently:
+# "gpt35": 4097 tokens which is equivalent to ~3000 words
+# "gpt35_16": 16385 tokens
+# "gpt4": 8192 tokens
+# "GoogleFlan": ? tokens
+# "llama2": ? tokens
+# LLM_MODEL_TYPE must be one of "llama2", "GoogleFlan"
+LLM_MODEL_TYPE = "gpt35"
+# EMBEDDINGS_PROVIDER must be one of: "openai", "huggingface"
+EMBEDDINGS_PROVIDER = "openai"
+# EMBEDDINGS_MODEL must be one of: "text-embedding-ada-002", "all-mpnet-base-v2"
+# If EMBEDDINGS_MODEL is "all-mpnet-base-v2" then EMBEDDINGS_PROVIDER must be "huggingface"
+
+    '''
     def validate_name(form, field):
         if not re.search(r'^[a-zA-Z0-9-_ ]+$', field.data):
             raise ValidationError('Invalid name; Only letters, digits, spaces, - _ characters allowed.')
         same_docset = DocSet.query.filter(DocSet.name == field.data.strip(), DocSet.id != form.docset_id_for_validation).all()
         if len(same_docset) >= 1:
             raise ValidationError('This name already exists.')
+
+    def validate_llm_modeltype(form, field):
+        if form.llm_type.data == 'chatopenai':
+            supported = ['gpt35', 'gpt35_16', 'gpt4']
+            if not (field.data in supported):
+                raise ValidationError('The LLM type \'chatopenai\' only supports model types: ' + ', '.join(supported))
+        if form.llm_type.data == 'huggingface':
+            supported = ['llama2', 'GoogleFlan']
+            if not (field.data in supported):
+                raise ValidationError('This LLM type \'huggingface\' only supports model types: ' + ', '.join(supported))
+
+    def validate_embeddings_model(form, field):
+        if form.embeddings_provider.data == 'openai':
+            supported = ['text-embedding-ada-002']
+            if not (field.data in supported):
+                raise ValidationError('The embeddings provider \'openai\' only supports embeddings models: ' + ', '.join(supported))
+        if form.embeddings_provider.data == 'hugging_face':
+            supported = ['all-mpnet-base-v2']
+            if not (field.data in supported):
+                raise ValidationError('This embeddings provider \'hugging_face\' only supports embeddings models: ' + ', '.join(supported))
 
 
     # Handle the request (from routes.py) for this form
@@ -116,12 +155,18 @@ class DocSetForm(FlaskForm):
             to_document = ''
             for file in files_:
                 file_full_name = path.join(doc_dir, file.filename)
+                if path.exists(file_full_name):
+                    fdt = datetime.fromtimestamp(path.getctime(file_full_name)).strftime('%d-%m-%Y %H:%M:%S')
+                    fsz = size_to_human(path.getsize(file_full_name))
+                else:
+                    fdt = '- deleted -'
+                    fsz = '- deleted -'
                 files.append({
                     'id': file.id, 
                     'no': file.no, 
                     'name': file.filename, 
-                    'dt': datetime.fromtimestamp(path.getctime(file_full_name)).strftime('%d-%m-%Y %H:%M:%S'),
-                    'size': size_to_human(path.getsize(file_full_name)),
+                    'dt': fdt,
+                    'size': fsz,
                 })
                 #f = open(file_full_name, 'r')
                 #to_document += f.read().replace('\r\n', '\n')
@@ -160,9 +205,17 @@ class DocSetForm(FlaskForm):
         if method == 'STATUS':
             obj = DocSet.query.filter(DocSet.id == id).first()
             if obj:
-                files, files_ = [], DocSetFile.query.outerjoin(Job, Job.bind_to_id == DocSetFile.id).with_entities(DocSetFile.id, DocSetFile.no, DocSetFile.filename, Job.status_system, Job.status, Job.status_msg).filter(DocSetFile.docset_id == id).order_by(DocSetFile.no).all()
+                #files, files_ = [], DocSetFile.query.outerjoin(Job, Job.bind_to_id == DocSetFile.id).with_entities(DocSetFile.id, DocSetFile.no, DocSetFile.filename, Job.status_system, Job.status, Job.status_msg).filter(DocSetFile.docset_id == id).order_by(DocSetFile.no).all()
+                files, files_ = [], DocSetFile.query.filter(DocSetFile.docset_id == id).order_by(DocSetFile.no).all()
                 if files_:
                     for file in files_:
+                        status_msg, status_system, status = '', 'Done', Job.query.filter(Job.bind_to_id == file.id).order_by(Job.id).all()
+                        if status:
+                            status_msg = status[-1].status_msg
+                            status_system = status[-1].status_system
+                            status = status[-1].status
+                        else:
+                            status = 'Done'
                         file_full_name = path.join(obj.get_doc_path(), file.filename)
                         if path.exists(file_full_name):
                             dt = datetime.fromtimestamp(path.getctime(file_full_name)).strftime('%d-%m-%Y %H:%M:%S')
@@ -170,7 +223,7 @@ class DocSetForm(FlaskForm):
                         else:
                             dt = '- deleted -'
                             sz = '- deleted -'
-                        files.append({'id': file[0], 'no': file[1], 'filename': file[2], 'status_system': file[3] if file[3] else 'Done', 'status': file[4] if file[4] else '', 'status_msg': file[5] if file[5] else '', 'dt': dt, 'size': sz})
+                        files.append({'id': file.id, 'no': file.no, 'filename': file.filename, 'status_system': status_system, 'status': status, 'status_msg': status_msg, 'dt': dt, 'size': sz})
                 status = {'error': False, 'files': files}
             else:
                 status = {'error': True, 'msg': 'Document set does not exists (anymore).'}
