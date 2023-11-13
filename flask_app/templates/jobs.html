@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{% block content %}
+	<div class="form-title"><h3>Jobs</h3></div>
+    <table class="table table-hover table-sortable"><thead><tr><th>Job type</th><th>Start / End</th><th>Status</th><th>Message</th></tr></thead><tbody>
+    	{% for job in jobs %}
+    		<tr>
+    			<td style="white-space: nowrap;">{{ job.job_type }}</td>
+    			<td style="white-space: nowrap;">{% if job.status == 'Done' or job.status == 'Error' %}{{ job.dt_last }}{% else %}{{ job.dt }}{% endif %}</td>
+    			<td style="white-space: nowrap;">{{ job.status }}</td>
+    			<td>{{ job.status_msg }}</td>
+    		</tr>
+    	{% endfor %}
+    </table>
+{% endblock %}

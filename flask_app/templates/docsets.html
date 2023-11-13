@@ -17,7 +17,8 @@
 					<tr><td>Chunks:</td><td>Size: {{ docset.chunk_size }},&nbsp;&nbsp;&nbsp;overlap: {{ docset.chunk_overlap }},&nbsp;&nbsp;&nbsp;K: {{ docset.chunk_k }}</td></tr>
 				</table></td>
 				<td style="white-space: nowrap;">
-					<a class="btn btn-primary btn-s" style="margin-right: 40px;" href="{{ url_for('docset_files', id=docset.id) }}"><i class="bi-files" role="img" aria-label="Chunks"></i>Chunks</a>
+					<a class="btn btn-primary btn-s" style="margin-right: 40px;" href="{{ url_for('docset_files', id=docset.id) }}"><i class="bi-files" role="img" aria-label="Files"></i>Files</a>
+					<a class="btn btn-primary btn-s" style="margin-right: 40px;" href="{{ url_for('docset_chunks', id=docset.id) }}"><i class="bi-files" role="img" aria-label="Chunks"></i>Chunks</a>
 					<a class="btn btn-primary btn-s" href="javascript:chat_delete('Delete document set \'{{ docset.name }}\'?', '{{ url_for('docset_delete', id=docset.id) }}');"><i class="bi-trash" role="img" aria-label="Delete"></i>Delete</a>
 				</td>
 				</tr>
