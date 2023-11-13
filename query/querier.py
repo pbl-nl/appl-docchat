@@ -33,7 +33,7 @@ class Querier:
         self.chain_verbosity = settings.CHAIN_VERBOSITY if chain_verbosity is None else chain_verbosity
         self.search_type = settings.SEARCH_TYPE if search_type is None else search_type
         self.chunk_k = settings.CHUNK_K if chunk_k is None else chunk_k
-        self.local_api_url = settings.LOCAL_API_URL if local_api_url is None and settings.LOCAL_API_URL is not None else local_api_url
+        self.local_api_url = settings.API_URL if local_api_url is None and settings.API_URL is not None else local_api_url
         self.chat_history = []
 
     def make_agent(self, input_folder, vectordb_folder):
