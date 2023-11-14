@@ -7,6 +7,11 @@ from langchain.schema import AIMessage, HumanMessage
 from langchain.vectorstores.chroma import Chroma
 from loguru import logger
 from langchain.llms import HuggingFaceHub
+from langchain.llms import Ollama
+from langchain.callbacks.manager import CallbackManager
+from langchain.callbacks.streaming_stdout import StreamingStdOutCallbackHandler
+from langchain.embeddings import OllamaEmbeddings
+
 # local imports
 import settings
 
@@ -14,8 +19,9 @@ import settings
 class Querier:
     # When parameters are read from settings.py, object is initiated without parameter settings
     # When parameters are read from GUI, object is initiated with parameter settings listed
-    def __init__(self, llm_type=None, llm_model_type=None, embeddings_provider=None, embeddings_model=None,
-                 vecdb_type=None, chain_name=None, chain_type=None, chain_verbosity=None, search_type=None, chunk_k=None):
+    def __init__(self, llm_type=None, llm_model_type=None, embeddings_provider=None, embeddings_model=None, 
+                 vecdb_type=None, chain_name=None, chain_type=None, chain_verbosity=None, search_type=None, 
+                 chunk_k=None, local_api_url=None):
         load_dotenv()
         self.llm_type = settings.LLM_TYPE if llm_type is None else llm_type
         self.llm_model_type = settings.LLM_MODEL_TYPE if llm_model_type is None else llm_model_type
@@ -27,6 +33,7 @@ class Querier:
         self.chain_verbosity = settings.CHAIN_VERBOSITY if chain_verbosity is None else chain_verbosity
         self.search_type = settings.SEARCH_TYPE if search_type is None else search_type
         self.chunk_k = settings.CHUNK_K if chunk_k is None else chunk_k
+        self.local_api_url = settings.API_URL if local_api_url is None and settings.API_URL is not None else local_api_url
         self.chat_history = []
 
     def make_agent(self, input_folder, vectordb_folder):
@@ -73,10 +80,37 @@ class Querier:
                                  model_kwargs={"temperature": 0.1,
                                                "max_length": max_length}
                                 )
+        
+        if self.llm_type == "local_llm":
+            logger.info("Use Local LLM")
+            logger.info("Retrieving " + self.llm_model_type)
+            if self.local_api_url is not None: # If API URL is defined, use it
+                logger.info("Using local api url " + self.local_api_url)
+                llm = Ollama(
+                    model=self.llm_model_type, 
+                    base_url = self.local_api_url,
+                    callback_manager=CallbackManager([StreamingStdOutCallbackHandler()])
+                )
+            else:
+                llm = Ollama(
+                    model=self.llm_model_type,
+                    callback_manager=CallbackManager([StreamingStdOutCallbackHandler()])
+                )
+            logger.info("Retrieved " + self.llm_model_type)
 
         if self.embeddings_provider == "openai":
             embeddings = OpenAIEmbeddings(model=self.embeddings_model, client=None)
             logger.info("Loaded openai embeddings")
+
+        if self.embeddings_provider == "local_embeddings":
+            if self.local_api_url is not None: # If API URL is defined, use it
+                embeddings = OllamaEmbeddings(
+                    base_url = self.local_api_url,
+                    model = self.embeddings_model)
+            else:
+                embeddings = OllamaEmbeddings( # Otherwise, use localhost
+                    model = self.embeddings_model)
+            logger.info("Loaded local embeddings: " + self.embeddings_model)
 
         if self.embeddings_provider == "huggingface":
             embeddings = HuggingFaceEmbeddings(model_name=self.embeddings_model)
