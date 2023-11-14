@@ -35,7 +35,6 @@ class Ingester:
         self.chunk_size = settings.CHUNK_SIZE if chunk_size is None else chunk_size
         self.chunk_overlap = settings.CHUNK_OVERLAP if chunk_overlap is None else chunk_overlap
         self.local_api_url = settings.API_URL if local_api_url is None and settings.API_URL is not None else local_api_url
-
         self.file_no = file_no
 
     def ingest(self) -> None:
