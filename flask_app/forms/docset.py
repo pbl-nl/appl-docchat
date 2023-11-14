@@ -1,19 +1,21 @@
 import re
-from os import remove, path, makedirs
+from os import path, makedirs
 from datetime import datetime
 from shutil import rmtree
-from flask import url_for, redirect, flash, Markup
+from flask import url_for, redirect, flash, Markup, jsonify
 from sqlalchemy import text
 
 from flask_wtf import FlaskForm
 from wtforms import HiddenField, StringField, SubmitField, IntegerField, SelectField, BooleanField
 from wtforms.validators import Length, ValidationError
 
-from flask_app.models import db, Chat, ChatQuestion, DocSet, DocSetFile, UserGroup
+from flask_app.models import db, Chat, ChatQuestion, DocSet, DocSetFile, UserGroup, Job
 from flask_app.helpers import render_chat_template, size_to_human, upload_file
+from flask_app.background_jobs import background_jobs
 
 from langchain.vectorstores import Chroma
-from langchain.embeddings.openai import OpenAIEmbeddings
+#from langchain.embeddings.openai import OpenAIEmbeddings
+#from langchain.embeddings.huggingface import HuggingFaceEmbeddings
 
 '''
 This form contains all for inserting, updating and deleting a docset
@@ -24,10 +26,11 @@ class DocSetForm(FlaskForm):
     # Field definitions
     id = HiddenField('ID', default=0)
     name = StringField('Name', default='', validators=[Length(min=3, max=64)], render_kw={'size': 40})
-    llm_type = SelectField('LLM type', default='chatopenai', choices=['chatopenai'])
-    llm_modeltype = SelectField('LLM model type', default='gpt35', choices=['gpt35', 'gpt35_16', 'gpt4'])
-    embeddings_provider = SelectField('Embeddings provider', default='openai', choices=['openai'])
-    embeddings_model = SelectField('Embeddings model', default='text-embedding-ada-002', choices=['text-embedding-ada-002'])
+    llm_type = SelectField('LLM type', default='chatopenai', choices=['chatopenai', 'huggingface'])
+    llm_modeltype = SelectField('LLM model type', default='gpt35', choices=['gpt35', 'gpt35_16', 'gpt4', 'llama2', 'GoogleFlan'])
+    embeddings_provider = SelectField('Embeddings provider', default='openai', choices=['openai', 'hugging_face'])
+    embeddings_model = SelectField('Embeddings model', default='text-embedding-ada-002', choices=['text-embedding-ada-002', 'all-mpnet-base-v2'])
+    text_splitter_method = SelectField('Text splitter method', default='NLTKTextSplitter', choices=['NLTKTextSplitter', 'RecursiveCharacterTextSplitter'])
     chain = SelectField('Chain', default='conversationalretrievalchain', choices=['conversationalretrievalchain'])
     chain_type = SelectField('Chain type', default='stuff', choices=['stuff'])
     chain_verbosity = BooleanField('Chain verbosity', default=False, render_kw={'class': 'yes-checkbox'})
@@ -40,6 +43,25 @@ class DocSetForm(FlaskForm):
 
 
     # Custom validation    ( See: https://wtforms.readthedocs.io/en/stable/validators/ )
+    '''
+    # if LLM_TYPE is "chatopenai" then LLM_MODEL_TYPE must be one of: "gpt35", "gpt35_16", "gpt4"
+# if LLM_TYPE is "huggingface" then LLM_MODEL_TYPE must be one of "llama2", "GoogleFlan"
+# "llama2" requires Huggingface Pro Account and access to the llama2 model https://huggingface.co/meta-llama/Llama-2-7b-chat-hf
+# note: llama2 is not fully tested, the last step was not undertaken, because no HF Pro account was available for the developer
+# Context window sizes are currently:
+# "gpt35": 4097 tokens which is equivalent to ~3000 words
+# "gpt35_16": 16385 tokens
+# "gpt4": 8192 tokens
+# "GoogleFlan": ? tokens
+# "llama2": ? tokens
+# LLM_MODEL_TYPE must be one of "llama2", "GoogleFlan"
+LLM_MODEL_TYPE = "gpt35"
+# EMBEDDINGS_PROVIDER must be one of: "openai", "huggingface"
+EMBEDDINGS_PROVIDER = "openai"
+# EMBEDDINGS_MODEL must be one of: "text-embedding-ada-002", "all-mpnet-base-v2"
+# If EMBEDDINGS_MODEL is "all-mpnet-base-v2" then EMBEDDINGS_PROVIDER must be "huggingface"
+
+    '''
     def validate_name(form, field):
         if not re.search(r'^[a-zA-Z0-9-_ ]+$', field.data):
             raise ValidationError('Invalid name; Only letters, digits, spaces, - _ characters allowed.')
@@ -47,9 +69,29 @@ class DocSetForm(FlaskForm):
         if len(same_docset) >= 1:
             raise ValidationError('This name already exists.')
 
+    def validate_llm_modeltype(form, field):
+        if form.llm_type.data == 'chatopenai':
+            supported = ['gpt35', 'gpt35_16', 'gpt4']
+            if not (field.data in supported):
+                raise ValidationError('The LLM type \'chatopenai\' only supports model types: ' + ', '.join(supported))
+        if form.llm_type.data == 'huggingface':
+            supported = ['llama2', 'GoogleFlan']
+            if not (field.data in supported):
+                raise ValidationError('This LLM type \'huggingface\' only supports model types: ' + ', '.join(supported))
+
+    def validate_embeddings_model(form, field):
+        if form.embeddings_provider.data == 'openai':
+            supported = ['text-embedding-ada-002']
+            if not (field.data in supported):
+                raise ValidationError('The embeddings provider \'openai\' only supports embeddings models: ' + ', '.join(supported))
+        if form.embeddings_provider.data == 'hugging_face':
+            supported = ['all-mpnet-base-v2']
+            if not (field.data in supported):
+                raise ValidationError('This embeddings provider \'hugging_face\' only supports embeddings models: ' + ', '.join(supported))
+
 
     # Handle the request (from routes.py) for this form
-    def handle_request(self, method, id):
+    def handle_request(self, method, id, file_id=0):
 
         usergroups, checked, files = [], [], []
 
@@ -61,17 +103,6 @@ class DocSetForm(FlaskForm):
                     checked.append('checked="checked"')
                 else:
                     checked.append('')
-            files, files_ = [], DocSetFile.query.filter(DocSetFile.docset_id == id).order_by(DocSetFile.no).all()
-            obj = DocSet.query.get(id)
-            for file in files_:
-                file_full_name = path.join(obj.get_doc_path(), file.filename)
-                files.append({
-                    'id': file.id, 
-                    'no': file.no, 
-                    'name': file.filename, 
-                    'dt': datetime.fromtimestamp(path.getctime(file_full_name)).strftime('%d-%m-%Y %H:%M:%S'),
-                    'size': size_to_human(path.getsize(file_full_name)),
-                })
 
         # Show the form
         if method == 'GET':
@@ -81,7 +112,7 @@ class DocSetForm(FlaskForm):
                 obj.fields_to_form(self)
 
             # Show the form
-            return render_chat_template('docset.html', form=self, usergroups = usergroups, checked=checked, files=files)
+            return render_chat_template('docset.html', form=self, id=id, usergroups = usergroups, checked=checked)
         
         # Save the form
         if method == 'POST':
@@ -113,10 +144,10 @@ class DocSetForm(FlaskForm):
                 return redirect(url_for('docset', id=id))
             
             # Validation failed: Show the form with the errors
-            return render_chat_template('docset.html', form=self, usergroups = usergroups, checked=checked, files=files)
+            return render_chat_template('docset.html', form=self, id=id, usergroups = usergroups, checked=checked)
 
-        # Show the files from the docset
-        if method == 'FILES':
+        # Show the chunks from the docset
+        if method == 'CHUNKS':
             obj = DocSet.query.get(id)
             obj.fields_to_form(self)
             doc_dir = obj.get_doc_path()
@@ -124,21 +155,27 @@ class DocSetForm(FlaskForm):
             to_document = ''
             for file in files_:
                 file_full_name = path.join(doc_dir, file.filename)
+                if path.exists(file_full_name):
+                    fdt = datetime.fromtimestamp(path.getctime(file_full_name)).strftime('%d-%m-%Y %H:%M:%S')
+                    fsz = size_to_human(path.getsize(file_full_name))
+                else:
+                    fdt = '- deleted -'
+                    fsz = '- deleted -'
                 files.append({
                     'id': file.id, 
                     'no': file.no, 
                     'name': file.filename, 
-                    'dt': datetime.fromtimestamp(path.getctime(file_full_name)).strftime('%d-%m-%Y %H:%M:%S'),
-                    'size': size_to_human(path.getsize(file_full_name)),
+                    'dt': fdt,
+                    'size': fsz,
                 })
                 #f = open(file_full_name, 'r')
                 #to_document += f.read().replace('\r\n', '\n')
                 #f.close()
-            embeddings = OpenAIEmbeddings()
+            #embeddings = OpenAIEmbeddings()
             vectordb_folder = obj.create_vectordb_name()
             vector_store = Chroma(
                             collection_name=obj.get_collection_name(),
-                            embedding_function=embeddings,
+                            # embedding_function=embeddings,
                             persist_directory=vectordb_folder,
                         )
             sources = vector_store.get()
@@ -153,43 +190,49 @@ class DocSetForm(FlaskForm):
                 chunks.append({'chunk1': chunk1, 'chunk2': chunk2, 'chunk3': chunk3, 'metadata': metadata})
                 i += 1
             chunks.sort(key=lambda x: 10000 * x['metadata']['file_no'] + x['metadata']['chunk_no'])
-            return render_chat_template('docset-files.html', form=self, files=files, chunks=chunks)
+            return render_chat_template('docset-chunks.html', form=self, files=files, chunks=chunks)
+
+        # Show the files from the docset
+        if method == 'FILES':
+            return render_chat_template('docset-files.html', form=self, docset_id=id)
 
         # Upload a file to the docset
         if method == 'UPLOAD-FILE':
             obj = DocSet.query.get(id)
             return upload_file(obj)
 
+        # Get file statusses for the docset
+        if method == 'STATUS':
+            obj = DocSet.query.filter(DocSet.id == id).first()
+            if obj:
+                #files, files_ = [], DocSetFile.query.outerjoin(Job, Job.bind_to_id == DocSetFile.id).with_entities(DocSetFile.id, DocSetFile.no, DocSetFile.filename, Job.status_system, Job.status, Job.status_msg).filter(DocSetFile.docset_id == id).order_by(DocSetFile.no).all()
+                files, files_ = [], DocSetFile.query.filter(DocSetFile.docset_id == id).order_by(DocSetFile.no).all()
+                if files_:
+                    for file in files_:
+                        status_msg, status_system, status = '', 'Done', Job.query.filter(Job.bind_to_id == file.id).order_by(Job.id).all()
+                        if status:
+                            status_msg = status[-1].status_msg
+                            status_system = status[-1].status_system
+                            status = status[-1].status
+                        else:
+                            status = 'Done'
+                        file_full_name = path.join(obj.get_doc_path(), file.filename)
+                        if path.exists(file_full_name):
+                            dt = datetime.fromtimestamp(path.getctime(file_full_name)).strftime('%d-%m-%Y %H:%M:%S')
+                            sz = size_to_human(path.getsize(file_full_name))
+                        else:
+                            dt = '- deleted -'
+                            sz = '- deleted -'
+                        files.append({'id': file.id, 'no': file.no, 'filename': file.filename, 'status_system': status_system, 'status': status, 'status_msg': status_msg, 'dt': dt, 'size': sz})
+                status = {'error': False, 'files': files}
+            else:
+                status = {'error': True, 'msg': 'Document set does not exists (anymore).'}
+            return jsonify(status)
+
         # Delete a file from the docset
         if method == 'DELETE-FILE':
-            obj = DocSetFile.query.get(id)
-            if obj:
-                docset = DocSet.query.get(obj.docset_id)
-                if docset:
-                    embeddings = OpenAIEmbeddings()
-                    vectordb_folder = docset.create_vectordb_name()
-                    vector_store = Chroma(
-                                    collection_name=docset.get_collection_name(),
-                                    embedding_function=embeddings,
-                                    persist_directory=vectordb_folder,
-                                )
-                    sources = vector_store.get()
-                    i, ids_to_delete = 0, []
-                    for vec_id in sources['ids']:
-                        if sources['metadatas'][i]['file_no'] == obj.no:
-                            ids_to_delete.append(vec_id)
-                        i += 1
-                    vector_store.delete(ids=ids_to_delete)
-                    remove(path.join(docset.get_doc_path(), obj.filename))
-                    flash('The file \'' + obj.filename + '\' is deleted.', 'success')
-                    DocSetFile.query.filter(DocSetFile.id == obj.id).delete()
-                    db.session.commit()
-                    flash('The file is deleted.', 'success')
-                    return redirect(url_for('docset', id=docset.id))
-                flash('Error: The document set is no longer in the database.', 'danger')
-                return redirect(url_for('docset', id=obj.docset_id))
-            flash('Error: The file is no longer in the database.', 'danger')
-            return redirect(url_for('docsets'))
+            background_jobs.new_job('Delete file', file_id)
+            return jsonify({'start_polling': True}) #redirect(url_for('docsets'))
 
         # Delete the docset
         if method == 'DELETE':

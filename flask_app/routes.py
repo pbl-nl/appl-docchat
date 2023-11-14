@@ -1,5 +1,6 @@
 
 import json
+from time import sleep
 
 from flask import request, flash, jsonify, current_app
 from flask_login import current_user, login_user
@@ -11,7 +12,7 @@ from flask_app.forms.usergroup import UserGroupForm
 from flask_app.forms.docset import DocSetForm
 from flask_app.forms.setting import SettingForm
 from flask_app.forms.chat import ChatForm
-from flask_app.models import db, User, UserGroup, DocSet, Setting
+from flask_app.models import db, User, UserGroup, DocSet, Setting, Job
 from flask_app.helpers import render_chat_template, getSetting
 
 
@@ -29,7 +30,6 @@ def auto_login():
             login_user(user, remember_me)
 
 def init_app(app):
-
     '''
     General routes, no permissions required
     '''
@@ -178,22 +178,37 @@ def init_app(app):
         form = DocSetForm()
         return permission.chat_admin(form.handle_request, 'FILES', id)
 
+    @app.route('/docset-chunks/<int:id>')
+    def docset_chunks(id):
+        form = DocSetForm()
+        return permission.chat_admin(form.handle_request, 'CHUNKS', id)
+
     @app.route('/docset-upload-file/<int:id>', methods=['POST'])
     def docset_upload_file(id):
         form = DocSetForm()
         return permission.chat_admin(form.handle_request, 'UPLOAD-FILE', id)
 
-    @app.route('/docset-delete-file/<int:file_id>')
-    def docset_delete_file(file_id):
+    @app.route('/docset-delete-file/<int:id>/<int:file_id>')
+    def docset_delete_file(id, file_id):
         form = DocSetForm()
-        return permission.chat_admin(form.handle_request, 'DELETE-FILE', file_id)
+        return permission.chat_admin(form.handle_request, 'DELETE-FILE', id, file_id)
 
     @app.route('/docset-delete/<int:id>')
     def docset_delete(id):
         form = DocSetForm()
         return permission.chat_admin(form.handle_request, 'DELETE', id)
 
+    @app.route('/docset-status/<int:id>', methods=['POST'])
+    def docset_status(id):
+        form = DocSetForm()
+        return permission.chat_admin(form.handle_request, 'STATUS', id)
+
     # Miscellaneous
+    @app.route('/jobs')
+    def jobs():
+        jobs = Job.query.order_by(Job.id).all()
+        return permission.chat_admin(render_chat_template, 'jobs.html', jobs=jobs)
+
     @app.route('/settings')
     def settings():
         settings = Setting.query.all()

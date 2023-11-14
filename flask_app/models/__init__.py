@@ -43,6 +43,7 @@ class DocSet(db.Model):
     llm_modeltype = db.Column(db.String(32), nullable=False)
     embeddings_provider = db.Column(db.String(32), nullable=False)
     embeddings_model = db.Column(db.String(32), nullable=False)
+    text_splitter_method = db.Column(db.String(64), nullable=False)
     chain = db.Column(db.String(32), nullable=False)
     chain_type = db.Column(db.String(32), nullable=False)
     chain_verbosity = db.Column(db.Boolean, nullable=False)
@@ -68,6 +69,7 @@ class DocSet(db.Model):
         self.llm_modeltype = form.llm_modeltype.data
         self.embeddings_provider = form.embeddings_provider.data
         self.embeddings_model = form.embeddings_model.data
+        self.text_splitter_method = form.text_splitter_method.data
         self.chain = form.chain.data
         self.chain_type = form.chain_type.data
         self.chain_verbosity = form.chain_verbosity.data
@@ -84,6 +86,7 @@ class DocSet(db.Model):
         form.llm_modeltype.data = self.llm_modeltype
         form.embeddings_provider.data = self.embeddings_provider
         form.embeddings_model.data = self.embeddings_model
+        form.text_splitter_method.data = self.text_splitter_method
         form.chain.data = self.chain
         form.chain_type.data = self.chain_type
         form.chain_verbosity.data = self.chain_verbosity
@@ -177,3 +180,14 @@ class Setting(db.Model):
         else:
             form.value.data = self.value
 
+
+class Job(db.Model):
+    id = Column(Integer, primary_key=True)
+    bind_to_id = Column(Integer, default=0)
+    dt = Column(DateTime, default=func.now())
+    dt_last = Column(DateTime, default=func.now(), onupdate=func.now())
+    status_system = db.Column(db.String(16), nullable=True)
+    status = db.Column(db.String(16), nullable=True)
+    status_msg = db.Column(db.String(128), nullable=True)
+    job_type = db.Column(db.String(16), nullable=True)
+    job_parms = db.Column(db.String(1048), nullable=True)

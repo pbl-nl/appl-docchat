@@ -11,3 +11,30 @@ def create_vectordb_name(content_folder_name, chunk_size=None, chunk_overlap=Non
         vectordb_name = "_" + settings.VECDB_TYPE + "_" + str(settings.CHUNK_SIZE) + "_" + str(settings.CHUNK_OVERLAP) + "_" + settings.EMBEDDINGS_PROVIDER
     vectordb_folder_path = os.path.join(settings.VECDB_DIR, content_folder_name) + vectordb_name 
     return content_folder_path, vectordb_folder_path
+
+def get_settings_as_dictionary(file_name):
+    # Initialize an empty dictionary to store the variables and their values
+    variables_dict = {}
+    # Open and read the file
+    with open(file_name, 'r') as file:
+        lines = file.readlines()
+    start_reading = False
+    # Process each line in the file
+    for line in lines:
+        # start reading below the line with ####
+        if line.startswith("####"):
+            start_reading = True
+        # ignore comment lines
+        if start_reading and not line.startswith("#"):
+            # Remove leading and trailing whitespace and split the line by '='
+            parts = line.strip().split('=')
+            # Check if the line can be split into two parts
+            if len(parts) == 2:
+                # Extract the variable name and value
+                variable_name = parts[0].strip()
+                variable_value = parts[1].strip()
+                # Use exec() to assign the value to the variable name
+                exec(f'{variable_name} = {variable_value}')
+                # Add the variable and its value to the dictionary
+                variables_dict[variable_name] = eval(variable_name)
+    return variables_dict
