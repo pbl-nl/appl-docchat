@@ -85,6 +85,7 @@ class Querier:
             logger.info("Use Local LLM")
             logger.info("Retrieving " + self.llm_model_type)
             if self.local_api_url is not None: # If API URL is defined, use it
+                logger.info("Using local api url " + self.local_api_url)
                 llm = Ollama(
                     model=self.llm_model_type, 
                     base_url = self.local_api_url,
