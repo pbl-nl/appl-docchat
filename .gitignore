@@ -6,6 +6,7 @@
 
 # project specific files
 /flask_app/config.py
+settings.py
 
 # backup files
 *.bak
