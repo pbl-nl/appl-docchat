@@ -1,4 +1,5 @@
 import os
+import datetime as dt
 # local imports
 import settings
 
@@ -38,3 +39,7 @@ def get_settings_as_dictionary(file_name):
                 # Add the variable and its value to the dictionary
                 variables_dict[variable_name] = eval(variable_name)
     return variables_dict
+
+def get_timestamp():
+    return str(dt.datetime.now())
+
