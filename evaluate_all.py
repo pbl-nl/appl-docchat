@@ -9,35 +9,7 @@ from datasets import Dataset
 from ingest.ingester import Ingester
 from query.querier import Querier
 import settings
-import utils
-
-
-def get_settings_dictionary(file_name):
-    # Initialize an empty dictionary to store the variables and their values
-    variables_dict = {}
-    # Open and read the file
-    with open(file_name, 'r') as file:
-        lines = file.readlines()
-    start_reading = False
-    # Process each line in the file
-    for line in lines:
-        # start reading below the line with ####
-        if line.startswith("####"):
-            start_reading = True
-        # ignore comment lines
-        if start_reading and not line.startswith("#"):
-            # Remove leading and trailing whitespace and split the line by '='
-            parts = line.strip().split('=')
-            # Check if the line can be split into two parts
-            if len(parts) == 2:
-                # Extract the variable name and value
-                variable_name = parts[0].strip()
-                variable_value = parts[1].strip()
-                # Use exec() to assign the value to the variable name
-                exec(f'{variable_name} = {variable_value}')
-                # Add the variable and its value to the dictionary
-                variables_dict[variable_name] = eval(variable_name)
-    return variables_dict
+import utils as ut
 
 
 def store_evaluation_result(df, content_folder_name, type):
@@ -51,9 +23,9 @@ def store_evaluation_result(df, content_folder_name, type):
     df.to_csv(path, sep="\t", index=False)
 
 
-def main():
+def main(chunk_size=None, chunk_overlap=None, chunk_k=None):
     # Create instance of Querier
-    querier = Querier()
+    querier = Querier(chunk_k=chunk_k)
 
     # only now import ragas evaluation related modules because ragas requires the openai api key to be set on beforehand
     from ragas import evaluation
@@ -67,11 +39,12 @@ def main():
         
         # content_folder_name = input("Source folder of evaluation documents (without path): ")
         # get associated source folder path and vectordb path
-        content_folder_path, vectordb_folder_path = utils.create_vectordb_name(content_folder_name)
+        content_folder_path, vectordb_folder_path = ut.create_vectordb_name(content_folder_name, chunk_size, chunk_overlap)
         # if documents in source folder path are not ingested yet
         if not os.path.exists(vectordb_folder_path):
             # ingest documents
-            ingester = Ingester(content_folder_name, content_folder_path, vectordb_folder_path)
+            ingester = Ingester(content_folder_name, content_folder_path, vectordb_folder_path,
+                                chunk_size=chunk_size, chunk_overlap=chunk_overlap)
             ingester.ingest()
             logger.info(f"Created vector store in folder {vectordb_folder_path}")
         else:
@@ -111,7 +84,11 @@ def main():
         dataset = Dataset.from_dict(dataset_dict)
         # evaluate
         result = evaluation.evaluate(dataset)
-    
+
+        #update location for results
+        if chunk_size:
+            content_folder_name = "{}_size_{}_overlap_{}_k_{}".format(folder, chunk_size, chunk_overlap, chunk_k)
+
         # store aggregate results including the ragas score:
         agg_columns = list(result.keys())
         agg_scores = list(result.values())
@@ -123,7 +100,7 @@ def main():
         # line below is necessary as long as ragas package doesn't update metric name "context_relevancy" to "context_precision"
         df_agg = df_agg.rename(columns={"context_relevancy": "context_precision"}, errors="raise")
         # add settings
-        settings_dict = get_settings_dictionary("settings.py")
+        settings_dict = ut.get_settings_as_dictionary("settings.py")
         settings_columns = list(settings_dict.keys())
         settings_data = [list(settings_dict.values())[i] for i in range(len(list(settings_dict.keys())))]
         df_settings = pd.DataFrame(data=[settings_data], columns=settings_columns)
@@ -148,7 +125,7 @@ def main():
         # add result to existing evaluation file (if that exists) and store to disk
         store_evaluation_result(df, content_folder_name, "detail")
 
-    
+
 if __name__ == "__main__":
     main()
 
