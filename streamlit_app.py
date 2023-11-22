@@ -9,7 +9,7 @@ import settings
 import utils
 
 
-def create_vectordb(content_folder_name_selected, content_folder_path_selected, vectordb_folder_path_selected):
+def create_or_update_vectordb(content_folder_name_selected, content_folder_path_selected, vectordb_folder_path_selected):
     ingester = Ingester(content_folder_name_selected, content_folder_path_selected, vectordb_folder_path_selected)
     ingester.ingest()
 
@@ -54,8 +54,13 @@ def folder_selector(querier, folders):
         # When the associated vector database of the chosen content folder doesn't exist with the settings as given in settings.py, create it first
         if not os.path.exists(vectordb_folder_path_selected):
             logger.info("Creating vectordb")
-            with st.spinner(f'Creating vector database for folder {folder_name_selected}. Depending on the size of the source folder, this may take a while. Please wait...'):
-                create_vectordb(folder_name_selected, folder_path_selected, vectordb_folder_path_selected)
+            spinner_message = f'Creating vector database for folder {folder_name_selected}. Depending on the size of the source folder, this may take a while. Please wait...'
+        else:
+            logger.info("Updating vectordb")
+            spinner_message = f'Checking if vector database needs an update for folder {folder_name_selected}. This may take a while, please wait...'
+        with st.spinner(spinner_message):
+            create_or_update_vectordb(folder_name_selected, folder_path_selected, vectordb_folder_path_selected)
+
         # create a new chain based on the new source folder 
         querier.make_chain(folder_name_selected, vectordb_folder_path_selected)
         # set session state of selected folder to new source folder 

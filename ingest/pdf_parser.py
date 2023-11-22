@@ -6,7 +6,7 @@ from ingest.ingest_utils import IngestUtils
 
 
 class PdfParser:
-    """A parser for extracting text from PDF documents."""
+    """A parser for extracting and cleaning text from PDF documents."""
 
     def __init__(self, chunk_size: int, chunk_overlap: int, file_no: int, text_splitter_method: str):
         self.chunk_size = chunk_size
@@ -29,16 +29,10 @@ class PdfParser:
             reader = PdfReader(pdf_file)
             metadata = reader.metadata
             logger.info(f"{getattr(metadata, 'title', 'no title')}")
-            # default_date = date(1900, 1, 1)
             return {
-                # TODO add metadata title + pdf filename
-
                 "title": ingestutils.getattr_or_default(metadata, 'title', '').strip(),
                 "author": ingestutils.getattr_or_default(metadata, 'author', '').strip(),
-                "document_name": pdf_file_path.split('\\')[-1],
-                # "creation_date": ingestutils.getattr_or_default(metadata,
-                #                                                 'creation_date',
-                #                                                  default_date).strftime('%Y-%m-%d'),
+                "filename": pdf_file_path.split('\\')[-1],
             }
 
     def extract_pages_from_pdf(self, pdf_file_path: str) -> List[Tuple[int, str]]:
@@ -46,6 +40,5 @@ class PdfParser:
         logger.info("Extracting pages")
         with open(pdf_file_path, "rb") as pdf:
             reader = PdfReader(pdf)
-            # numpages = len(reader.pages)
-            return [(i + 1, p.extract_text())
-                    for i, p in enumerate(reader.pages) if p.extract_text().strip()]
+            return [(i + 1, p.extract_text()) for i, p in enumerate(reader.pages) if p.extract_text().strip()]
+        
