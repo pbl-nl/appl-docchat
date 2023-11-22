@@ -32,6 +32,6 @@ class WordParser:
         logger.info(f"{getattr(metadata_text, 'title', 'no title')}")
         metadata = {"title": ingestutils.getattr_or_default(metadata_text, 'title', '').strip(),
                    "author": ingestutils.getattr_or_default(metadata_text, 'author', '').strip(),
-                   "document_name": file_path.split('\\')[-1]
+                   "filename": file_path.split('\\')[-1]
         }
         return pages, metadata
