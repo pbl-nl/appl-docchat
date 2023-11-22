@@ -15,6 +15,10 @@ Save and close the .env file<br>
 * In case you don't have an OpenAI API key yet, you can obtain one here: https://platform.openai.com/account/api-keys
 * Click on + Create new secret key
 * Enter an identifier name (optional) and click on Create secret key
+4. Enter your Hugging Face API key in the second line of this file :<br>
+HUGGINGFACEHUB_API_TOKEN="hf_....."<br>
+* In case you don't have an Hugging Face API key yet, you can register at https://huggingface.co/join
+* When registered and logged in, you can get your API key in your Hugging Face profile settings
 
 ### Conda virtual environment setup
 1. Open an Anaconda prompt or other command prompt
