@@ -1,9 +1,6 @@
 import os
 from dotenv import load_dotenv
-from langchain.embeddings import OpenAIEmbeddings
-from langchain.embeddings import HuggingFaceEmbeddings
 from langchain.vectorstores import Chroma
-from langchain.embeddings import OllamaEmbeddings
 from loguru import logger
 # local imports
 import settings
@@ -13,6 +10,7 @@ from ingest.html_parser  import HtmlParser
 from ingest.word_parser import WordParser
 # from ingest.content_iterator import ContentIterator
 from ingest.ingest_utils import IngestUtils
+import utils as ut
 
 
 class Ingester:
@@ -48,22 +46,9 @@ class Ingester:
         html_parser = HtmlParser(self.chunk_size, self.chunk_overlap, self.file_no, self.text_splitter_method)
         word_parser = WordParser(self.chunk_size, self.chunk_overlap, self.file_no, self.text_splitter_method)
 
-        # determine embeddings model
-        if self.embeddings_provider == "openai":
-            embeddings = OpenAIEmbeddings(model=self.embeddings_model, client=None)
-            logger.info("Loaded openai embeddings")
-        elif self.embeddings_provider == "huggingface":
-            embeddings = HuggingFaceEmbeddings(model_name=self.embeddings_model)
-        elif self.embeddings_provider == "local_embeddings":
-            if self.local_api_url is not None:
-                embeddings = OllamaEmbeddings(
-                    base_url = self.local_api_url,
-                    model = self.embeddings_model)
-            else:
-                embeddings = OllamaEmbeddings(
-                    model = self.embeddings_model)
-            logger.info("Loaded local embeddings: " + self.embeddings_model)
-
+        # get embeddings
+        embeddings = ut.getEmbeddings(self.embeddings_provider, self.embeddings_model, self.local_api_url)
+        
         # create empty list representing added files
         new_files = []
 

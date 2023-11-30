@@ -1,7 +1,12 @@
 import os
 import datetime as dt
+from loguru import logger
+from langchain.embeddings import OpenAIEmbeddings
+from langchain.embeddings import HuggingFaceEmbeddings
+from langchain.embeddings import OllamaEmbeddings
 # local imports
 import settings
+
 
 def create_vectordb_name(content_folder_name, chunk_size=None, chunk_overlap=None):
     content_folder_path = os.path.join(settings.DOC_DIR, content_folder_name)
@@ -12,6 +17,7 @@ def create_vectordb_name(content_folder_name, chunk_size=None, chunk_overlap=Non
         vectordb_name = "_" + settings.VECDB_TYPE + "_" + str(settings.CHUNK_SIZE) + "_" + str(settings.CHUNK_OVERLAP) + "_" + settings.EMBEDDINGS_PROVIDER
     vectordb_folder_path = os.path.join(settings.VECDB_DIR, content_folder_name) + vectordb_name 
     return content_folder_path, vectordb_folder_path
+
 
 def get_settings_as_dictionary(file_name):
     # Initialize an empty dictionary to store the variables and their values
@@ -40,6 +46,29 @@ def get_settings_as_dictionary(file_name):
                 variables_dict[variable_name] = eval(variable_name)
     return variables_dict
 
+
+def getEmbeddings(embeddings_provider, embeddings_model, local_api_url):
+    # determine embeddings model
+    if embeddings_provider == "openai":
+        embeddings = OpenAIEmbeddings(model=embeddings_model, client=None)
+        logger.info("Loaded openai embeddings")
+    elif embeddings_provider == "huggingface":
+        embeddings = HuggingFaceEmbeddings(model_name=embeddings_model)
+    elif embeddings_provider == "local_embeddings":
+        if local_api_url is not None:
+            embeddings = OllamaEmbeddings(
+                base_url = local_api_url,
+                model = embeddings_model)
+        else:
+            embeddings = OllamaEmbeddings(
+                model = embeddings_model)
+        logger.info("Loaded local embeddings: " + embeddings_model)
+    return embeddings
+
+
 def get_timestamp():
     return str(dt.datetime.now())
+
+
+
 
