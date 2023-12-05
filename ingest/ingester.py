@@ -57,12 +57,8 @@ class Ingester:
             files_in_folder = os.listdir(self.content_folder)
             # if the vector store already exists, get the set of ingested files from the vector store
             if os.path.exists(self.vectordb_folder):
-                # define chroma vector store
-                vector_store = Chroma(
-                    collection_name=self.collection_name,
-                    embedding_function=embeddings,
-                    persist_directory=self.vectordb_folder
-                )
+                # get chroma vector store
+                vector_store = ut.get_chroma_vector_store(self.collection_name, embeddings, self.vectordb_folder)
                 logger.info(f"Vector store already exists for specified settings and folder {self.content_folder}")
                 # determine the files that are added or deleted
                 collection = vector_store.get() # dict_keys(['ids', 'embeddings', 'documents', 'metadatas'])
@@ -75,13 +71,13 @@ class Ingester:
                 # delete all chunks from the vector store that belong to files removed from the folder
                 if len(files_deleted) > 0:
                     logger.info(f"Files are deleted, so vector store for {self.content_folder} needs to be updated")
-                    ids_to_delete = []
+                    idx_id_to_delete = []
                     for idx in range(len(collection['ids'])):
                         idx_id = collection['ids'][idx]
                         idx_metadata = collection['metadatas'][idx]
                         if idx_metadata['filename'] in files_deleted:
-                            ids_to_delete.append(idx_id)
-                    vector_store.delete(ids_to_delete)
+                            idx_id_to_delete.append(idx_id)
+                    vector_store.delete(idx_id_to_delete)
                     logger.info(f"Deleted files from vectorstore")
                 # determine updated maximum id from collection after deletions
                 collection = vector_store.get() # dict_keys(['ids', 'embeddings', 'documents', 'metadatas'])
@@ -90,11 +86,8 @@ class Ingester:
             # else it needs to be created first
             else:
                 logger.info(f"Vector store to be created for folder {self.content_folder}")
-                vector_store = Chroma(
-                    collection_name=self.collection_name,
-                    embedding_function=embeddings,
-                    persist_directory=self.vectordb_folder
-                )
+                # get chroma vector store
+                vector_store = ut.get_chroma_vector_store(self.collection_name, embeddings, self.vectordb_folder)
                 collection = vector_store.get() # dict_keys(['ids', 'embeddings', 'documents', 'metadatas'])
                 # all files in the folder are to be ingested into the vector store
                 new_files = [file for file in files_in_folder]

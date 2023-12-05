@@ -28,11 +28,11 @@ EVAL_FILE_NAME = ""
 # CHAIN_VERBOSITY must be boolean. When set to True, the standalone question that is conveyed to LLM is shown
 CHAIN_VERBOSITY = 
 
-#### The settings below can be used for testing and customized to your own preferences ####
+########## THE SETTINGS BELOW CAN BE USED FOR TESTING AND CUSTOMIZED TO YOUR PREFERENCE ##########
 # LLM_TYPE must be one of: "chatopenai", "huggingface", "local_llm"
 LLM_TYPE = ""
 
-# - LLM_MODEL_TYPE must be one of: "gpt35", "gpt35_16", "gpt4" if LLM_TYPE is "chatopenai"
+# - LLM_MODEL_TYPE must be one of: "gpt35", "gpt35_16", "gpt4" if LLM_TYPE is "chatopenai". Default is "gpt35"
 #   Context window sizes are currently: "gpt35": 4097 tokens (equivalent to ~3000 words), "gpt35_16": 16385 tokens, "gpt4": 8192 tokens
 # - LLM_MODEL_TYPE must be one of: "llama2", "GoogleFlan" if LLM_TYPE is "huggingface"
 #   "llama2" requires Huggingface Pro Account and access to the llama2 model https://huggingface.co/meta-llama/Llama-2-7b-chat-hf
@@ -65,8 +65,12 @@ CHAIN_NAME = ""
 # CHAIN_TYPE must be one of: "stuff", 
 CHAIN_TYPE = ""
 
-# SEARCH_TYPE must be one of: "similarity", 
+# SEARCH_TYPE must be one of: "similarity", "similarity_score_threshold"
 SEARCH_TYPE = ""
+
+# SCORE_THRESHOLD represents the similarity value that chunks must exceed to qualify for the context, value must be between 0.0 and 1.0
+# This value is only relevant when SEARCH_TYPE has been set to "similarity_score_threshold"
+SCORE_THRESHOLD = 
 
 # VECDB_TYPE must be one of: "chromadb", 
 VECDB_TYPE = ""

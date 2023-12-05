@@ -1,6 +1,7 @@
 import os
 import datetime as dt
 from loguru import logger
+from langchain.vectorstores import Chroma
 from langchain.embeddings import OpenAIEmbeddings
 from langchain.embeddings import HuggingFaceEmbeddings
 from langchain.embeddings import OllamaEmbeddings
@@ -17,6 +18,16 @@ def create_vectordb_name(content_folder_name, chunk_size=None, chunk_overlap=Non
         vectordb_name = "_" + settings.VECDB_TYPE + "_" + str(settings.CHUNK_SIZE) + "_" + str(settings.CHUNK_OVERLAP) + "_" + settings.EMBEDDINGS_PROVIDER
     vectordb_folder_path = os.path.join(settings.VECDB_DIR, content_folder_name) + vectordb_name 
     return content_folder_path, vectordb_folder_path
+
+
+def get_chroma_vector_store(collection_name, embeddings, vectordb_folder):
+    vector_store = Chroma(
+        collection_name=collection_name,
+        embedding_function=embeddings,
+        persist_directory=vectordb_folder,
+        collection_metadata={"hnsw:space": "cosine"}
+    )
+    return vector_store
 
 
 def get_settings_as_dictionary(file_name):

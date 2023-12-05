@@ -32,13 +32,17 @@ def main():
             if question not in ["exit", "quit", "q"]:
                 # log the question
                 logger.info(f"\nQuestion: {question}")
+                most_similar_docs = list((score, doc.page_content) for doc, score in querier.vector_store.similarity_search_with_relevance_scores(question, k=querier.chunk_k))
+                topscore = most_similar_docs[0][0]
+                docs_available = topscore >= querier.score_threshold
                 # Generate answer and include sources used to produce that answer
-                response = querier.ask_question(question)
-                # log the answer to the question and the sources used for creating the answer
-                logger.info("\nSources:\n")
-                for document in response["source_documents"]:
-                    logger.info(f"Page {document.metadata['page_number']} chunk used: {document.page_content}\n")
-                logger.info(f"\nAnswer: {response['answer']}")
+                response = querier.ask_question(question, docs_available)
+                # if the retriever will return 1 or more chunks
+                if docs_available:
+                    # log the answer to the question and the sources used for creating the answer
+                    logger.info("\nSources:\n")
+                    for document in response["source_documents"]:
+                        logger.info(f"Page {document.metadata['page_number']} chunk used: {document.page_content}\n")
             else:
                 exit_program()
 
