@@ -26,9 +26,9 @@ class DocSetForm(FlaskForm):
     # Field definitions
     id = HiddenField('ID', default=0)
     name = StringField('Name', default='', validators=[Length(min=3, max=64)], render_kw={'size': 40})
-    llm_type = SelectField('LLM type', default='chatopenai', choices=['chatopenai', 'huggingface'])
+    llm_type = SelectField('LLM type', default='chatopenai', choices=['chatopenai', 'huggingface', 'local_llm'])
     llm_modeltype = SelectField('LLM model type', default='gpt35', choices=['gpt35', 'gpt35_16', 'gpt4', 'llama2', 'GoogleFlan'])
-    embeddings_provider = SelectField('Embeddings provider', default='openai', choices=['openai', 'hugging_face'])
+    embeddings_provider = SelectField('Embeddings provider', default='openai', choices=['openai', 'hugging_face', 'local_embeddings'])
     embeddings_model = SelectField('Embeddings model', default='text-embedding-ada-002', choices=['text-embedding-ada-002', 'all-mpnet-base-v2'])
     text_splitter_method = SelectField('Text splitter method', default='NLTKTextSplitter', choices=['NLTKTextSplitter', 'RecursiveCharacterTextSplitter'])
     chain = SelectField('Chain', default='conversationalretrievalchain', choices=['conversationalretrievalchain'])
@@ -194,6 +194,8 @@ EMBEDDINGS_PROVIDER = "openai"
 
         # Show the files from the docset
         if method == 'FILES':
+            obj = DocSet.query.get(id)
+            obj.fields_to_form(self)
             return render_chat_template('docset-files.html', form=self, docset_id=id)
 
         # Upload a file to the docset

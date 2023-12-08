@@ -18,7 +18,7 @@ function pol_status() {
                     file = data.files[i];
                     tr = $('#file-tr-' + file.id);
                     if (tr.length == 0) {
-                        $('#file-table').append('<tr id="file-tr-' + file.id + '"><td id="f-' + file.id + '"></td><td id="file_name_' + file.id + '">' + file.filename + '</td><td style="white-space: nowrap;">' + file.dt + '</td><td>' + file.size + '</td><td id="status-' + file.id + '"></td><td><a id="fdel-' + file.id + '" href="javascript:docset_delete_file(' + file.id + ');" class="btn btn-secondary btn-sm">Delete</a></td></tr>');
+                        $('#file-table').append('<tr id="file-tr-' + file.id + '"><td id="f-' + file.id + '"></td><td id="file_name_' + file.id + '">' + file.filename + '</td><td style="white-space: nowrap;">' + file.dt + '</td><td>' + file.size + '</td><td id="status-' + file.id + '"></td><td id="status-msg-' + file.id + '"></td><td><a id="fdel-' + file.id + '" href="javascript:docset_delete_file(' + file.id + ');" class="btn btn-secondary btn-sm">Delete</a></td></tr>');
                         tr = $('#file-tr-' + file.id);
                     } else {
                         tr.removeClass('mark-for-deletion');
@@ -38,6 +38,8 @@ function pol_status() {
                     } else {
                         $('#status-' + file.id).removeClass('blink');
                     }
+                    // Set Status message column
+                    $('#status-msg-' + file.id).html(file.status_msg);
                     // delete button
                     if (file.status_system == 'Done' || file.status_system == 'Error') {
                         $('#fdel-' + file.id).show();

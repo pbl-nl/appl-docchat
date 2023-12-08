@@ -30,11 +30,11 @@ function page_ready() {
 function highlight_source() {
     var url, i, sources = $('#questions-info').find('.source-item-attr-value-source');
     if (sources.length > 0) {
-        url = location.origin + '/docset-files/' + $('#docset_id').val() + '?src=';
+        url = location.origin + '/docset-chunks/' + $('#docset_id').val() + '?src=';
         for (i = 0; i < sources.length; i++) {
             url += (i == 0 ? '' : ',') + $(sources[i]).html();
         }
-        location.assign(url);
+        window.open(url, 'chatnmdc-chunks');
     }
 }
 
