@@ -1,8 +1,6 @@
 from dotenv import load_dotenv
 from langchain.chains import ConversationalRetrievalChain
 from langchain.chat_models import ChatOpenAI
-from langchain.embeddings.openai import OpenAIEmbeddings
-from langchain.embeddings.huggingface import HuggingFaceEmbeddings
 from langchain.schema import AIMessage, HumanMessage
 from langchain.vectorstores.chroma import Chroma
 from loguru import logger
@@ -10,18 +8,19 @@ from langchain.llms import HuggingFaceHub
 from langchain.llms import Ollama
 from langchain.callbacks.manager import CallbackManager
 from langchain.callbacks.streaming_stdout import StreamingStdOutCallbackHandler
-from langchain.embeddings import OllamaEmbeddings
-
 # local imports
 import settings
+import utils as ut
 
 
 class Querier:
-    # When parameters are read from settings.py, object is initiated without parameter settings
-    # When parameters are read from GUI, object is initiated with parameter settings listed
+    '''
+    When parameters are read from settings.py, object is initiated without parameter settings
+    When parameters are read from GUI, object is initiated with parameter settings listed
+    '''
     def __init__(self, llm_type=None, llm_model_type=None, embeddings_provider=None, embeddings_model=None, 
                  vecdb_type=None, chain_name=None, chain_type=None, chain_verbosity=None, search_type=None, 
-                 chunk_k=None, local_api_url=None):
+                 score_threshold=None, chunk_k=None, local_api_url=None):
         load_dotenv()
         self.llm_type = settings.LLM_TYPE if llm_type is None else llm_type
         self.llm_model_type = settings.LLM_MODEL_TYPE if llm_model_type is None else llm_model_type
@@ -32,9 +31,12 @@ class Querier:
         self.chain_type = settings.CHAIN_TYPE if chain_type is None else chain_type
         self.chain_verbosity = settings.CHAIN_VERBOSITY if chain_verbosity is None else chain_verbosity
         self.search_type = settings.SEARCH_TYPE if search_type is None else search_type
+        self.score_threshold = settings.SCORE_THRESHOLD if score_threshold is None else score_threshold
         self.chunk_k = settings.CHUNK_K if chunk_k is None else chunk_k
         self.local_api_url = settings.API_URL if local_api_url is None and settings.API_URL is not None else local_api_url
         self.chat_history = []
+        self.vector_store = None
+
 
     def make_agent(self, input_folder, vectordb_folder):
         """Create a langchain agent with selected llm and tools"""
@@ -54,11 +56,14 @@ class Querier:
         #
         return
 
+
     def make_chain(self, input_folder, vectordb_folder):
         self.input_folder = input_folder
         self.vectordb_folder = vectordb_folder
 
+        # if llm_type is "chatopenai"
         if self.llm_type == "chatopenai":
+            # default llm_model_type value is "gpt-3.5-turbo"
             llm_model_type = "gpt-3.5-turbo"
             if self.llm_model_type == "gpt35_16":
                 llm_model_type = "gpt-3.5-turbo-16k"
@@ -69,6 +74,7 @@ class Querier:
                 model=llm_model_type,
                 temperature=0,
             )
+        # else, if llm_type is "huggingface"
         elif self.llm_type == "huggingface":
             # default value is llama-2, with maximum output length 512
             llm_model_type = "meta-llama/Llama-2-7b-chat-hf"
@@ -80,8 +86,8 @@ class Querier:
                                  model_kwargs={"temperature": 0.1,
                                                "max_length": max_length}
                                 )
-        
-        if self.llm_type == "local_llm":
+        # else, if llm_type is "local_llm"
+        elif self.llm_type == "local_llm":
             logger.info("Use Local LLM")
             logger.info("Retrieving " + self.llm_model_type)
             if self.local_api_url is not None: # If API URL is defined, use it
@@ -98,30 +104,19 @@ class Querier:
                 )
             logger.info("Retrieved " + self.llm_model_type)
 
-        if self.embeddings_provider == "openai":
-            embeddings = OpenAIEmbeddings(model=self.embeddings_model, client=None)
-            logger.info("Loaded openai embeddings")
+        # get embeddings
+        embeddings = ut.getEmbeddings(self.embeddings_provider, self.embeddings_model, self.local_api_url)
 
-        if self.embeddings_provider == "local_embeddings":
-            if self.local_api_url is not None: # If API URL is defined, use it
-                embeddings = OllamaEmbeddings(
-                    base_url = self.local_api_url,
-                    model = self.embeddings_model)
-            else:
-                embeddings = OllamaEmbeddings( # Otherwise, use localhost
-                    model = self.embeddings_model)
-            logger.info("Loaded local embeddings: " + self.embeddings_model)
-
-        if self.embeddings_provider == "huggingface":
-            embeddings = HuggingFaceEmbeddings(model_name=self.embeddings_model)
-
+        # get chroma vector store
         if self.vecdb_type == "chromadb":
-            vector_store = Chroma(
-                collection_name=self.input_folder,
-                embedding_function=embeddings,
-                persist_directory=self.vectordb_folder,
-            )
-            retriever = vector_store.as_retriever(search_type=self.search_type, search_kwargs={"k": self.chunk_k})
+            self.vector_store = ut.get_chroma_vector_store(self.input_folder, embeddings, self.vectordb_folder)
+
+            # get retriever
+            if self.search_type == "similarity":
+                retriever = self.vector_store.as_retriever(search_type=self.search_type, search_kwargs={"k": self.chunk_k})
+            elif self.search_type == "similarity_score_threshold":
+                retriever = self.vector_store.as_retriever(search_type=self.search_type, search_kwargs={"k": self.chunk_k, 'score_threshold': self.score_threshold})
+
             logger.info(f"Loaded chromadb from folder {self.vectordb_folder}")
 
         if self.chain_name == "conversationalretrievalchain":
@@ -137,14 +132,23 @@ class Querier:
 
 
     def ask_question(self, question: str):
+        # check if any chunk will qualify given the similarity threshold
+        most_similar_docs = list((score, doc.page_content) for doc, score in self.vector_store.similarity_search_with_relevance_scores(question, k=self.chunk_k))
+        scores = [most_similar_docs[i][0] for i in range(len(most_similar_docs))]
         logger.info(f"current chat history: {self.chat_history}")
+        # generate response from chain
         response = self.chain({"question": question, "chat_history": self.chat_history})
+        if scores[0] >= self.score_threshold:
+            answer = response["answer"]
+        else:
+            # if no chunk qualifies, overrule any answer generated by the LLM
+            answer = "I don't know because the information is not in the context"
         logger.info(f"question: {question}")
-        answer = response["answer"]
         logger.info(f"answer: {answer}")
         self.chat_history.append(HumanMessage(content=question))
         self.chat_history.append(AIMessage(content=answer))
-        return response
+        return response, scores
+
 
     def clear_history(self):
         # used by "Clear Conversation" button

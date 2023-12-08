@@ -33,12 +33,16 @@ def main():
                 # log the question
                 logger.info(f"\nQuestion: {question}")
                 # Generate answer and include sources used to produce that answer
-                response = querier.ask_question(question)
-                # log the answer to the question and the sources used for creating the answer
-                logger.info("\nSources:\n")
-                for document in response["source_documents"]:
-                    logger.info(f"Page {document.metadata['page_number']} chunk used: {document.page_content}\n")
-                logger.info(f"\nAnswer: {response['answer']}")
+                response, scores = querier.ask_question(question)
+                # if the retriever returns one or more chunks with a score above the threshold
+                if scores[0] >= querier.score_threshold:
+                    # log the answer to the question and the sources used for creating the answer
+                    logger.info("\nSources:\n")
+                    cnt = 0
+                    for document in response["source_documents"]:
+                        logger.info(f"score: {scores[cnt]}")
+                        cnt += 1
+                        logger.info(f"Page {document.metadata['page_number']} chunk used: {document.page_content}\n")
             else:
                 exit_program()
 

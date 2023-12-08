@@ -1,11 +1,6 @@
 import os
 from dotenv import load_dotenv
-from typing import List
-from langchain.embeddings import OpenAIEmbeddings
-from langchain.embeddings import HuggingFaceEmbeddings
 from langchain.vectorstores import Chroma
-import langchain.docstore.document as docstore
-#from langchain.embeddings import OllamaEmbeddings
 from loguru import logger
 # local imports
 import settings
@@ -13,13 +8,16 @@ from ingest.pdf_parser import PdfParser
 from ingest.txt_parser import TxtParser
 from ingest.html_parser  import HtmlParser
 from ingest.word_parser import WordParser
-from ingest.content_iterator import ContentIterator
+# from ingest.content_iterator import ContentIterator
 from ingest.ingest_utils import IngestUtils
+import utils as ut
 
 
 class Ingester:
-    # When parameters are read from settings.py, object is initiated without parameter settings
-    # When parameters are read from GUI, object is initiated with parameter settings listed
+    '''
+        When parameters are read from settings.py, object is initiated without parameter settings
+        When parameters are read from GUI, object is initiated with parameter settings listed
+    '''
     def __init__(self, collection_name: str, content_folder: str, vectordb_folder: str, 
                  embeddings_provider=None, embeddings_model=None, text_splitter_method=None,
                  vecdb_type=None, chunk_size=None, chunk_overlap=None, local_api_url=None,
@@ -38,70 +36,94 @@ class Ingester:
         self.file_no = file_no
 
     def ingest(self) -> None:
-        content_iterator = ContentIterator(self.content_folder)
-        # create text chunks with chosen settings of chunk size and chunk overlap
-        pdf_parser = PdfParser(self.chunk_size, self.chunk_overlap, self.file_no, self.text_splitter_method)
+        '''
+            Creates instances of all parsers, iterates over all files in the folder
+            When parameters are read from GUI, object is initiated with parameter settings listed
+        '''
         ingestutils = IngestUtils(self.chunk_size, self.chunk_overlap, self.file_no, self.text_splitter_method)
+        pdf_parser = PdfParser(self.chunk_size, self.chunk_overlap, self.file_no, self.text_splitter_method)
         txt_parser = TxtParser(self.chunk_size, self.chunk_overlap, self.file_no, self.text_splitter_method)
         html_parser = HtmlParser(self.chunk_size, self.chunk_overlap, self.file_no, self.text_splitter_method)
         word_parser = WordParser(self.chunk_size, self.chunk_overlap, self.file_no, self.text_splitter_method)
 
-        chunks: List[docstore.Document] = []
-        # for each file that the content_iterator yields
-        for document in content_iterator:
-            # check and set document path
-            if not os.path.isfile(document):
-                raise FileNotFoundError(f"File not found: {document}")
-            self.file_path = document
-
-            if document.endswith(".pdf"):
-                # parse pdf 
-                raw_pages, metadata = pdf_parser.parse_pdf(self.file_path)
-            elif document.endswith(".txt"):
-                # parse txt file
-                raw_pages, metadata = txt_parser.parse_txt(self.file_path)
-            elif document.endswith(".md"):
-                # parse md file
-                raw_pages, metadata = txt_parser.parse_txt(self.file_path)
-            elif document.endswith(".html"):
-                # parse html file
-                raw_pages, metadata = html_parser.parse_html(self.file_path)
-            elif document.endswith(".docx"):
-                # parse word document (as one; not separated into pages)
-                raw_pages, metadata = word_parser.parse_word(self.file_path)
-            else:
-                logger.info(f"Cannot ingest document {document} because it has extension {document[-4:]}")
-
-            # convert the raw text to cleaned text chunks
-            document_chunks = ingestutils.clean_text_to_docs(raw_pages, metadata)
-            chunks.extend(document_chunks)
-            logger.info(f"Extracted {len(chunks)} chunks from {document}")
-
-        if self.embeddings_provider == "openai":
-            embeddings = OpenAIEmbeddings(model=self.embeddings_model, client=None)
-            logger.info("Loaded openai embeddings")
+        # get embeddings
+        embeddings = ut.getEmbeddings(self.embeddings_provider, self.embeddings_model, self.local_api_url)
         
-        if self.embeddings_provider == "huggingface":
-            embeddings = HuggingFaceEmbeddings(model_name=self.embeddings_model)
+        # create empty list representing added files
+        new_files = []
 
-        '''
-        if self.embeddings_provider == "local_embeddings":
-            if self.local_api_url is not None:
-                embeddings = OllamaEmbeddings(
-                    base_url = self.local_api_url,
-                    model = self.embeddings_model)
-            else:
-                embeddings = OllamaEmbeddings(
-                    model = self.embeddings_model)
-            logger.info("Loaded local embeddings: " + self.embeddings_model)
-        '''
-
-        # create vector store with chosen settings of vector store type (e.g. chromadb)
         if self.vecdb_type == "chromadb":
-            vector_store = Chroma.from_documents(
-                documents=chunks,
-                embedding=embeddings,
-                collection_name=self.collection_name,
-                persist_directory=self.vectordb_folder
-            )
+            # get all files in the folder
+            files_in_folder = os.listdir(self.content_folder)
+            # if the vector store already exists, get the set of ingested files from the vector store
+            if os.path.exists(self.vectordb_folder):
+                # get chroma vector store
+                vector_store = ut.get_chroma_vector_store(self.collection_name, embeddings, self.vectordb_folder)
+                logger.info(f"Vector store already exists for specified settings and folder {self.content_folder}")
+                # determine the files that are added or deleted
+                collection = vector_store.get() # dict_keys(['ids', 'embeddings', 'documents', 'metadatas'])
+                collection_ids = [int(id) for id in collection['ids']]
+                files_in_store = [metadata['filename'] for metadata in collection['metadatas']]
+                files_in_store = list(set(files_in_store))
+                # check if files were added or removed
+                new_files = [file for file in files_in_folder if file not in files_in_store]
+                files_deleted = [file for file in files_in_store if file not in files_in_folder]
+                # delete all chunks from the vector store that belong to files removed from the folder
+                if len(files_deleted) > 0:
+                    logger.info(f"Files are deleted, so vector store for {self.content_folder} needs to be updated")
+                    idx_id_to_delete = []
+                    for idx in range(len(collection['ids'])):
+                        idx_id = collection['ids'][idx]
+                        idx_metadata = collection['metadatas'][idx]
+                        if idx_metadata['filename'] in files_deleted:
+                            idx_id_to_delete.append(idx_id)
+                    vector_store.delete(idx_id_to_delete)
+                    logger.info(f"Deleted files from vectorstore")
+                # determine updated maximum id from collection after deletions
+                collection = vector_store.get() # dict_keys(['ids', 'embeddings', 'documents', 'metadatas'])
+                collection_ids = [int(id) for id in collection['ids']]
+                start_id = max(collection_ids) + 1
+            # else it needs to be created first
+            else:
+                logger.info(f"Vector store to be created for folder {self.content_folder}")
+                # get chroma vector store
+                vector_store = ut.get_chroma_vector_store(self.collection_name, embeddings, self.vectordb_folder)
+                collection = vector_store.get() # dict_keys(['ids', 'embeddings', 'documents', 'metadatas'])
+                # all files in the folder are to be ingested into the vector store
+                new_files = [file for file in files_in_folder]
+                start_id = 0
+
+            # For all files to add to the vector store
+            if len(new_files) > 0:
+                logger.info(f"Files are added, so vector store for {self.content_folder} needs to be updated")
+                for file in new_files:
+                    file_path = os.path.join(self.content_folder, file)
+                    # extract pages and metadata according to file type
+                    if file.endswith(".pdf"):
+                        raw_pages, metadata = pdf_parser.parse_pdf(file_path)
+                    elif file.endswith(".txt") or file.endswith(".md"):
+                        raw_pages, metadata = txt_parser.parse_txt(file_path)
+                    elif file.endswith(".html"):
+                        raw_pages, metadata = html_parser.parse_html(file_path)
+                    elif file.endswith(".docx"):
+                        raw_pages, metadata = word_parser.parse_word(file_path)
+                    else:
+                        logger.info(f"Skipping ingestion of file {file} because it has extension {file[-4:]}")
+                    # convert the raw text to cleaned text chunks
+                    documents = ingestutils.clean_text_to_docs(raw_pages, metadata)
+                    logger.info(f"Extracted {len(documents)} chunks from {file}")    
+                    # and add the chunks to the vector store 
+                    vector_store.add_documents(
+                        documents=documents,
+                        embedding=embeddings,
+                        collection_name=self.collection_name,
+                        persist_directory=self.vectordb_folder,
+                        ids=[str(id) for id in list(range(start_id, start_id + len(documents)))] # add id to file chunks for later identification
+                    )
+                    collection = vector_store.get() # dict_keys(['ids', 'embeddings', 'documents', 'metadatas'])
+                    collection_ids = [int(id) for id in collection['ids']]
+                    start_id = max(collection_ids) + 1
+                logger.info(f"Added files to vectorstore")
+
+            # save updated vector store to disk
             vector_store.persist()
