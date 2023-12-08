@@ -12,6 +12,7 @@
     			<td><table class="plain">
 					<tr><td>LLM:</td><td>{{ docset.llm_type }}&nbsp;&nbsp;&nbsp;{{ docset.llm_modeltype }}</td></tr>
 					<tr><td>Embeddings:</td><td>{{ docset.embeddings_provider }}&nbsp;&nbsp;&nbsp;{{ docset.embeddings_model }}</td></tr>
+					<tr><td>Text splitter:</td><td>{{ docset.text_splitter_method }}</td></tr>
 					<tr><td>Chain, Search:</td><td>{{ docset.chain }}&nbsp;&nbsp;&nbsp;{{ docset.chain_type }}&nbsp;&nbsp;&nbsp;{{ docset.chain_verbosity }},&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{{ docset.search_type }}</td></tr>
 					<tr><td>Vector database:</td><td>{{ docset.vecdb_type }}</td></tr>
 					<tr><td>Chunks:</td><td>Size: {{ docset.chunk_size }},&nbsp;&nbsp;&nbsp;overlap: {{ docset.chunk_overlap }},&nbsp;&nbsp;&nbsp;K: {{ docset.chunk_k }}</td></tr>

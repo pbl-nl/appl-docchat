@@ -26,7 +26,7 @@
             </span>
             <span style="display: inline-block; width: 240px; margin-bottom: 8px;">
                 Chunck middle:
-                <a id="middle-sections-hide" middle_hide="hide" href="javascript:middle_sections();" class="btn btn-secondary btn-sm" style="margin-left: 20px; min-width: 65px;">Hidden</a>
+                <a id="middle-sections-hide" middle_hide="show" href="javascript:middle_sections();" class="btn btn-secondary btn-sm" style="margin-left: 20px; min-width: 65px;">Visible</a>
             </span>
             <span id="unused-chunks" style="display: inline-block; width: 240px; margin-bottom: 8px;">
                 Unused chunks:
@@ -34,7 +34,7 @@
             </span>
         </div>
         {% for chunk in chunks %}
-            <div source="{{ chunk.metadata.source }}" onclick="$(this).toggleClass('chunk-hide');" class="chunk-outer chunk-hide">
+            <div source="{{ chunk.metadata.source }}" onclick="$(this).toggleClass('chunk-hide');" class="chunk-outer">
                 <div class="chunk-source">{{ chunk.metadata.source }}</div>
                 <div class="chunk"><span class="chunk1">{{ chunk.chunk1 }}</span><span class="chunk2">{{ chunk.chunk2 }}</span><span class="chunk3">{{ chunk.chunk3 }}</span></div>
             </div>

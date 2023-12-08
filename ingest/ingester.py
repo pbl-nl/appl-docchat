@@ -5,7 +5,7 @@ from langchain.embeddings import OpenAIEmbeddings
 from langchain.embeddings import HuggingFaceEmbeddings
 from langchain.vectorstores import Chroma
 import langchain.docstore.document as docstore
-from langchain.embeddings import OllamaEmbeddings
+#from langchain.embeddings import OllamaEmbeddings
 from loguru import logger
 # local imports
 import settings
@@ -84,6 +84,7 @@ class Ingester:
         if self.embeddings_provider == "huggingface":
             embeddings = HuggingFaceEmbeddings(model_name=self.embeddings_model)
 
+        '''
         if self.embeddings_provider == "local_embeddings":
             if self.local_api_url is not None:
                 embeddings = OllamaEmbeddings(
@@ -93,6 +94,7 @@ class Ingester:
                 embeddings = OllamaEmbeddings(
                     model = self.embeddings_model)
             logger.info("Loaded local embeddings: " + self.embeddings_model)
+        '''
 
         # create vector store with chosen settings of vector store type (e.g. chromadb)
         if self.vecdb_type == "chromadb":
