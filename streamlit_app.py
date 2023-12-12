@@ -6,7 +6,7 @@ from loguru import logger
 from ingest.ingester import Ingester
 from query.querier import Querier
 import settings
-import utils
+import utils as ut
 
 
 def click_GO_button():
@@ -45,7 +45,7 @@ def folder_selector(folders):
     folder_name_selected = st.sidebar.selectbox("label=folder_selector", options=folders, label_visibility="hidden")
     logger.info(f"folder_name_selected is now {folder_name_selected}")
     # get associated source folder path and vectordb path
-    folder_path_selected, vectordb_folder_path_selected = utils.create_vectordb_name(folder_name_selected)
+    folder_path_selected, vectordb_folder_path_selected = ut.create_vectordb_name(folder_name_selected)
     logger.info(f"vectordb_folder_path_selected is now {vectordb_folder_path_selected}")
     if folder_name_selected != st.session_state['folder_selected']:
         st.session_state['is_GO_clicked'] = False
@@ -93,13 +93,15 @@ def handle_query(querier, prompt: str):
         st.markdown(response["answer"])
     # Add the response to chat history
     st.session_state['messages'].append({"role": "assistant", "content": response["answer"]})
-    with st.expander("Sources used for answer"):
-        cnt = 0
-        for document in response["source_documents"]:
-            # st.write(f"similarity score: {scores[cnt]:.4f}, file: {document.metadata['filename']}, chunk: {document.metadata['filename']}")
-            st.write(f"similarity score: {scores[cnt]:.4f}, file: {document.metadata['filename']}")
-            cnt += 1
-            st.write(document)
+    if len(response["source_documents"]) > 0:
+        with st.expander("Sources used for answer"):
+            cnt = 0
+            for document in response["source_documents"]:
+                st.markdown(f"**page: {document.metadata['page_number']}, chunk: {document.metadata['chunk']}, score: {scores[cnt]:.4f}, file: {document.metadata['filename']}**")
+                cnt += 1
+                st.markdown(f"{document.page_content}")
+    else:
+        logger.info("No source documents found relating to the question")
     logger.info("Executed handle_query(querier, prompt)")
 
 
@@ -117,16 +119,6 @@ def initialize_page():
         st.header(settings.APP_HEADER)
     # set session state default for messages to fight hallucinations
     # st.session_state.setdefault('messages', [{"role": "system", "content": "You are a helpful assistant. 
-    # If the answer to the question cannot be found in the context, just answer that you don't know the answer because the given context doesn't provide information"}])
-    with st.expander("User manual for this application"):
-        # read app explanation from file explanation.txt
-        with open(file=settings.APP_INFO) as file:
-            explanation = file.read()
-        st.markdown(body=explanation, unsafe_allow_html=True)
-        st.image("./images/multilingual.png")
-    st.divider()
-    # Sidebar text for folder selection
-    st.sidebar.title("Select a document folder")
     # Custom CSS to have white expander background
     st.markdown(
         '''
@@ -143,6 +135,15 @@ def initialize_page():
         ''',
         unsafe_allow_html=True
     )
+    with st.expander("User manual for this application"):
+        # read app explanation from file explanation.txt
+        with open(file=settings.APP_INFO) as file:
+            explanation = file.read()
+        st.markdown(body=explanation, unsafe_allow_html=True)
+        st.image("./images/multilingual.png")
+    st.divider()
+    # Sidebar text for folder selection
+    st.sidebar.title("Select a document folder")
     logger.info("Executed initialize_page()")
 
 
