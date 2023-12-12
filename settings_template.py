@@ -28,7 +28,7 @@ EVAL_FILE_NAME = ""
 # CHAIN_VERBOSITY must be boolean. When set to True, the standalone question that is conveyed to LLM is shown
 CHAIN_VERBOSITY = 
 
-########## THE SETTINGS BELOW CAN BE USED FOR TESTING AND CUSTOMIZED TO YOUR PREFERENCE ##########
+# ######### THE SETTINGS BELOW CAN BE USED FOR TESTING AND CUSTOMIZED TO YOUR PREFERENCE ##########
 # LLM_TYPE must be one of: "chatopenai", "huggingface", "local_llm"
 LLM_TYPE = ""
 

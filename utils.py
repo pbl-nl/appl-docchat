@@ -1,4 +1,5 @@
 import os
+import sys
 import datetime as dt
 from loguru import logger
 from langchain.vectorstores import Chroma
@@ -18,6 +19,11 @@ def create_vectordb_name(content_folder_name, chunk_size=None, chunk_overlap=Non
         vectordb_name = "_" + settings.VECDB_TYPE + "_" + str(settings.CHUNK_SIZE) + "_" + str(settings.CHUNK_OVERLAP) + "_" + settings.EMBEDDINGS_PROVIDER
     vectordb_folder_path = os.path.join(settings.VECDB_DIR, content_folder_name) + vectordb_name 
     return content_folder_path, vectordb_folder_path
+
+
+def exit_program():
+    print("Exiting the program...")
+    sys.exit(0)
 
 
 def get_chroma_vector_store(collection_name, embeddings, vectordb_folder):

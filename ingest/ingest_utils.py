@@ -6,18 +6,22 @@ from loguru import logger
 
 
 class IngestUtils:
-    """Utils for ingesting different types of documents. 
-    This includes cutting text into chunks and cleaning text."""
+    """
+    Utils for ingesting different types of documents.
+    This includes cutting text into chunks and cleaning text.
+    """
 
     def __init__(self, chunk_size: int, chunk_overlap: int, file_no: int, text_splitter_method: str):
         self.chunk_size = chunk_size
         self.chunk_overlap = chunk_overlap
         self.file_no = file_no
         self.text_splitter_method = text_splitter_method
-    
+
     def getattr_or_default(self, obj, attr, default=None):
-        """Get an attribute from an object, returning a default value if the attribute """
-        """is not found or its value is None."""
+        """
+        Get an attribute from an object, returning a default value if the attribute
+        is not found or its value is None.
+        """
         value = getattr(obj, attr, default)
         return value if value is not None else default
 
@@ -27,12 +31,6 @@ class IngestUtils:
             self.fix_newlines,
             self.remove_multiple_newlines,
         ]
-
-        '''
-        if self.file_no > 0:
-            metadata['file_no'] = self.file_no
-        '''
-
         cleaned_text = self.clean_text(raw_pages, cleaning_functions)
         return self.text_to_docs(cleaned_text, metadata)
 
@@ -80,7 +78,7 @@ class IngestUtils:
                     separators=["\n\n", "\n", ".", "!", "?", ",", " ", ""],
                     chunk_overlap=self.chunk_overlap
                 )
-            
+
             chunks = text_splitter.split_text(page)
             for i, chunk in enumerate(chunks):
                 if self.file_no:
