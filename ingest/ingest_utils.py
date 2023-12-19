@@ -29,7 +29,7 @@ class IngestUtils:
         cleaning_functions: List = [
             self.merge_hyphenated_words,
             self.fix_newlines,
-            self.remove_multiple_newlines,
+            self.remove_multiple_newlines
         ]
         cleaned_text = self.clean_text(raw_pages, cleaning_functions)
         return self.text_to_docs(cleaned_text, metadata)
@@ -38,30 +38,45 @@ class IngestUtils:
                    pages: List[Tuple[int, str]],
                    cleaning_functions: List[Callable[[str], str]]
                    ) -> List[Tuple[int, str]]:
-        """Apply the cleaning functions to the text of each page."""
+        """
+        Apply the cleaning functions to the text of each page.
+        """
         logger.info("Cleaning text of each page")
         cleaned_pages = []
         for page_num, text in pages:
+            # cnt = 0
+            # print(f"Text before cleaning: {text}")
             for cleaning_function in cleaning_functions:
+                # print(f"cleaning phase {cnt}")
+                # cnt += 1
                 text = cleaning_function(text)
+                # print(text)
             cleaned_pages.append((page_num, text))
         return cleaned_pages
 
     def merge_hyphenated_words(self, text: str) -> str:
-        """Merge words in the text that have been split with a hyphen."""
+        """
+        Merge words in the text that have been split with a hyphen.
+        """
         return re.sub(r"(\w)-\n(\w)", r"\1\2", text)
 
     def fix_newlines(self, text: str) -> str:
-        """Replace single newline characters in the text with spaces."""
+        """
+        Replace single newline characters in the text with spaces.
+        """
         return re.sub(r"(?<!\n)\n(?!\n)", " ", text)
 
     def remove_multiple_newlines(self, text: str) -> str:
-        """Reduce multiple newline characters in the text to a single newline."""
+        """
+        Reduce multiple newline characters in the text to a single newline.
+        """
         return re.sub(r"\n{2,}", "\n", text)
 
     def text_to_docs(self, text: List[Tuple[int, str]],
                      metadata: Dict[str, str]) -> List[docstore.Document]:
-        """Split the text into chunks and return them as Documents."""
+        """
+        Split the text into chunks and return them as Documents.
+        """
         doc_chunks: List[docstore.Document] = []
 
         chunk_no = 0

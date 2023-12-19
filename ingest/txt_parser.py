@@ -6,7 +6,7 @@ from ingest.ingest_utils import IngestUtils
 
 
 class TxtParser:
-    """A parser for extracting text from PDF documents."""
+    """A parser for extracting text from .txt documents."""
 
     def __init__(self, chunk_size: int, chunk_overlap: int, file_no: int, text_splitter_method: str):
         self.chunk_size = chunk_size

@@ -135,6 +135,7 @@ class Querier:
         # check if any chunk will qualify given the similarity threshold
         most_similar_docs = list((score, doc.page_content) for doc, score in self.vector_store.similarity_search_with_relevance_scores(question, k=self.chunk_k))
         scores = [most_similar_docs[i][0] for i in range(len(most_similar_docs))]
+        logger.info(f"current question: {question}")
         logger.info(f"current chat history: {self.chat_history}")
         # generate response from chain
         response = self.chain({"question": question, "chat_history": self.chat_history})
@@ -142,7 +143,6 @@ class Querier:
         print(f"topscore: {scores[0]}")
         if scores[0] < self.score_threshold:
             response["answer"] = "Ik weet het niet want er is geen context die het antwoord bevat / I don't know because there is no context containing the answer"
-        logger.info(f"question: {question}")
         logger.info(f"answer: {response['answer']}")
         self.chat_history.append(HumanMessage(content=question))
         self.chat_history.append(AIMessage(content=response["answer"]))

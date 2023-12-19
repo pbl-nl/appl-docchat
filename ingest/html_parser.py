@@ -7,7 +7,7 @@ from ingest.ingest_utils import IngestUtils
 
 
 class HtmlParser:
-    """A parser for extracting text from HTML documents."""
+    """A parser for extracting text from .html documents."""
 
     def __init__(self, chunk_size: int, chunk_overlap: int, file_no: int, text_splitter_method: str):
         self.chunk_size = chunk_size
