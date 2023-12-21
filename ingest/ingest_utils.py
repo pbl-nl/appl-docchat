@@ -3,6 +3,8 @@ from typing import Callable, Dict, List, Tuple
 import langchain.docstore.document as docstore
 import langchain.text_splitter as splitter
 from loguru import logger
+# local imports
+from ingest.file_parser import FileParser
 
 
 class IngestUtils:
@@ -16,14 +18,6 @@ class IngestUtils:
         self.chunk_overlap = chunk_overlap
         self.file_no = file_no
         self.text_splitter_method = text_splitter_method
-
-    def getattr_or_default(self, obj, attr, default=None):
-        """
-        Get an attribute from an object, returning a default value if the attribute
-        is not found or its value is None.
-        """
-        value = getattr(obj, attr, default)
-        return value if value is not None else default
 
     def clean_text_to_docs(self, raw_pages, metadata) -> List[docstore.Document]:
         cleaning_functions: List = [
@@ -72,6 +66,23 @@ class IngestUtils:
         """
         return re.sub(r"\n{2,}", "\n", text)
 
+    def get_splitter(self):
+        """
+        Get the text splitter object
+        """
+        if self.text_splitter_method == "NLTKTextSplitter":
+            text_splitter = splitter.NLTKTextSplitter(
+                chunk_size=self.chunk_size,
+                chunk_overlap=self.chunk_overlap
+            )
+        elif self.text_splitter_method == "RecursiveCharacterTextSplitter":
+            text_splitter = splitter.RecursiveCharacterTextSplitter(
+                chunk_size=self.chunk_size,
+                separators=["\n\n", "\n", ".", "!", "?", ",", " ", ""],
+                chunk_overlap=self.chunk_overlap
+            )
+        return text_splitter
+
     def text_to_docs(self, text: List[Tuple[int, str]],
                      metadata: Dict[str, str]) -> List[docstore.Document]:
         """
@@ -82,18 +93,7 @@ class IngestUtils:
         chunk_no = 0
         for page_num, page in text:
             logger.info(f"Splitting page {page_num}")
-            if self.text_splitter_method == "NLTKTextSplitter":
-                text_splitter = splitter.NLTKTextSplitter(
-                    chunk_size=self.chunk_size,
-                    chunk_overlap=self.chunk_overlap
-                )
-            elif self.text_splitter_method == "RecursiveCharacterTextSplitter":
-                text_splitter = splitter.RecursiveCharacterTextSplitter(
-                    chunk_size=self.chunk_size,
-                    separators=["\n\n", "\n", ".", "!", "?", ",", " ", ""],
-                    chunk_overlap=self.chunk_overlap
-                )
-
+            text_splitter = self.get_splitter()
             chunks = text_splitter.split_text(page)
             for i, chunk in enumerate(chunks):
                 if self.file_no:

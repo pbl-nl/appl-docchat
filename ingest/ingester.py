@@ -1,15 +1,11 @@
 import os
 from dotenv import load_dotenv
-from langchain.vectorstores import Chroma
 from loguru import logger
 # local imports
 import settings
-from ingest.pdf_parser import PdfParser
-from ingest.txt_parser import TxtParser
-from ingest.html_parser  import HtmlParser
-from ingest.word_parser import WordParser
 # from ingest.content_iterator import ContentIterator
 from ingest.ingest_utils import IngestUtils
+from ingest.file_parser import FileParser
 import utils as ut
 
 
@@ -41,10 +37,7 @@ class Ingester:
             When parameters are read from GUI, object is initiated with parameter settings listed
         '''
         ingestutils = IngestUtils(self.chunk_size, self.chunk_overlap, self.file_no, self.text_splitter_method)
-        pdf_parser = PdfParser(self.chunk_size, self.chunk_overlap, self.file_no, self.text_splitter_method)
-        txt_parser = TxtParser(self.chunk_size, self.chunk_overlap, self.file_no, self.text_splitter_method)
-        html_parser = HtmlParser(self.chunk_size, self.chunk_overlap, self.file_no, self.text_splitter_method)
-        word_parser = WordParser(self.chunk_size, self.chunk_overlap, self.file_no, self.text_splitter_method)
+        file_parser = FileParser(self.chunk_size, self.chunk_overlap, self.file_no, self.text_splitter_method)
 
         # get embeddings
         embeddings = ut.getEmbeddings(self.embeddings_provider, self.embeddings_model, self.local_api_url)
@@ -93,20 +86,15 @@ class Ingester:
                 new_files = [file for file in files_in_folder]
                 start_id = 0
 
-            # For all files to add to the vector store
+            # If there are any files to be ingested into the vector store
             if len(new_files) > 0:
                 logger.info(f"Files are added, so vector store for {self.content_folder} needs to be updated")
                 for file in new_files:
                     file_path = os.path.join(self.content_folder, file)
-                    # extract pages and metadata according to file type
-                    if file.endswith(".pdf"):
-                        raw_pages, metadata = pdf_parser.parse_pdf(file_path)
-                    elif file.endswith(".txt") or file.endswith(".md"):
-                        raw_pages, metadata = txt_parser.parse_txt(file_path)
-                    elif file.endswith(".html"):
-                        raw_pages, metadata = html_parser.parse_html(file_path)
-                    elif file.endswith(".docx"):
-                        raw_pages, metadata = word_parser.parse_word(file_path)
+                    _, file_extension = os.path.splitext(file_path)
+                    if file_extension in [".docx", ".html", ".md", ".pdf", ".txt"]:
+                        # extract raw text pages and metadata according to file type
+                        raw_pages, metadata = file_parser.parse_file(file_path)
                     else:
                         logger.info(f"Skipping ingestion of file {file} because it has extension {file[-4:]}")
                     # convert the raw text to cleaned text chunks

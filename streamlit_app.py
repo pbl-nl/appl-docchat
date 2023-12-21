@@ -135,13 +135,13 @@ def initialize_page():
         ''',
         unsafe_allow_html=True
     )
-    with st.expander("User manual for this application"):
+    with st.sidebar.expander("User manual"):
         # read app explanation from file explanation.txt
         with open(file=settings.APP_INFO) as file:
             explanation = file.read()
         st.markdown(body=explanation, unsafe_allow_html=True)
         st.image("./images/multilingual.png")
-    st.divider()
+    st.sidebar.divider()
     # Sidebar text for folder selection
     st.sidebar.title("Select a document folder")
     logger.info("Executed initialize_page()")
@@ -202,6 +202,7 @@ if st.session_state['is_GO_clicked']:
 
     # Show button "Clear Conversation"
     clear_messages_button = st.button("Clear Conversation", key="clear")
+    
     # If button "Clear Conversation" is clicked
     if clear_messages_button:
         # clear all chat messages on screen and in Querier object
@@ -214,5 +215,5 @@ if st.session_state['is_GO_clicked']:
     display_chat_history()
 
     # React to user input if a question has been asked
-    if prompt := st.chat_input("Ask your question"):
+    if prompt := st.chat_input("Your question"):
         handle_query(querier, prompt)
