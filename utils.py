@@ -2,10 +2,10 @@ import os
 import sys
 import datetime as dt
 from loguru import logger
-from langchain.vectorstores import Chroma
-from langchain.embeddings import OpenAIEmbeddings
-from langchain.embeddings import HuggingFaceEmbeddings
-from langchain.embeddings import OllamaEmbeddings
+from langchain_community.vectorstores.chroma import Chroma
+from langchain_community.embeddings import HuggingFaceEmbeddings
+from langchain_community.embeddings import OllamaEmbeddings
+from langchain_openai import OpenAIEmbeddings
 # local imports
 import settings
 
@@ -49,13 +49,13 @@ def get_settings_as_dictionary(file_name):
     # Initialize an empty dictionary to store the variables and their values
     variables_dict = {}
     # Open and read the file
-    with open(file_name, 'r') as file:
+    with open(file=file_name, mode='r', encoding="utf-8") as file:
         lines = file.readlines()
     start_reading = False
     # Process each line in the file
     for line in lines:
         # start reading below the line with ####
-        if line.startswith("####"):
+        if line.startswith("#########"):
             start_reading = True
         # ignore comment lines
         if start_reading and not line.startswith("#"):
@@ -83,18 +83,14 @@ def getEmbeddings(embeddings_provider, embeddings_model, local_api_url):
     elif embeddings_provider == "local_embeddings":
         if local_api_url is not None:
             embeddings = OllamaEmbeddings(
-                base_url = local_api_url,
-                model = embeddings_model)
+                base_url=local_api_url,
+                model=embeddings_model)
         else:
             embeddings = OllamaEmbeddings(
-                model = embeddings_model)
+                model=embeddings_model)
         logger.info("Loaded local embeddings: " + embeddings_model)
     return embeddings
 
 
 def get_timestamp():
     return str(dt.datetime.now())
-
-
-
-

@@ -94,7 +94,7 @@ def handle_query(querier, prompt: str):
     # Add the response to chat history
     st.session_state['messages'].append({"role": "assistant", "content": response["answer"]})
     if len(response["source_documents"]) > 0:
-        with st.expander("Sources used for answer"):
+        with st.expander("Paragraphs used for answer"):
             cnt = 0
             for document in response["source_documents"]:
                 st.markdown(f"**page: {document.metadata['page_number']}, chunk: {document.metadata['chunk']}, score: {scores[cnt]:.4f}, file: {document.metadata['filename']}**")
