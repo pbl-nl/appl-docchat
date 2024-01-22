@@ -10,6 +10,9 @@ APP_HEADER = ""
 # relative filepath of folder with input documents, e.g. "./docs"
 DOC_DIR = ""
 
+# relative filepath of folder with chunkss, e.g. "./chunks"
+CHUNK_DIR = ""
+
 # relative filepath of persistent vector databases, e.g. "./vector_stores"
 VECDB_DIR = ""
 
