@@ -3,155 +3,196 @@ channels:
   - defaults
 dependencies:
   - bzip2=1.0.8=he774522_0
-  - ca-certificates=2023.05.30=haa95532_0
+  - ca-certificates=2023.12.12=haa95532_0
   - libffi=3.4.4=hd77b12b_0
-  - openssl=3.0.9=h2bbff1b_0
-  - pip=23.1.2=py311haa95532_0
-  - python=3.11.4=he1021f5_0
-  - setuptools=67.8.0=py311haa95532_0
+  - openssl=3.0.12=h2bbff1b_0
+  - pip=23.3.1=py311haa95532_0
+  - python=3.11.7=he1021f5_0
+  - setuptools=68.2.2=py311haa95532_0
   - sqlite=3.41.2=h2bbff1b_0
   - tk=8.6.12=h2bbff1b_0
   - vc=14.2=h21ff451_1
   - vs2015_runtime=14.27.29016=h5e58377_2
-  - wheel=0.38.4=py311haa95532_0
-  - xz=5.4.2=h8cc25b3_0
+  - wheel=0.41.2=py311haa95532_0
+  - xz=5.4.5=h8cc25b3_0
   - zlib=1.2.13=h8cc25b3_0
   - pip:
-    - aiohttp==3.8.4
+    - aiohttp==3.9.1
     - aiosignal==1.3.1
-    - altair==5.0.1
-    - anyio==3.7.1
-    - async-timeout==4.0.2
-    - attrs==23.1.0
+    - altair==5.2.0
+    - annotated-types==0.6.0
+    - anyio==4.2.0
+    - asgiref==3.7.2
+    - attrs==23.2.0
     - backoff==2.2.1
-    - blinker==1.6.2
-    - cachetools==5.3.1
-    - certifi==2023.5.7
+    - bcrypt==4.1.2
+    - blinker==1.7.0
+    - build==1.0.3
+    - cachetools==5.3.2
+    - certifi==2023.11.17
     - chardet==5.2.0
-    - charset-normalizer==3.2.0
-    - chromadb==0.3.29
-    - click==8.1.6
-    - clickhouse-connect==0.6.8
+    - charset-normalizer==3.3.2
+    - chroma-hnswlib==0.7.3
+    - chromadb==0.4.22
+    - clarifai==10.0.0
+    - clarifai-grpc==10.0.1
+    - click==8.1.7
+    - cohere==4.41
     - colorama==0.4.6
     - coloredlogs==15.0.1
-    - dataclasses-json==0.5.12
-    - datasets==2.14.5
-    - decorator==5.1.1
+    - contextlib2==21.6.0
+    - dataclasses-json==0.6.3
+    - datasets==2.16.1
+    - deprecated==1.2.14
     - dill==0.3.7
-    - duckdb==0.8.1
-    - emoji==2.8.0
-    - fastapi==0.85.1
-    - filelock==3.12.4
+    - distro==1.9.0
+    - emoji==2.9.0
+    - fastapi==0.108.0
+    - fastavro==1.9.3
+    - filelock==3.13.1
     - filetype==1.2.0
     - flatbuffers==23.5.26
-    - frozenlist==1.4.0
-    - fsspec==2023.6.0
-    - gitdb==4.0.10
-    - gitpython==3.1.32
-    - greenlet==2.0.2
+    - frozenlist==1.4.1
+    - fsspec==2023.10.0
+    - gitdb==4.0.11
+    - gitpython==3.1.41
+    - google-auth==2.26.1
+    - googleapis-common-protos==1.62.0
+    - greenlet==3.0.3
+    - grpcio==1.60.0
     - h11==0.14.0
-    - hnswlib==0.7.0
-    - httptools==0.6.0
-    - huggingface-hub==0.17.3
+    - httpcore==1.0.2
+    - httptools==0.6.1
+    - httpx==0.26.0
+    - huggingface-hub==0.20.2
     - humanfriendly==10.0
-    - idna==3.4
-    - importlib-metadata==6.8.0
+    - idna==3.6
+    - importlib-metadata==6.11.0
+    - importlib-resources==6.1.1
     - jinja2==3.1.2
     - joblib==1.3.2
     - jsonpatch==1.33
+    - jsonpath-python==1.0.6
     - jsonpointer==2.4
-    - jsonschema==4.18.4
-    - jsonschema-specifications==2023.7.1
-    - langchain==0.0.306
+    - jsonschema==4.20.0
+    - jsonschema-specifications==2023.12.1
+    - kubernetes==29.0.0
+    - langchain==0.1.0
+    - langchain-community==0.0.11
+    - langchain-core==0.1.9
+    - langchain-openai==0.0.2
     - langdetect==1.0.9
-    - langsmith==0.0.41
-    - loguru==0.7.0
-    - lxml==4.9.3
-    - lz4==4.3.2
+    - langsmith==0.0.79
+    - llama-index==0.9.28.post2
+    - loguru==0.7.2
+    - lxml==5.1.0
+    - manifest-ml==0.0.1
     - markdown-it-py==3.0.0
     - markupsafe==2.1.3
-    - marshmallow==3.19.0
+    - marshmallow==3.20.2
     - mdurl==0.1.2
+    - mmh3==4.1.0
     - monotonic==1.6
     - mpmath==1.3.0
     - multidict==6.0.4
     - multiprocess==0.70.15
     - mypy-extensions==1.0.0
-    - networkx==3.1
+    - nest-asyncio==1.5.8
+    - networkx==3.2.1
+    - nlpcloud==1.1.45
     - nltk==3.8.1
-    - numexpr==2.8.4
-    - numpy==1.25.1
-    - onnxruntime==1.15.1
-    - openai==0.27.8
-    - openapi-schema-pydantic==1.2.4
-    - overrides==7.3.1
-    - packaging==23.1
-    - pandas==2.0.3
-    - pillow==9.5.0
-    - posthog==3.0.1
-    - protobuf==4.23.4
-    - pulsar-client==3.2.0
-    - pyarrow==12.0.1
-    - pydantic==1.10.11
+    - numpy==1.26.3
+    - oauthlib==3.2.2
+    - onnxruntime==1.16.3
+    - openai==1.7.0
+    - opencv-python==4.9.0.80
+    - openlm==0.0.5
+    - opentelemetry-api==1.22.0
+    - opentelemetry-exporter-otlp-proto-common==1.22.0
+    - opentelemetry-exporter-otlp-proto-grpc==1.22.0
+    - opentelemetry-instrumentation==0.43b0
+    - opentelemetry-instrumentation-asgi==0.43b0
+    - opentelemetry-instrumentation-fastapi==0.43b0
+    - opentelemetry-proto==1.22.0
+    - opentelemetry-sdk==1.22.0
+    - opentelemetry-semantic-conventions==0.43b0
+    - opentelemetry-util-http==0.43b0
+    - overrides==7.4.0
+    - packaging==23.2
+    - pandas==2.1.4
+    - pillow==10.2.0
+    - posthog==3.3.1
+    - protobuf==4.25.1
+    - pulsar-client==3.4.0
+    - pyarrow==14.0.2
+    - pyarrow-hotfix==0.6
+    - pyasn1==0.5.1
+    - pyasn1-modules==0.3.0
+    - pydantic==2.5.3
+    - pydantic-core==2.14.6
     - pydeck==0.8.1b0
-    - pygments==2.15.1
-    - pympler==1.0.1
-    - pypdf==3.12.2
+    - pygments==2.17.2
+    - pypdf==3.17.4
+    - pypika==0.48.9
+    - pyproject-hooks==1.0.0
     - pyreadline3==3.4.1
     - pysbd==0.3.4
     - python-dateutil==2.8.2
     - python-docx==1.1.0
     - python-dotenv==1.0.0
-    - python-iso639==2023.6.15
+    - python-iso639==2024.1.2
     - python-magic==0.4.27
-    - pytz==2023.3
-    - pytz-deprecation-shim==0.1.0.post0
+    - python-rapidjson==1.14
+    - pytz==2023.3.post1
     - pyyaml==6.0.1
-    - ragas==0.0.16
-    - rapidfuzz==3.5.2
-    - referencing==0.30.0
-    - regex==2023.6.3
+    - ragas==0.0.22
+    - rapidfuzz==3.6.1
+    - redis==5.0.1
+    - referencing==0.32.1
+    - regex==2023.12.25
     - requests==2.31.0
-    - rich==13.4.2
-    - rpds-py==0.9.2
-    - safetensors==0.3.3
-    - scikit-learn==1.3.1
-    - scipy==1.11.3
-    - sentence-transformers==2.2.2
-    - sentencepiece==0.1.99
+    - requests-oauthlib==1.3.1
+    - rich==13.7.0
+    - rpds-py==0.16.2
+    - rsa==4.9
+    - safetensors==0.4.1
+    - schema==0.7.5
     - six==1.16.0
-    - smmap==5.0.0
+    - smmap==5.0.1
     - sniffio==1.3.0
-    - sqlalchemy==2.0.19
-    - starlette==0.20.4
-    - streamlit==1.24.1
+    - soupsieve==2.5
+    - sqlalchemy==2.0.25
+    - sqlitedict==2.1.0
+    - starlette==0.32.0.post1
+    - streamlit==1.29.0
     - sympy==1.12
     - tabulate==0.9.0
-    - tenacity==8.2.2
-    - threadpoolctl==3.2.0
-    - tiktoken==0.4.0
-    - tokenizers==0.13.3
+    - tenacity==8.2.3
+    - tiktoken==0.5.2
+    - tokenizers==0.15.0
     - toml==0.10.2
     - toolz==0.12.0
-    - torch==2.0.1
-    - torchvision==0.15.2
-    - tornado==6.3.2
-    - tqdm==4.65.0
-    - transformers==4.33.3
-    - typing-extensions==4.7.1
+    - torch==2.1.2
+    - tornado==6.4
+    - tqdm==4.66.1
+    - transformers==4.36.2
+    - tritonclient==2.41.1
+    - typer==0.9.0
+    - typing-extensions==4.9.0
     - typing-inspect==0.9.0
-    - tzdata==2023.3
-    - tzlocal==4.3.1
-    - unstructured==0.10.28
-    - urllib3==2.0.3
-    - uvicorn==0.23.1
-    - validators==0.20.0
+    - tzdata==2023.4
+    - tzlocal==5.2
+    - unstructured==0.12.0
+    - unstructured-client==0.15.2
+    - urllib3==2.1.0
+    - uvicorn==0.25.0
+    - validators==0.22.0
     - watchdog==3.0.0
-    - watchfiles==0.19.0
-    - websockets==11.0.3
+    - watchfiles==0.21.0
+    - websocket-client==1.7.0
+    - websockets==12.0
     - win32-setctime==1.1.0
-    - xxhash==3.3.0
-    - yarl==1.9.2
-    - zipp==3.16.2
-    - zstandard==0.21.0
-
+    - wrapt==1.16.0
+    - xxhash==3.4.1
+    - yarl==1.9.4
+    - zipp==3.17.0

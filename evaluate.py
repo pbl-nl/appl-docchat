@@ -1,8 +1,8 @@
 import os
-from loguru import logger
 import json
-import pandas as pd
 from collections import defaultdict
+import pandas as pd
+from loguru import logger
 from datasets import Dataset
 # local imports
 from ingest.ingester import Ingester
@@ -49,7 +49,7 @@ def generate_answers(querier, eval_questions, eval_question_types):
         logger.info(f"i = {i}, question_type = {eval_question_types[i]}")
         if eval_question_types[i] == "initial":
             querier.clear_history()
-        response = querier.ask_question(question)
+        response, scores = querier.ask_question(question)
         answers.append(response["answer"])
         sources.append(response["source_documents"])
     return answers, sources
@@ -72,7 +72,8 @@ def get_ragas_results(answers, sources, eval_questions, eval_groundtruths):
         dataset_dict["contexts"].append([d.page_content for d in results[i]["source_documents"]])
     dataset = Dataset.from_dict(dataset_dict)
     # evaluate
-    return evaluation.evaluate(dataset)
+    result = evaluation.evaluate(dataset)
+    return result
 
 def store_aggregated_results(timestamp, admin_columns, content_folder_name, result):
     agg_columns = list(result.keys())
@@ -80,9 +81,8 @@ def store_aggregated_results(timestamp, admin_columns, content_folder_name, resu
     
     agg_data = [content_folder_name] + [timestamp] + agg_scores
     df_agg = pd.DataFrame(data=[agg_data], columns=admin_columns + agg_columns)
-    df_agg = df_agg.loc[:, ["folder", "timestamp", "ragas_score", "answer_relevancy", "context_relevancy", "faithfulness", "context_recall"]]
-    # line below is necessary as long as ragas package doesn't update metric name "context_relevancy" to "context_precision"
-    df_agg = df_agg.rename(columns={"context_relevancy": "context_precision"}, errors="raise")
+    # No ragas_score available in ragas package version 0.0.22
+    df_agg = df_agg.loc[:, ["folder", "timestamp", "answer_relevancy", "context_precision", "faithfulness", "context_recall"]]
     # add settings
     settings_dict = ut.get_settings_as_dictionary("settings.py")
     settings_columns = list(settings_dict.keys())
@@ -100,10 +100,8 @@ def store_detailed_results(timestamp, admin_columns, content_folder_name, eval_q
     admin_data = zip(folder_data, timestamp_data)
     df_admin = pd.DataFrame(data=list(admin_data), columns=admin_columns)
     # evaluation results
-    df_result = result.to_pandas().loc[:,["question", "answer", "answer_relevancy", "context_relevancy", "faithfulness", "context_recall", 
+    df_result = result.to_pandas().loc[:,["question", "answer", "answer_relevancy", "context_precision", "faithfulness", "context_recall", 
                                           "contexts", "ground_truths"]]
-    # line below is necessary as long as ragas package doesn't update metric name "context_relevancy" to "context_precision"
-    df_result = df_result.rename(columns={"context_relevancy": "context_precision"}, errors="raise")
     # combined
     df = pd.concat([df_admin, df_result], axis=1)
     # add result to existing evaluation file (if that exists) and store to disk

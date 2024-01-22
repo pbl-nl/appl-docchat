@@ -14,7 +14,7 @@ def folderlist_creator():
     """
     folders = [f[:-8] for f in os.listdir(settings.EVAL_DIR) if 
                (os.path.isfile(os.path.join(settings.EVAL_DIR, f)) and f.endswith("_agg.tsv"))]
-    logger.info("Executed evluation folderlist_creator()")
+    logger.info("Executed evaluation folderlist_creator()")
     return folders
 
 

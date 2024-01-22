@@ -33,11 +33,10 @@ class Ingester:
 
     def ingest(self) -> None:
         '''
-            Creates instances of all parsers, iterates over all files in the folder
-            When parameters are read from GUI, object is initiated with parameter settings listed
+        Creates file parser object and ingestutils object and iterates over all files in the folder
         '''
+        file_parser = FileParser()
         ingestutils = IngestUtils(self.chunk_size, self.chunk_overlap, self.file_no, self.text_splitter_method)
-        file_parser = FileParser(self.chunk_size, self.chunk_overlap, self.file_no, self.text_splitter_method)
 
         # get embeddings
         embeddings = ut.getEmbeddings(self.embeddings_provider, self.embeddings_model, self.local_api_url)
