@@ -39,6 +39,10 @@ NB: The chosen name of the environment is here appl-docchat. It can be changed t
 4. All required packages can now be installed with command line command<br>
 <code>pip install -r requirements.txt</code>
 
+### Setting parameters
+The file settings_template.py contains all parameters that can be used and needs to be copied to settings.py. In settings.py, fill in the parameter values you want to use for your use case. 
+Examples and restrictions for parameter values are given in the comment lines
+
 ### Ingesting documents
 The file ingest.py can be used to vectorize all documents in a chosen folder and store the vectors and texts in a vector database for later use.<br>
 Execution is done in the activated virtual environment using commandline command:<br>
