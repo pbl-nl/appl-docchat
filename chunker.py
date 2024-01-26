@@ -55,6 +55,12 @@ def clean_pages(raw_pages: List[str]) -> List[Tuple[int, str]]:
 
 
 def create_chunks_RCT(content_folder_name: str, pages: List[str]):
+    '''
+    Implements the RecursiveCharacterTextSplitter of LangChain. The splitter looks for separators to split on in the 
+    order in which they appear in the "separators" argumentdouble new lines (paragraph break)Once paragraphs are 
+    split, then it looks at the chunk size, if a chunk is too big, then it'll split by the next separator. If the 
+    chunk is still too big, then it'll move onto the next one and so forth.
+    '''
     my_chunksize = 1000
     my_chunkoverlap = 200
     my_separators = ["\n\n", "\n", ".", "!", "?", ",", " ", ""]

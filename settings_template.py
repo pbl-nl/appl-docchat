@@ -71,7 +71,7 @@ CHAIN_TYPE = ""
 # SEARCH_TYPE must be one of: "similarity", "similarity_score_threshold"
 SEARCH_TYPE = ""
 
-# SCORE_THRESHOLD represents the similarity value that chunks must exceed to qualify for the context, value must be between 0.0 and 1.0
+# SCORE_THRESHOLD represents the similarity value that chunks must exceed to qualify for the context, value must be between 0.0 and 1.0, e.g. 0.8
 # This value is only relevant when SEARCH_TYPE has been set to "similarity_score_threshold"
 SCORE_THRESHOLD = 
 
@@ -85,6 +85,6 @@ CHUNK_SIZE =
 # NB: CHUNK_SIZE and CHUNK_K are related, make sure that CHUNK_K * CHUNK_SIZE < LLM window size
 CHUNK_K = 
 
-# CHUNK_OVERLAP represents the overlap between 2 sequential text chunks, value must be integer
+# CHUNK_OVERLAP represents the overlap between 2 sequential text chunks, value must be integer (>=0 and < CHUNK_SIZE)
 CHUNK_OVERLAP = 
 
