@@ -1,4 +1,4 @@
-# Chat with your docs!
+# Chat with your docs! 
 A RAG (Retrieval Augmented Generation) setup for further exploration of chatting to company documents<br><br><br>
 ![image](https://github.com/pbl-nl/appl-docchat/assets/7226328/d30cdb13-2276-4510-aae9-c94fcaeb9f66)
 
