@@ -144,7 +144,7 @@ class Summarizer:
             When parameters are read from GUI, object is initiated with parameter settings listed
         '''
         ingestutils = IngestUtils(self.chunk_size, self.chunk_overlap, self.file_no, self.text_splitter_method)
-        file_parser = FileParser(self.chunk_size, self.chunk_overlap, self.file_no, self.text_splitter_method)
+        file_parser = FileParser()
         
         if self.summary_method == 'Refine':
             files_in_folder = os.listdir(self.content_folder)
@@ -274,7 +274,7 @@ Only return the summary, no other text.
                 indices.append(index)
             text_pieces = [collection['documents'][index] for index in indices]
             text_pieces_joined = 'Next Summary Piece: '.join(text_pieces)
-            prompt = f''' Write a summary of the following text pieces. Return only the summary, no other text. {str(text_pieces_joined)} '''
+            prompt = f''' Join the following text pieces and write a combined summary. Be elaborate and write a comprehensible, nice summary. Return only the summary, no other text. {str(text_pieces_joined)} '''
             summary = self.llm.invoke(prompt)
             summary = str(summary).strip("content='")[:-1] # strip the content out of the summary. Weirdly I could not figure out how to access the content object from the AIMEssage object.
             # summarize
