@@ -8,10 +8,10 @@ from ingest.ingest_utils import IngestUtils
 from ingest.file_parser import FileParser
 import utils as ut
 from langchain.callbacks.manager import CallbackManager
-from langchain.llms import HuggingFaceHub
-from langchain.chat_models import ChatOpenAI
 from langchain.callbacks.streaming_stdout import StreamingStdOutCallbackHandler
-from langchain.llms import Ollama
+from langchain_community.llms.huggingface_hub import HuggingFaceHub
+from langchain_community.llms.ollama import Ollama
+from langchain_openai import ChatOpenAI
 import numpy as np
 
 
@@ -124,9 +124,9 @@ class Summarizer:
             logger.info("Retrieving " + self.llm_model_type)
             if self.local_api_url is not None: # If API URL is defined, use it
                 logger.info("Using local api url " + self.local_api_url)
-                self.llm = Ollama(
+                llm = Ollama(
                     model=self.llm_model_type, 
-                    base_url = self.local_api_url,
+                    base_url=self.local_api_url,
                     callback_manager=CallbackManager([StreamingStdOutCallbackHandler()])
                 )
             else:
@@ -135,6 +135,7 @@ class Summarizer:
                     callback_manager=CallbackManager([StreamingStdOutCallbackHandler()])
                 )
             logger.info("Retrieved " + self.llm_model_type)
+
 
 
 
