@@ -2,11 +2,6 @@ from dotenv import load_dotenv
 from langchain.chains import ConversationalRetrievalChain
 from langchain.schema import AIMessage
 from langchain.schema import HumanMessage
-from langchain.callbacks.manager import CallbackManager
-from langchain.callbacks.streaming_stdout import StreamingStdOutCallbackHandler
-from langchain_community.llms.huggingface_hub import HuggingFaceHub
-from langchain_community.llms.ollama import Ollama
-from langchain_openai import ChatOpenAI
 from loguru import logger
 # local imports
 import settings
