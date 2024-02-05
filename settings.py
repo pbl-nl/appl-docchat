@@ -81,3 +81,7 @@ CHUNK_K = 4
 # CHUNK_OVERLAP represents the overlap between 2 sequential text chunks, value must be integer
 CHUNK_OVERLAP = 200
 
+# PROMPT_INSTRUCTIONS is the file name of the prompt instructions
+# Note: The prompt instructions must instruct the LLM to return a json file only with the keys 'answer_in_text' (bool) and 'answer' (str), see summary_instructions.txt for template
+# Note: ASR the LLM chosen is largely relevant, suggestion is to use at least GPT4 
+PROMPT_INSTRUCTIONS = "summary_instructions.txt"

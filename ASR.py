@@ -9,7 +9,8 @@ def main():
     # Create instance of Querier once
     # Get source folder with docs from user
     content_folder_name = input("Source folder of documents (without path): ")
-    question_list_name = input('Please insert file name of question list: ') + '.txt'
+    question_list_name = input('Please insert file name of question list: ') 
+    question_list_name = 'asr/prompt_instructions/' + question_list_name + '.txt'
     # get associated vectordb path
     content_folder, vectordb_folder_path = ut.create_vectordb_name(content_folder_name)
 

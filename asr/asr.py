@@ -25,7 +25,8 @@ class AutomatedSystematicReview:
     def __init__(self, content_folder: str, question_list_name: str, 
                  embeddings_provider=None, embeddings_model=None, text_splitter_method=None,
                  vecdb_type=None, chunk_size=None, chunk_overlap=None, local_api_url=None,
-                 file_no=None, llm_type=None, llm_model_type=None):
+                 file_no=None, llm_type=None, llm_model_type=None, prompt_instructions_location=None):
+        
         load_dotenv()
         self.content_folder = content_folder
         self.question_list_name = question_list_name
@@ -39,8 +40,10 @@ class AutomatedSystematicReview:
         self.file_no = file_no
         self.llm_type = settings.LLM_TYPE if llm_type is None else llm_type
         self.llm_model_type = settings.LLM_MODEL_TYPE if llm_model_type is None else llm_model_type
+        self.prompt_instructions_location = settings.PROMPT_INSTRUCTIONS if prompt_instructions_location is None else prompt_instructions_location
 
-
+        with open('asr/prompt_instructions/' + self.prompt_instructions_location, 'r') as f:
+            self.prompt_instructions = f.read()
         
         # if llm_type is "chatopenai"
         if self.llm_type == "chatopenai":
@@ -95,12 +98,10 @@ class AutomatedSystematicReview:
         # get documents and questions
         files_in_folder = os.listdir(self.content_folder)
         question_list = _get_questions(self.question_list_name)
-        with open('summary_instructions.txt', 'r') as f:
-            summary_instructions = f.read()
         # loop over documents
         for file in files_in_folder:
         # loop over question list
-            answer_dict = {}
+            answer_dict = {'file_name': file.split('.')[0]}
             # get document texts
             file_path = os.path.join(self.content_folder, file)
             _, file_extension = os.path.splitext(file_path)
@@ -117,7 +118,7 @@ class AutomatedSystematicReview:
                 flag = False
                 for text_chunk_num, text in enumerate(documents):
                     question_text = f'''
-{summary_instructions}
+{self.prompt_instructions}
 Question: {question}
 Text: {text}
 '''
@@ -134,7 +135,7 @@ Text: {text}
                         break
                 if not flag:
                     answer_dict[question] = 'Answer not found in text'
-            log_to_tsv(answer_dict, file_name=self.content_folder + '/ASR.tsv')
+            log_to_tsv(answer_dict, self.content_folder + '/ASR.tsv')
                 
 
 
@@ -147,17 +148,33 @@ def _get_questions(question_list_name: str, delimiter='\n-') -> list[str]:
 
 def log_to_tsv(input_dict: dict, file_name: str) -> None:
     """
-    Appends a dictionary to the end of a TSV file.
+    Appends a dictionary to the end of a TSV file, ensuring values are added to the correct columns.
 
-    :param input_dict: Dictionary to append. Keys should match TSV columns.
+    :param input_dict: Dictionary to append. Keys should match existing TSV columns, if any.
     :param file_name: Path to the TSV file.
     """
-    with open(file_name, 'a', newline='', encoding='utf-8') as file:
-        writer = csv.DictWriter(file, fieldnames=input_dict.keys(), delimiter='\t')
-        
-        # Check if the file is empty to decide whether to write the header
-        file.seek(0)
-        if file.tell() == 0:
-            writer.writeheader()
+    # First, determine if the file exists and has a header
+    file_exists = os.path.isfile(file_name)
+    header_exists = False
+    if file_exists:
+        with open(file_name, 'r', newline='', encoding='utf-8') as file:
+            # Check if there's at least one line for the header
+            header_exists = bool(file.readline())
 
-        writer.writerow(input_dict)
+    with open(file_name, 'a', newline='', encoding='utf-8') as file:
+        if header_exists:
+            # Read the existing header to align the input dictionary
+            with open(file_name, 'r', newline='', encoding='utf-8') as file_for_header:
+                reader = csv.reader(file_for_header, delimiter='\t')
+                existing_header = next(reader)
+            
+            # Filter input_dict to only include keys that match the existing header
+            filtered_dict = {key: input_dict[key] for key in existing_header if key in input_dict}
+            writer = csv.DictWriter(file, fieldnames=existing_header, delimiter='\t')
+        else:
+            # File doesn't exist or is empty, use the input_dict keys as the header
+            writer = csv.DictWriter(file, fieldnames=input_dict.keys(), delimiter='\t')
+            writer.writeheader()
+            filtered_dict = input_dict
+        
+        writer.writerow(filtered_dict)
