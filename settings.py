@@ -39,7 +39,7 @@ LLM_TYPE = "chatopenai"
 #   note: llama2 is not fully tested, the last step was not undertaken, because no HF Pro account was available for the developer
 #   Context window sizes are currently: "GoogleFlan": ? tokens, "llama2": ? tokens
 # - LLM_MODEL_TYPE must be one of the Ollama downloaded models, e.g. "llama2" "mini-orca" or "zephyr". See also https://ollama.ai/library
-LLM_MODEL_TYPE = "gpt35"
+LLM_MODEL_TYPE = "gpt4"
 
 # API_URL must be the URL to your (local) API
 # If LLM_TYPE is "local_llm" and model is run on your local machine, API_URL should be "localhost:11434" by default

@@ -122,10 +122,10 @@ Question: {question}
 Text: {text}
 '''
                     answer_json_str = self.llm.invoke(question_text)
-                    answer_json_str = str(answer_json_str).strip("content='").replace('\\n', '\n')
+                    answer_json_str = str(answer_json_str).strip("content='") # .replace('\\n', '\n')
                     try:
-                        answer_json = eval(json.loads(answer_json_str))
-                    except Exception as e:
+                        answer_json = json.loads(answer_json_str) if type(json.loads(answer_json_str)) != str else eval(json.loads(answer_json_str))
+                    except Exception as e:  
                         logger.info(f'Could not turn the text {answer_json_str} to JSON because of {e}')
                         continue
                     if answer_json['answer_in_text'].lower() == 'true':
@@ -134,7 +134,6 @@ Text: {text}
                         break
                 if not flag:
                     answer_dict[question] = 'Answer not found in text'
-            print(answer_dict)
             log_to_tsv(answer_dict, file_name=self.content_folder + '/ASR.tsv')
                 
 

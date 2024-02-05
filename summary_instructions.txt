@@ -9,7 +9,6 @@ Approach this task step-by-step, take your time and do not skip a step.
 'answer': 'contains the answer to the posed question as string'
 'evidence': 'contains the string of text which the answer is based on'
 'explanation': 'explains why the questions is answered by the evidence'}
-4. Be as elaborate as possible, but as concise as necessary.
-5. Make sure that the JSON is returned is indeed a JSON format. If this is not the case convert it to a proper JSON format.
+4. Make sure that the JSON is returned is indeed a JSON format. If this is not the case convert it to a proper JSON format.
 
 Return only the JSON, no other text.
