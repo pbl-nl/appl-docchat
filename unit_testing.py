@@ -1,4 +1,5 @@
-from unit_testing.ingest_test import UnitTesting
+from unit_testing.ingest_test import TestQuery, TestIngester
+import unittest
 
-instance = UnitTesting()
-instance.test()
+if __name__ == '__main__':
+    unittest.main()
