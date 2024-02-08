@@ -95,6 +95,7 @@ class Ingester:
                         # extract raw text pages and metadata according to file type
                         raw_pages, metadata = file_parser.parse_file(file_path)
                     else:
+                        continue
                         logger.info(f"Skipping ingestion of file {file} because it has extension {file[-4:]}")
                     # convert the raw text to cleaned text chunks
                     documents = ingestutils.clean_text_to_docs(raw_pages, metadata)

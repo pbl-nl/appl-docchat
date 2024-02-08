@@ -88,3 +88,5 @@ CHUNK_K =
 # CHUNK_OVERLAP represents the overlap between 2 sequential text chunks, value must be integer (>=0 and < CHUNK_SIZE)
 CHUNK_OVERLAP = 
 
+# SCORE_THRESHOLD determines the threshold when closeness in the vector space is deemed to be useful
+SCORE_THRESHOLD =
