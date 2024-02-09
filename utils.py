@@ -54,8 +54,8 @@ def get_settings_as_dictionary(file_name):
     start_reading = False
     # Process each line in the file
     for line in lines:
-        # start reading below the line with ####
-        if line.startswith("#########"):
+        # start reading below the line with # #########
+        if line.startswith("# #########"):
             start_reading = True
         # ignore comment lines
         if start_reading and not line.startswith("#"):
