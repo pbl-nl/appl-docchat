@@ -2,15 +2,11 @@ from dotenv import load_dotenv
 from langchain.chains import ConversationalRetrievalChain
 from langchain.schema import AIMessage
 from langchain.schema import HumanMessage
-from langchain.callbacks.manager import CallbackManager
-from langchain.callbacks.streaming_stdout import StreamingStdOutCallbackHandler
-from langchain_community.llms.huggingface_hub import HuggingFaceHub
-from langchain_community.llms.ollama import Ollama
-from langchain_openai import ChatOpenAI
 from loguru import logger
 # local imports
 import settings
 import utils as ut
+from llm_class.llm_class import LLM
 
 
 class Querier:
@@ -37,6 +33,9 @@ class Querier:
         self.chat_history = []
         self.vector_store = None
 
+        # define llm
+        self.llm = LLM(self.llm_type, self.llm_model_type).get_llm()
+
 
     def make_agent(self, input_folder, vectordb_folder):
         """Create a langchain agent with selected llm and tools"""
@@ -61,49 +60,6 @@ class Querier:
         self.input_folder = input_folder
         self.vectordb_folder = vectordb_folder
 
-        # if llm_type is "chatopenai"
-        if self.llm_type == "chatopenai":
-            # default llm_model_type value is "gpt-3.5-turbo"
-            llm_model_type = "gpt-3.5-turbo"
-            if self.llm_model_type == "gpt35_16":
-                llm_model_type = "gpt-3.5-turbo-16k"
-            elif self.llm_model_type == "gpt4":
-                llm_model_type = "gpt-4"
-            llm = ChatOpenAI(
-                client=None,
-                model=llm_model_type,
-                temperature=0,
-            )
-        # else, if llm_type is "huggingface"
-        elif self.llm_type == "huggingface":
-            # default value is llama-2, with maximum output length 512
-            llm_model_type = "meta-llama/Llama-2-7b-chat-hf"
-            max_length = 512
-            if self.llm_model_type == 'GoogleFlan':
-                llm_model_type = 'google/flan-t5-base'
-                max_length = 512
-            llm = HuggingFaceHub(repo_id=llm_model_type,
-                                 model_kwargs={"temperature": 0.1,
-                                               "max_length": max_length}
-                                )
-        # else, if llm_type is "local_llm"
-        elif self.llm_type == "local_llm":
-            logger.info("Use Local LLM")
-            logger.info("Retrieving " + self.llm_model_type)
-            if self.local_api_url is not None: # If API URL is defined, use it
-                logger.info("Using local api url " + self.local_api_url)
-                llm = Ollama(
-                    model=self.llm_model_type, 
-                    base_url=self.local_api_url,
-                    callback_manager=CallbackManager([StreamingStdOutCallbackHandler()])
-                )
-            else:
-                llm = Ollama(
-                    model=self.llm_model_type,
-                    callback_manager=CallbackManager([StreamingStdOutCallbackHandler()])
-                )
-            logger.info("Retrieved " + self.llm_model_type)
-
         # get embeddings
         embeddings = ut.getEmbeddings(self.embeddings_provider, self.embeddings_model, self.local_api_url)
 
@@ -121,7 +77,7 @@ class Querier:
 
         if self.chain_name == "conversationalretrievalchain":
             self.chain = ConversationalRetrievalChain.from_llm(
-                llm=llm,
+                llm=self.llm,
                 retriever=retriever,
                 chain_type=self.chain_type,
                 verbose=self.chain_verbosity,
