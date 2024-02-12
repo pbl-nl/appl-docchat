@@ -1,23 +1,21 @@
 # imports
 from loguru import logger
-
 # LLM modules
 from langchain_community.llms.huggingface_hub import HuggingFaceHub
 from langchain_community.llms.ollama import Ollama
 from langchain_openai import ChatOpenAI
 from langchain.callbacks.manager import CallbackManager
 from langchain.callbacks.streaming_stdout import StreamingStdOutCallbackHandler
-
 # local imports
 import settings
 
 
-
 class LLM():
     '''LLM class to import into other modules'''
-    def __init__(self, llm_type=None, llm_model_type=None):
+    def __init__(self, llm_type=None, llm_model_type=None, local_api_url=None) -> None:
         self.llm_type = settings.LLM_TYPE if llm_type is None else llm_type
         self.llm_model_type = settings.LLM_MODEL_TYPE if llm_model_type is None else llm_model_type
+        self.local_api_url = settings.API_URL if local_api_url is None and settings.API_URL is not None else local_api_url
 
         # if llm_type is "chatopenai"
         if self.llm_type == "chatopenai":
@@ -41,17 +39,17 @@ class LLM():
                 self.llm_model_type = 'google/flan-t5-base'
                 max_length = 512
             self.llm = HuggingFaceHub(repo_id=self.llm_model_type,
-                                    model_kwargs={"temperature": 0.1,
-                                                "max_length": max_length}
-                                )
+                                      model_kwargs={"temperature": 0.1,
+                                                    "max_length": max_length}
+                                      )
         # else, if llm_type is "local_llm"
         elif self.llm_type == "local_llm":
             logger.info("Use Local LLM")
             logger.info("Retrieving " + self.llm_model_type)
-            if self.local_api_url is not None: # If API URL is defined, use it
+            if self.local_api_url is not None:  # If API URL is defined, use it
                 logger.info("Using local api url " + self.local_api_url)
                 self.llm = Ollama(
-                    model=self.llm_model_type, 
+                    model=self.llm_model_type,
                     base_url=self.local_api_url,
                     callback_manager=CallbackManager([StreamingStdOutCallbackHandler()])
                 )
