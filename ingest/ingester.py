@@ -14,7 +14,7 @@ class Ingester:
         When parameters are read from settings.py, object is initiated without parameter settings
         When parameters are read from GUI, object is initiated with parameter settings listed
     '''
-    def __init__(self, collection_name: str, content_folder: str, vectordb_folder: str, 
+    def __init__(self, collection_name: str, content_folder: str, vectordb_folder: str,
                  embeddings_provider=None, embeddings_model=None, text_splitter_method=None,
                  vecdb_type=None, chunk_size=None, chunk_overlap=None, local_api_url=None,
                  file_no=None):
@@ -40,7 +40,7 @@ class Ingester:
 
         # get embeddings
         embeddings = ut.getEmbeddings(self.embeddings_provider, self.embeddings_model, self.local_api_url)
-        
+
         # create empty list representing added files
         new_files = []
 
@@ -53,7 +53,7 @@ class Ingester:
                 vector_store = ut.get_chroma_vector_store(self.collection_name, embeddings, self.vectordb_folder)
                 logger.info(f"Vector store already exists for specified settings and folder {self.content_folder}")
                 # determine the files that are added or deleted
-                collection = vector_store.get() # dict_keys(['ids', 'embeddings', 'documents', 'metadatas'])
+                collection = vector_store.get()  # dict_keys(['ids', 'embeddings', 'documents', 'metadatas'])
                 collection_ids = [int(id) for id in collection['ids']]
                 files_in_store = [metadata['filename'] for metadata in collection['metadatas']]
                 files_in_store = list(set(files_in_store))
@@ -70,9 +70,9 @@ class Ingester:
                         if idx_metadata['filename'] in files_deleted:
                             idx_id_to_delete.append(idx_id)
                     vector_store.delete(idx_id_to_delete)
-                    logger.info(f"Deleted files from vectorstore")
+                    logger.info("Deleted files from vectorstore")
                 # determine updated maximum id from collection after deletions
-                collection = vector_store.get() # dict_keys(['ids', 'embeddings', 'documents', 'metadatas'])
+                collection = vector_store.get()  # dict_keys(['ids', 'embeddings', 'documents', 'metadatas'])
                 collection_ids = [int(id) for id in collection['ids']]
                 start_id = max(collection_ids) + 1
             # else it needs to be created first
@@ -80,9 +80,9 @@ class Ingester:
                 logger.info(f"Vector store to be created for folder {self.content_folder}")
                 # get chroma vector store
                 vector_store = ut.get_chroma_vector_store(self.collection_name, embeddings, self.vectordb_folder)
-                collection = vector_store.get() # dict_keys(['ids', 'embeddings', 'documents', 'metadatas'])
+                collection = vector_store.get()  # dict_keys(['ids', 'embeddings', 'documents', 'metadatas'])
                 # all files in the folder are to be ingested into the vector store
-                new_files = [file for file in files_in_folder]
+                new_files = list(files_in_folder)
                 start_id = 0
 
             # If there are any files to be ingested into the vector store
@@ -98,19 +98,19 @@ class Ingester:
                         logger.info(f"Skipping ingestion of file {file} because it has extension {file[-4:]}")
                     # convert the raw text to cleaned text chunks
                     documents = ingestutils.clean_text_to_docs(raw_pages, metadata)
-                    logger.info(f"Extracted {len(documents)} chunks from {file}")    
-                    # and add the chunks to the vector store 
+                    logger.info(f"Extracted {len(documents)} chunks from {file}")
+                    # and add the chunks to the vector store
                     vector_store.add_documents(
                         documents=documents,
                         embedding=embeddings,
                         collection_name=self.collection_name,
                         persist_directory=self.vectordb_folder,
-                        ids=[str(id) for id in list(range(start_id, start_id + len(documents)))] # add id to file chunks for later identification
+                        ids=[str(id) for id in list(range(start_id, start_id + len(documents)))]  # add id to file chunks for later identification
                     )
-                    collection = vector_store.get() # dict_keys(['ids', 'embeddings', 'documents', 'metadatas'])
+                    collection = vector_store.get()  # dict_keys(['ids', 'embeddings', 'documents', 'metadatas'])
                     collection_ids = [int(id) for id in collection['ids']]
                     start_id = max(collection_ids) + 1
-                logger.info(f"Added files to vectorstore")
+                logger.info("Added files to vectorstore")
 
             # save updated vector store to disk
             vector_store.persist()
