@@ -1,5 +1,5 @@
 
-from typing import List, Tuple
+from typing import List
 import os
 import pandas as pd
 from loguru import logger
@@ -42,9 +42,8 @@ def generate_answer(querier: Querier, review_question: str):
     Generate an answer to the given question with the provided Querier instance
     '''
     # Iterate over the questions and generate the answers
-    logger.info(f"question = {review_question}")
     querier.clear_history()
-    response, scores = querier.ask_question(review_question)
+    response, _ = querier.ask_question(review_question)
     return response["answer"], response["source_documents"]
 
 
@@ -57,7 +56,7 @@ def main() -> None:
     # get associated vectordb path
     content_folder_path, vectordb_folder_path = ut.create_vectordb_name(content_folder_name)
     review_files = os.listdir(content_folder_path)
-    question_list_path = os.path.join(content_folder_path, "questions.txt")
+    question_list_path = os.path.join(content_folder_path, "review", "questions.txt")
 
     # If vector store folder does not exist, stop
     if not os.path.exists(content_folder_path):
@@ -67,7 +66,7 @@ def main() -> None:
         logger.info("This question list does not exist, please make sure this list exists.")
         ut.exit_program()
 
-    # Create instance of Querier
+    # Create instance of Querier once
     querier = Querier()
 
     # ingest documents if documents in source folder path are not ingested yet
@@ -90,7 +89,7 @@ def main() -> None:
                 # Generate answer
                 answer, sources = generate_answer(querier, review_question)
                 df_result.loc[cntrow] = [review_file, review_question, answer, sources]
-    output_path = os.path.join(content_folder_path, "result.tsv")
+    output_path = os.path.join(content_folder_path, "review", "result.tsv")
     # sort on question, then on paper
     df_result = df_result.sort_values(by=["question", "filename"])
     df_result.to_csv(output_path, sep="\t", index=False)
