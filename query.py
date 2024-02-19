@@ -28,6 +28,7 @@ def main():
                 logger.info(f"\nQuestion: {question}")
                 # Generate answer and include sources used to produce that answer
                 response, scores = querier.ask_question(question)
+                logger.info(f"\nAnswer: {response['answer']}")
                 # if the retriever returns one or more chunks with a score above the threshold
                 if scores[0] >= querier.score_threshold:
                     # log the answer to the question and the sources used for creating the answer
