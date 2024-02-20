@@ -11,7 +11,7 @@ from langchain.callbacks.manager import CallbackManager
 from langchain.callbacks.streaming_stdout import StreamingStdOutCallbackHandler
 from langchain_community.llms.huggingface_hub import HuggingFaceHub
 from langchain_community.llms.ollama import Ollama
-from langchain_openai import ChatOpenAI
+from langchain_openai import ChatOpenAI, AzureChatOpenAI
 import numpy as np
 
 
@@ -76,7 +76,7 @@ class Summarizer:
     def __init__(self, collection_name:str, content_folder: str, vectordb_folder: str, summary_method: str,
                  embeddings_provider=None, embeddings_model=None, text_splitter_method=None,
                  vecdb_type=None, chunk_size=None, chunk_overlap=None, local_api_url=None,
-                 file_no=None, llm_type=None, llm_model_type=None):
+                 file_no=None, llm_type=None, llm_model_type=None, azureopenai_api_version=None):
         load_dotenv()
         self.collection_name = collection_name
         self.summary_method = summary_method
@@ -92,6 +92,8 @@ class Summarizer:
         self.file_no = file_no
         self.llm_type = settings.LLM_TYPE if llm_type is None else llm_type
         self.llm_model_type = settings.LLM_MODEL_TYPE if llm_model_type is None else llm_model_type
+        self.azureopenai_api_version = settings.AZUREOPENAI_API_VERSION \
+            if azureopenai_api_version is None and settings.AZUREOPENAI_API_VERSION is not None else azureopenai_api_version
 
         # if llm_type is "chatopenai"
         if self.llm_type == "chatopenai":
@@ -134,6 +136,17 @@ class Summarizer:
                     model=self.llm_model_type,
                     callback_manager=CallbackManager([StreamingStdOutCallbackHandler()])
                 )
+            logger.info("Retrieved " + self.llm_model_type)
+
+        # else, if llm_type is "azureopenai"
+        elif self.llm_type == "azureopenai":
+            logger.info("Use Azure OpenAI LLM")
+            logger.info("Retrieving " + self.llm_model_type)
+            self.llm = AzureChatOpenAI(
+                azure_deployment=self.llm_model_type,
+                azure_endpoint=self.local_api_url,
+                api_version=self.azureopenai_api_version,
+            )
             logger.info("Retrieved " + self.llm_model_type)
 
 
@@ -186,7 +199,7 @@ Only return the summary, no other text.
         elif self.summary_method == 'Map_Reduce':
             '''create/update vector store'''
             # get embeddings
-            embeddings = ut.getEmbeddings(self.embeddings_provider, self.embeddings_model, self.local_api_url)
+            embeddings = ut.getEmbeddings(self.embeddings_provider, self.embeddings_model, self.local_api_url, self.azureopenai_api_version)
             # create empty list representing added files
             new_files = []
 

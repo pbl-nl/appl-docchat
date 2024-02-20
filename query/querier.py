@@ -17,7 +17,7 @@ class Querier:
     '''
     def __init__(self, llm_type=None, llm_model_type=None, embeddings_provider=None, embeddings_model=None, 
                  vecdb_type=None, chain_name=None, chain_type=None, chain_verbosity=None, search_type=None, 
-                 score_threshold=None, chunk_k=None, local_api_url=None):
+                 score_threshold=None, chunk_k=None, local_api_url=None, azureopenai_api_version=None):
         load_dotenv()
         self.llm_type = settings.LLM_TYPE if llm_type is None else llm_type
         self.llm_model_type = settings.LLM_MODEL_TYPE if llm_model_type is None else llm_model_type
@@ -33,9 +33,11 @@ class Querier:
         self.local_api_url = settings.API_URL if local_api_url is None and settings.API_URL is not None else local_api_url
         self.chat_history = []
         self.vector_store = None
+        self.azureopenai_api_version = settings.AZUREOPENAI_API_VERSION \
+            if azureopenai_api_version is None and settings.AZUREOPENAI_API_VERSION is not None else azureopenai_api_version
 
         # define llm
-        self.llm = LLM(self.llm_type, self.llm_model_type).get_llm()
+        self.llm = LLM(self.llm_type, self.llm_model_type, self.local_api_url, self.azureopenai_api_version).get_llm()
 
 
     def make_agent(self, input_folder, vectordb_folder):
@@ -62,7 +64,7 @@ class Querier:
         self.vectordb_folder = vectordb_folder
 
         # get embeddings
-        embeddings = ut.getEmbeddings(self.embeddings_provider, self.embeddings_model, self.local_api_url)
+        embeddings = ut.getEmbeddings(self.embeddings_provider, self.embeddings_model, self.local_api_url, self.azureopenai_api_version)
 
         # get chroma vector store
         if self.vecdb_type == "chromadb":
