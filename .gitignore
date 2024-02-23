@@ -1,6 +1,8 @@
 # project specific folders
 /dev
 /vector_stores
+/docs/*/review
+/docs/*/summaries
 /flask_app/instance
 /docs/docset_*
 
