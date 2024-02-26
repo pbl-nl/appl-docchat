@@ -90,13 +90,13 @@ def getEmbeddings(embeddings_provider, embeddings_model, local_api_url, azureope
                 model=embeddings_model)
         logger.info("Loaded local embeddings: " + embeddings_model)
     elif embeddings_provider == "azureopenai":
-            logger.info("Retrieve " + embeddings_model)
-            embeddings = AzureOpenAIEmbeddings(
-                azure_deployment=embeddings_model,
-                openai_api_version=azureopenai_api_version,
-                azure_endpoint=local_api_url,
-                )
-            logger.info("Loaded Azure OpenAI embeddings")
+        logger.info("Retrieve " + embeddings_model)
+        embeddings = AzureOpenAIEmbeddings(
+            azure_deployment=embeddings_model,
+            openai_api_version=azureopenai_api_version,
+            azure_endpoint=local_api_url,
+            )
+        logger.info("Loaded Azure OpenAI embeddings")
     return embeddings
 
 

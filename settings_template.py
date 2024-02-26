@@ -50,12 +50,12 @@ LLM_MODEL_TYPE = "gpt35"
 # If run on Azure virtual machine, use "http://127.0.0.1:11434"
 API_URL = "http://127.0.0.1:11434"
 
-# AZUREOPENAI_API_VERSION must be the API version used for AzureOpenAI
-# This is e.g. "2023-08-01-preview"
-# AZUREOPENAI_API_VERSION = "2023-08-01-preview"
+# AZUREOPENAI_API_VERSION must be the API version used for AzureOpenAI, e.g. "2023-08-01-preview"
+# NB: this only needs to be set when LLM_TYPE = "azureopenai" and/or EMBEDDINGS_PROVIDER = "azureopenai"
+AZUREOPENAI_API_VERSION = "2023-08-01-preview"
 
 # EMBEDDINGS_PROVIDER must be one of: "openai", "huggingface", "local_embeddings", "azureopenai"
-EMBEDDINGS_PROVIDER = "azureopenai"
+EMBEDDINGS_PROVIDER = "openai"
 
 # - EMBEDDINGS_MODEL must be one of: "text-embedding-ada-002" if EMBEDDINGS_PROVIDER is "openai"
 # - EMBEDDINGS_MODEL must be one of: "all-mpnet-base-v2" if EMBEDDINGS_PROVIDER is "huggingface"
