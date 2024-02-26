@@ -32,7 +32,7 @@ EVAL_FILE_NAME = "eval.json"
 CHAIN_VERBOSITY = False
 
 # ######### THE SETTINGS BELOW CAN BE USED FOR TESTING AND CUSTOMIZED TO YOUR PREFERENCE ##########
-# LLM_TYPE must be one of: "chatopenai", "huggingface", "local_llm"
+# LLM_TYPE must be one of: "chatopenai", "huggingface", "local_llm", "azureopenai"
 LLM_TYPE = "chatopenai"
 
 # - LLM_MODEL_TYPE must be one of: "gpt35", "gpt35_16", "gpt4" if LLM_TYPE is "chatopenai". Default is "gpt35"
@@ -42,6 +42,7 @@ LLM_TYPE = "chatopenai"
 #   note: llama2 is not fully tested, the last step was not undertaken, because no HF Pro account was available for the developer
 #   Context window sizes are currently: "GoogleFlan": ? tokens, "llama2": ? tokens
 # - LLM_MODEL_TYPE must be one of the Ollama downloaded models, e.g. "llama2" "mini-orca" or "zephyr". See also https://ollama.ai/library
+# - LLM_MODEL_TYPE must be the deployment name if LLM_TYPE is "azureopenai"
 LLM_MODEL_TYPE = "gpt35"
 
 # API_URL must be the URL to your (local) API
@@ -49,12 +50,17 @@ LLM_MODEL_TYPE = "gpt35"
 # If run on Azure virtual machine, use "http://127.0.0.1:11434"
 API_URL = "http://127.0.0.1:11434"
 
-# EMBEDDINGS_PROVIDER must be one of: "openai", "huggingface", "local_embeddings"
-EMBEDDINGS_PROVIDER = "openai"
+# AZUREOPENAI_API_VERSION must be the API version used for AzureOpenAI
+# This is e.g. "2023-08-01-preview"
+# AZUREOPENAI_API_VERSION = "2023-08-01-preview"
+
+# EMBEDDINGS_PROVIDER must be one of: "openai", "huggingface", "local_embeddings", "azureopenai"
+EMBEDDINGS_PROVIDER = "azureopenai"
 
 # - EMBEDDINGS_MODEL must be one of: "text-embedding-ada-002" if EMBEDDINGS_PROVIDER is "openai"
 # - EMBEDDINGS_MODEL must be one of: "all-mpnet-base-v2" if EMBEDDINGS_PROVIDER is "huggingface"
 # - EMBEDDINGS_MODEL must be one of the locally downloaded models, e.g. "llama2" if EMBEDDINGS_PROVIDER is "local_embeddings"
+# - EMBEDDINGS_MODEL must be the embeddings deployment name if EMBEDDINGS_PROVIDER is "azureopenai"
 EMBEDDINGS_MODEL = "text-embedding-ada-002"
 
 # TEXT_SPLITTER_METHOD represents the way in which raw text chunks are created, must be one of:
