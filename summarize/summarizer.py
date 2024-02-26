@@ -109,7 +109,7 @@ class Summarizer:
             if azureopenai_api_version is None and settings.AZUREOPENAI_API_VERSION is not None else azureopenai_api_version
 
         # get llm object
-        self.llm = LLM(self.llm_type, self.llm_model_type).get_llm()
+        self.llm = LLM(self.llm_type, self.llm_model_type, self.local_api_url, self.azureopenai_api_version).get_llm()
 
     def summarize(self) -> None:
         """
@@ -131,7 +131,7 @@ class Summarizer:
             os.mkdir(os.path.join(self.content_folder, "summaries"))
 
         # get vector store object
-        embeddings = ut.getEmbeddings(self.embeddings_provider, self.embeddings_model, self.local_api_url)
+        embeddings = ut.getEmbeddings(self.embeddings_provider, self.embeddings_model, self.local_api_url, self.azureopenai_api_version)
         vector_store = ut.get_chroma_vector_store(self.collection_name, embeddings, self.vectordb_folder)
 
         # loop over all files in the folder
