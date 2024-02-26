@@ -57,8 +57,10 @@ class Ingester:
 
         if self.vecdb_type == "chromadb":
             # get all relevant files in the folder
+            files_in_folder = [f for f in os.listdir(self.content_folder)
+                               if os.path.isfile(os.path.join(self.content_folder, f))]
             relevant_files_in_folder = []
-            for file in os.listdir(self.content_folder):
+            for file in files_in_folder:
                 # file_path = os.path.join(self.content_folder, file)
                 _, file_extension = os.path.splitext(file)
                 if file_extension in [".docx", ".html", ".md", ".pdf", ".txt"]:
