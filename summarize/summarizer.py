@@ -106,7 +106,8 @@ class Summarizer:
         self.llm_type = settings.LLM_TYPE if llm_type is None else llm_type
         self.llm_model_type = settings.LLM_MODEL_TYPE if llm_model_type is None else llm_model_type
         self.azureopenai_api_version = settings.AZUREOPENAI_API_VERSION \
-            if azureopenai_api_version is None and settings.AZUREOPENAI_API_VERSION is not None else azureopenai_api_version
+            if azureopenai_api_version is None and settings.AZUREOPENAI_API_VERSION is not None \
+            else azureopenai_api_version
 
         # get llm object
         self.llm = LLM(self.llm_type, self.llm_model_type, self.local_api_url, self.azureopenai_api_version).get_llm()
@@ -131,7 +132,10 @@ class Summarizer:
             os.mkdir(os.path.join(self.content_folder, "summaries"))
 
         # get vector store object
-        embeddings = ut.getEmbeddings(self.embeddings_provider, self.embeddings_model, self.local_api_url, self.azureopenai_api_version)
+        embeddings = ut.getEmbeddings(self.embeddings_provider,
+                                      self.embeddings_model,
+                                      self.local_api_url,
+                                      self.azureopenai_api_version)
         vector_store = ut.get_chroma_vector_store(self.collection_name, embeddings, self.vectordb_folder)
 
         # loop over all files in the folder
@@ -173,8 +177,6 @@ class Summarizer:
             # if Map Reduce method is chosen
             if self.summary_method == "Map_Reduce":
                 # extract data from vector store
-                # collection = vector_store.get(where={"filename": file})
-                # collection = vector_store.get(include=['embeddings', 'documents'])
                 embeddings = np.array(collection['embeddings'])
                 # cluster (KNN)
                 number_of_cluster = 3
