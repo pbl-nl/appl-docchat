@@ -39,7 +39,8 @@ class Ingester:
             if local_api_url is None and settings.API_URL is not None else local_api_url
         self.file_no = file_no
         self.azureopenai_api_version = settings.AZUREOPENAI_API_VERSION \
-            if azureopenai_api_version is None and settings.AZUREOPENAI_API_VERSION is not None else azureopenai_api_version
+            if azureopenai_api_version is None and settings.AZUREOPENAI_API_VERSION is not None \
+            else azureopenai_api_version
 
     def ingest(self) -> None:
         """
@@ -50,7 +51,10 @@ class Ingester:
         ingestutils = IngestUtils(self.chunk_size, self.chunk_overlap, self.file_no, self.text_splitter_method)
 
         # get embeddings
-        embeddings = ut.getEmbeddings(self.embeddings_provider, self.embeddings_model, self.local_api_url, self.azureopenai_api_version)
+        embeddings = ut.getEmbeddings(self.embeddings_provider,
+                                      self.embeddings_model,
+                                      self.local_api_url,
+                                      self.azureopenai_api_version)
 
         # create empty list representing added files
         new_files = []

@@ -17,7 +17,8 @@ class LLM():
         self.llm_model_type = settings.LLM_MODEL_TYPE if llm_model_type is None else llm_model_type
         self.local_api_url = settings.API_URL if local_api_url is None else local_api_url
         self.azureopenai_api_version = settings.AZUREOPENAI_API_VERSION \
-            if azureopenai_api_version is None and settings.AZUREOPENAI_API_VERSION is not None else azureopenai_api_version
+            if azureopenai_api_version is None and settings.AZUREOPENAI_API_VERSION is not None \
+            else azureopenai_api_version
 
         # if llm_type is "chatopenai"
         if self.llm_type == "chatopenai":
