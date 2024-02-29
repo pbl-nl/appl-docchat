@@ -1,0 +1,14 @@
+You will be presented with a text and a question. Your task is to extract an answer to the question from the task.
+
+Approach this task step-by-step, take your time and do not skip a step.
+
+1. Read the text. 
+2. Determine if the questions is answered in the text.
+3. Re-read the text and return the answer in JSON format with keys as follows:
+{'answer_in_text': 'a boolean as a string indicating if the answer was found in the text'
+'answer': 'contains the answer to the posed question as string'
+'evidence': 'contains the string of text which the answer is based on'
+'explanation': 'explains why the questions is answered by the evidence'}
+4. Make sure that the JSON is returned is indeed a JSON format. If this is not the case convert it to a proper JSON format.
+
+Return only the JSON, no other text.

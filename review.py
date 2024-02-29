@@ -57,13 +57,14 @@ def main() -> None:
     content_folder_path, vectordb_folder_path = ut.create_vectordb_name(content_folder_name)
     review_files = os.listdir(content_folder_path)
     question_list_path = os.path.join(content_folder_path, "review", "questions.txt")
+    print(question_list_path)
 
     # If vector store folder does not exist, stop
     if not os.path.exists(content_folder_path):
         logger.info("This content folder does not exist. Please make sure the spelling is correct")
         ut.exit_program()
     elif not os.path.exists(question_list_path):
-        logger.info("This question list does not exist, please make sure this list exists.")
+        logger.info(f"This question list does not exist, please make sure this list exists at {question_list_path}.")
         ut.exit_program()
 
     # Create instance of Querier once
