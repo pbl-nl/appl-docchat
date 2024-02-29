@@ -82,7 +82,7 @@ def main() -> None:
     # create the query chain with a search filter and answer each question for each paper
     cntrow = 0
     for review_file in review_files:
-        if os.path.splitext(review_file)[1] != ".tsv" and review_file != "questions.txt":
+        if os.path.isfile(os.path.join(content_folder_path, review_file)):
             logger.info(f"current file: {review_file}")
             for review_question in review_questions:
                 cntrow += 1

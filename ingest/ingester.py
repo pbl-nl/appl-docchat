@@ -23,7 +23,7 @@ class Ingester:
     def __init__(self, collection_name: str, content_folder: str, vectordb_folder: str,
                  embeddings_provider=None, embeddings_model=None, text_splitter_method=None,
                  vecdb_type=None, chunk_size=None, chunk_overlap=None, local_api_url=None,
-                 file_no=None):
+                 file_no=None, azureopenai_api_version=None):
         load_dotenv()
         self.collection_name = collection_name
         self.content_folder = content_folder
@@ -38,6 +38,9 @@ class Ingester:
         self.local_api_url = settings.API_URL \
             if local_api_url is None and settings.API_URL is not None else local_api_url
         self.file_no = file_no
+        self.azureopenai_api_version = settings.AZUREOPENAI_API_VERSION \
+            if azureopenai_api_version is None and settings.AZUREOPENAI_API_VERSION is not None \
+            else azureopenai_api_version
 
     def ingest(self) -> None:
         """
@@ -48,15 +51,20 @@ class Ingester:
         ingestutils = IngestUtils(self.chunk_size, self.chunk_overlap, self.file_no, self.text_splitter_method)
 
         # get embeddings
-        embeddings = ut.getEmbeddings(self.embeddings_provider, self.embeddings_model, self.local_api_url)
+        embeddings = ut.getEmbeddings(self.embeddings_provider,
+                                      self.embeddings_model,
+                                      self.local_api_url,
+                                      self.azureopenai_api_version)
 
         # create empty list representing added files
         new_files = []
 
         if self.vecdb_type == "chromadb":
             # get all relevant files in the folder
+            files_in_folder = [f for f in os.listdir(self.content_folder)
+                               if os.path.isfile(os.path.join(self.content_folder, f))]
             relevant_files_in_folder = []
-            for file in os.listdir(self.content_folder):
+            for file in files_in_folder:
                 # file_path = os.path.join(self.content_folder, file)
                 _, file_extension = os.path.splitext(file)
                 if file_extension in [".docx", ".html", ".md", ".pdf", ".txt"]:

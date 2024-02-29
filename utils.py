@@ -5,7 +5,7 @@ from loguru import logger
 from langchain_community.vectorstores.chroma import Chroma
 from langchain_community.embeddings import HuggingFaceEmbeddings
 from langchain_community.embeddings import OllamaEmbeddings
-from langchain_openai import OpenAIEmbeddings
+from langchain_openai import OpenAIEmbeddings, AzureOpenAIEmbeddings
 # local imports
 import settings
 
@@ -73,7 +73,7 @@ def get_settings_as_dictionary(file_name):
     return variables_dict
 
 
-def getEmbeddings(embeddings_provider, embeddings_model, local_api_url):
+def getEmbeddings(embeddings_provider, embeddings_model, local_api_url, azureopenai_api_version):
     # determine embeddings model
     if embeddings_provider == "openai":
         embeddings = OpenAIEmbeddings(model=embeddings_model, client=None)
@@ -89,6 +89,14 @@ def getEmbeddings(embeddings_provider, embeddings_model, local_api_url):
             embeddings = OllamaEmbeddings(
                 model=embeddings_model)
         logger.info("Loaded local embeddings: " + embeddings_model)
+    elif embeddings_provider == "azureopenai":
+        logger.info("Retrieve " + embeddings_model)
+        embeddings = AzureOpenAIEmbeddings(
+            azure_deployment=embeddings_model,
+            openai_api_version=azureopenai_api_version,
+            azure_endpoint=local_api_url,
+            )
+        logger.info("Loaded Azure OpenAI embeddings")
     return embeddings
 
 
