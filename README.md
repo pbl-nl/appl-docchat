@@ -53,6 +53,11 @@ The file query.py can be used to query any folder with documents, provided that 
 Execution is done in the activated virtual environment using commandline command:<br>
 <code>python query.py</code>
 
+### Querying multiple documents with multiple questions in batch
+The file review.py uses the standard question-answer technique but allows you to ask multiple questions to each document in a folder. 
+All the results are gathered in a .csv file.<br>
+<code>python review.py</code>
+
 ### Ingesting and querying documents through a Streamlit User Interface
 The functionalities described above can also be used through a User Interface.<br>
 The UI can be started by using commandline command:<br>
