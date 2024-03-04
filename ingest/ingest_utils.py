@@ -39,37 +39,78 @@ class IngestUtils:
         """
         return re.sub(r"\n{2,}", "\n", text)
 
-    def clean_text(self,
-                   pages: List[Tuple[int, str]],
-                   cleaning_functions: List[Callable[[str], str]]
-                   ) -> List[Tuple[int, str]]:
+    def clean_texts(self,
+                    texts: List[Tuple[int, str]],
+                    cleaning_functions: List[Callable[[str], str]]
+                    ) -> List[Tuple[int, str]]:
         """
         Apply the cleaning functions to the text of each page.
         """
-        logger.info("Cleaning text of each page")
-        cleaned_pages = []
-        for page_num, text in pages:
-            # cnt = 0
-            # print(f"Text before cleaning: {text}")
+        logger.info("Cleaning texts")
+        cleaned_texts = []
+        for page_num, text in texts:
             for cleaning_function in cleaning_functions:
-                # print(f"cleaning phase {cnt}")
-                # cnt += 1
                 text = cleaning_function(text)
-                # print(text)
-            cleaned_pages.append((page_num, text))
-        return cleaned_pages
+            cleaned_texts.append((page_num, text))
+        return cleaned_texts
 
-    def text_to_docs(self, text: List[Tuple[int, str]],
-                     metadata: Dict[str, str]) -> List[docstore.Document]:
+    # def split_text_into_chunks(self,
+    #                            text: Tuple[int, str],
+    #                            metadata: Dict[str, str]):
+    #     """
+    #     Split the text into chunks
+    #     """
+    #     text_splitter = self.get_splitter()
+    #     chunk_no = 0
+    #     for page_num, page in texts:
+    #         logger.info(f"Splitting page {page_num}")
+    #         chunks = text_splitter.split_text(page)
+
+    # def chunks_to_docs(self,
+    #                    chunks,
+    #                    metadata: Dict[str, str]):
+    #     """
+    #     Convert chunks into Documents
+    #     """
+    #     # initialize empty list of Documents
+    #     docs: List[docstore.Document] = []
+    #     # loop over chunks
+    #     for i, chunk in enumerate(chunks):
+    #         if self.file_no:
+    #             metadata_combined = {
+    #                 "file_no": self.file_no,
+    #                 "chunk_no": chunk_no,
+    #                 "source": f"F{self.file_no}-{chunk_no}"
+    #             }
+    #         else:
+    #             metadata_combined = {
+    #                 "page_number": page_num,
+    #                 "chunk": i,
+    #                 "source": f"p{page_num}-{i}",
+    #                 **metadata,
+    #             }
+    #         doc = docstore.Document(
+    #             page_content=chunk,
+    #             metadata=metadata_combined
+    #         )
+    #         docs.append(doc)
+    #         chunk_no += 1
+    #     return docs
+
+
+
+    def texts_to_docs(self,
+                      texts: List[Tuple[int, str]],
+                      metadata: Dict[str, str]) -> List[docstore.Document]:
         """
         Split the text into chunks and return them as Documents.
         """
-        doc_chunks: List[docstore.Document] = []
+        text_splitter = self.get_splitter()
+        docs: List[docstore.Document] = []
 
         chunk_no = 0
-        for page_num, page in text:
+        for page_num, page in texts:
             logger.info(f"Splitting page {page_num}")
-            text_splitter = self.get_splitter()
             chunks = text_splitter.split_text(page)
             for i, chunk in enumerate(chunks):
                 if self.file_no:
@@ -89,18 +130,24 @@ class IngestUtils:
                     page_content=chunk,
                     metadata=metadata_combined
                 )
-                doc_chunks.append(doc)
+                docs.append(doc)
                 chunk_no += 1
-        return doc_chunks
+        return docs
 
-    def clean_text_to_docs(self, raw_pages, metadata) -> List[docstore.Document]:
+    def clean_texts_to_docs(self, raw_pages, metadata) -> List[docstore.Document]:
+        """"
+        Combines the functions clean_text and text_to_docs
+        """
         cleaning_functions: List = [
             self.merge_hyphenated_words,
             self.fix_newlines,
             self.remove_multiple_newlines
         ]
-        cleaned_text = self.clean_text(raw_pages, cleaning_functions)
-        return self.text_to_docs(cleaned_text, metadata)
+        cleaned_texts = self.clean_texts(raw_pages, cleaning_functions)
+        # for cleaned_text in cleaned_texts:
+        #     cleaned_chunks = self.split_text_into_chunks(cleaned_text, metadata)
+        docs = self.texts_to_docs(cleaned_texts, metadata)
+        return docs
 
     def get_splitter(self):
         """
@@ -108,6 +155,8 @@ class IngestUtils:
         """
         if self.text_splitter_method == "NLTKTextSplitter":
             text_splitter = splitter.NLTKTextSplitter(
+                separator="\n\n",
+                language="english",
                 chunk_size=self.chunk_size,
                 chunk_overlap=self.chunk_overlap
             )
