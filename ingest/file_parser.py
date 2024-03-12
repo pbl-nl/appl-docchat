@@ -1,4 +1,5 @@
 from typing import Dict, List, Tuple
+import re
 from loguru import logger
 from langchain_community.document_loaders import BSHTMLLoader
 from langchain_community.document_loaders import TextLoader
@@ -6,13 +7,12 @@ from langchain_community.document_loaders import UnstructuredWordDocumentLoader
 from pypdf import PdfReader
 import fitz
 from unidecode import unidecode
-import re
 import pprint
 # local imports
 import utils as ut
 import settings_template as settings
-from ingest.splitter import Splitter
-import ingest.pdf_analyzer as pdf_analyzer
+from ingest.splitter_creator import SplitterCreator
+# import ingest.pdf_analyzer as pdf_analyzer
 
 class FileParser:
     """
@@ -24,7 +24,7 @@ class FileParser:
         self.chunk_size = settings.CHUNK_SIZE if chunk_size is None else chunk_size
         self.chunk_overlap = settings.CHUNK_OVERLAP if chunk_overlap is None else chunk_overlap
         # define splitter
-        self.splitter = Splitter(self.text_splitter_method, self.chunk_size, self.chunk_overlap).get_splitter()
+        self.splitter = SplitterCreator(self.text_splitter_method, self.chunk_size, self.chunk_overlap).get_splitter()
 
     def parse_file(self, file_path: str):
         if file_path.endswith(".pdf"):
@@ -41,6 +41,8 @@ class FileParser:
 
     def get_metadata(self, file_path: str, metadata_text: str):
         """
+        Extracts the following metadata from the pdf document:
+        title, author(s) and full filename
         """
         return {"title": ut.getattr_or_default(obj=metadata_text, attr='title', default='').strip(),
                 "author": ut.getattr_or_default(obj=metadata_text, attr='author', default='').strip(),
@@ -81,13 +83,11 @@ class FileParser:
             pages = [(i + 1, p.extract_text()) for i, p in enumerate(reader.pages) if p.extract_text().strip()]
         return pages, metadata
 
-    # def is_string_contained(self, string_to_find: str, list_of_strings: List[str]) -> bool:
-    #     return any(string_to_find in string for string in list_of_strings)
-
     def parse_pymupdf(self, file_path: str) -> Tuple[str, List[Tuple[int, str]], Dict[str, str]]:
         """
-        Extract and return the page blocks and metadata from the PDF file
-        Then determine which blocks of text should be merged, depending on whether the previous block was a header
+        Extracts and return the page blocks and metadata from the PDF file
+        Then determines which blocks of text should be merged, depending on whether the previous block was a 
+        paragraph header
         """
         logger.info("Extracting pdf metadata")
         doc = fitz.open(file_path)
@@ -98,50 +98,105 @@ class FileParser:
         pages = []
         toc = doc.get_toc()
         toc_paragraph_titles = [item[1] for item in toc]
-        print(f"paragraph titles: {toc_paragraph_titles}")
+        # print(f"paragraph titles: {toc_paragraph_titles}")
 
-        # NB: paragraph text in toc is without decimal point after paragraph number, but in text it is including decimal point
-        # Change this to be able to filter blocks when they are in toc
-        print(f"toc = {toc}")
-
-        # First determine, based on font size and font style and toc info, which blocks represents headers
-        # and which blocks represent content. We only want to feed content into the vector database
-        doc_tags = pdf_analyzer.get_doc_tags(doc)
+        # Determine which blocks on a page represent content. We only want to feed content (including the paragraph
+        # header) into the vector database
+        # doc_tags = pdf_analyzer.get_doc_tags(doc)
 
         # for each page in pdf file
         for i, page in enumerate(doc.pages()):
-            # if (page.number > 95) and (page.number) < 100:
+            first_block_of_page = True
+            prv_block_text = ""
+            prv_block_is_valid = True
+            prv_block_is_paragraph = False
             # obtain the blocks
-            previous_block_id = -1
-            page_blocks = page.get_text("blocks")
-            print(f"page {page} contains {len(page_blocks)} blocks")
+            blocks = page.get_text("blocks")
+
             # for each block
-            for block in page_blocks:
-                # only take the text
+            for block in blocks:
+                # only consider text blocks
+                # if block["type"] == 0:
                 if block[6] == 0:
                     block_is_valid = True
-                    block_id = block[5]
-                    print(f"block id = {block_id}")
-                    if block_id != previous_block_id:
-                        block_tag = pdf_analyzer.get_block_tag(doc_tags, i, block_id)
-                        print(f"page = {i}, block_id = {block_id}, tag = {block_tag}")
-                        # filter blocks
-                        # if block_tag != "<p>":
-                        #     block_is_valid = False
-                        block_text = unidecode(block[4]).strip()
-                        # # If the block text represents a paragraph, strip the paragraph number from the text
-                        # pattern = r'^\d+(\.\d+)*\s+'
-                        # block_text = re.sub(pattern, '', block_text)
-                        # print(f"page {i} block size = {len(block_text)}: {block_text}\n")
-                        if block_is_valid:
-                            pages.append((i, block_text))
+                    block_is_pagenr = False
+                    block_is_paragraph = False
+                    # block_tag = pdf_analyzer.get_block_tag(doc_tags, i, block_id)
+                    # block_text = pdf_analyzer.get_block_text(doc_tags, i, block_id)
+                    block_text = block[4]
+
+                    # block text should not represent a page header or footer
+                    pattern_pagenr = r'^\s*(\d+)([.\s]*)$|^\s*(\d+)([.\s]*)$'
+                    if bool(re.match(pattern_pagenr, block_text)):
+                        block_is_pagenr = True
+                        block_is_valid = False
+                        # print(f"block {block[5]}: {block_text} is a page number")
+
+                    # block text should not represent a page header or footer containing a pipe character
+                    # and some text
+                    pattern_pagenr = r'^\s*(\d+)\s*\|\s*([\w\s]+)$|^\s*([\w\s]+)\s*\|\s*(\d+)$'
+                    if bool(re.match(pattern_pagenr, block_text)):
+                        block_is_pagenr = True
+                        block_is_valid = False
+                        # print(f"block {block[5]}: {block_text} is a page number")
+
+                    # # text must have "paragraph" tag
+                    # if block_tag != "<p>":
+                    #     block_is_valid = False
+
+                    # block text should not represent any form of paragraph title
+                    pattern_paragraph = r'^\d+(\.\d+)*\s*.+$'
+                    if bool(re.match(pattern_paragraph, block_text)):
+                        if not block_is_pagenr:
+                            block_is_paragraph = True
+                            # print(f"block {block[5]}: {block_text} is a paragraph")
+
+                    # if current block is content
+                    if block_is_valid and (not block_is_paragraph):
+                        # print(f"block {block[5]} is valid and not a paragraph: {block_text} ")
+                        # and the previous block was a paragraph
+                        if prv_block_is_paragraph:
+                            # extend the paragraph block text with a newline character and the current block text
+                            block_text = prv_block_text + "\n" + block_text
+                        # but if the previous block was a content block
                         else:
-                            print(f"block_text {block_text} is a paragraph title")
-                    previous_block_id = block[5]
-                # filter page numbers
-                # filter paragraph titles
-                # merge blocks when applicable
-                # split merged blocks if they are too large
+                            if prv_block_is_valid and block_is_valid:
+                                # extend the content block text with a whitespace character and the current block text
+                                block_text = prv_block_text + " " + block_text
+                        # in both cases, set the previous block text to the current block text
+                        prv_block_text = block_text
+                    # else if current block text is not content
+                    else:
+                        # and the current block is not the very first block of the page
+                        if not first_block_of_page:
+                            # if previous block was content
+                            if prv_block_is_valid and (not prv_block_is_paragraph):
+                                # add text of previous block to pages together with page number
+                                pages.append((i, prv_block_text))
+                                print(f"added to page {i}: {prv_block_text}")
+                                # and empty the previous block text
+                                prv_block_text = ""
+                            # if previous block was not relevant
+                            else:
+                                # just set the set the previous block text to the current block text
+                                prv_block_text = block_text
+
+                    # set previous block validity indicators to current block validity indicators
+                    prv_block_is_valid = block_is_valid
+                    # prv_block_is_pagenr = block_is_pagenr
+                    prv_block_is_paragraph = block_is_paragraph
+                    prv_block_text = block_text
+
+                    # set first_block_of_page to False
+                    first_block_of_page = False
+
+            # end of page:
+            # if previous block was content
+            if prv_block_is_valid and (not prv_block_is_paragraph):
+                # add text of previous block to pages together with page number
+                pages.append((i, prv_block_text))
+                print(f"added to page {i}: {prv_block_text}")
+
             # tabs = page.find_tables() # locate and extract any tables on page
             # print(f"{len(tabs.tables)} table found on {page}") # display number of found tables
             # if tabs.tables:  # at least one table found?

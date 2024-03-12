@@ -97,8 +97,6 @@ class IngestUtils:
     #         chunk_no += 1
     #     return docs
 
-
-
     def texts_to_docs(self,
                       texts: List[Tuple[int, str]],
                       metadata: Dict[str, str]) -> List[docstore.Document]:
