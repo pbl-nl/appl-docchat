@@ -7,7 +7,7 @@ from loguru import logger
 # local imports
 import settings
 import utils as ut
-from llm_class.llm_class import LLM
+from query.llm_creator import LLMCreator
 
 
 class Querier:
@@ -39,7 +39,10 @@ class Querier:
             else azureopenai_api_version
 
         # define llm
-        self.llm = LLM(self.llm_type, self.llm_model_type, self.local_api_url, self.azureopenai_api_version).get_llm()
+        self.llm = LLMCreator(self.llm_type,
+                              self.llm_model_type,
+                              self.local_api_url,
+                              self.azureopenai_api_version).get_llm()
 
     def make_agent(self, input_folder, vectordb_folder):
         """

@@ -5,7 +5,7 @@ import numpy as np
 import settings
 import utils as ut
 from ingest.ingester import Ingester
-from llm_class.llm_class import LLM
+from query.llm_creator import LLMCreator
 
 
 def initialize_centroids(data, k):
@@ -110,7 +110,10 @@ class Summarizer:
             else azureopenai_api_version
 
         # get llm object
-        self.llm = LLM(self.llm_type, self.llm_model_type, self.local_api_url, self.azureopenai_api_version).get_llm()
+        self.llm = LLMCreator(self.llm_type,
+                              self.llm_model_type,
+                              self.local_api_url,
+                              self.azureopenai_api_version).get_llm()
 
     def summarize(self) -> None:
         """
@@ -179,7 +182,7 @@ class Summarizer:
                 # extract data from vector store
                 embeddings = np.array(collection['embeddings'])
                 # cluster (KNN)
-                number_of_cluster = 3
+                number_of_cluster = 8
                 clusters, centroids = kmeans_clustering(embeddings, number_of_cluster)
                 # find text pieces most central in the cluster
                 indices = []
