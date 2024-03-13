@@ -12,6 +12,7 @@ import settings
 # from ingest.content_iterator import ContentIterator
 from ingest.ingest_utils import IngestUtils
 from ingest.file_parser import FileParser
+from ingest.embedder import EmbeddingsCreator
 import utils as ut
 
 
@@ -51,10 +52,10 @@ class Ingester:
         ingestutils = IngestUtils(self.chunk_size, self.chunk_overlap, self.file_no, self.text_splitter_method)
 
         # get embeddings
-        embeddings = ut.getEmbeddings(self.embeddings_provider,
-                                      self.embeddings_model,
-                                      self.local_api_url,
-                                      self.azureopenai_api_version)
+        embeddings = EmbeddingsCreator(self.embeddings_provider,
+                                       self.embeddings_model,
+                                       self.local_api_url,
+                                       self.azureopenai_api_version).get_embeddings()
 
         # create empty list representing added files
         new_files = []

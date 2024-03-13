@@ -5,6 +5,7 @@ import numpy as np
 import settings
 import utils as ut
 from ingest.ingester import Ingester
+from ingest.embedder import EmbeddingsCreator
 from query.llm_creator import LLMCreator
 
 
@@ -134,11 +135,13 @@ class Summarizer:
         if 'summaries' not in os.listdir(self.content_folder):
             os.mkdir(os.path.join(self.content_folder, "summaries"))
 
+        # get embeddings object
+        embeddings = EmbeddingsCreator(self.embeddings_provider,
+                                       self.embeddings_model,
+                                       self.local_api_url,
+                                       self.azureopenai_api_version).get_embeddings()
+        
         # get vector store object
-        embeddings = ut.getEmbeddings(self.embeddings_provider,
-                                      self.embeddings_model,
-                                      self.local_api_url,
-                                      self.azureopenai_api_version)
         vector_store = ut.get_chroma_vector_store(self.collection_name, embeddings, self.vectordb_folder)
 
         # loop over all files in the folder
