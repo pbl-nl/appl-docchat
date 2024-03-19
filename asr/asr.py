@@ -8,7 +8,7 @@ import settings
 # from ingest.content_iterator import ContentIterator
 from ingest.ingest_utils import IngestUtils
 from ingest.file_parser import FileParser
-from llm_class.llm_class import LLM
+from query.llm_creator import LLMCreator
 
 
 class AutomatedSystematicReview:
@@ -37,7 +37,7 @@ class AutomatedSystematicReview:
         self.llm_model_type = settings.LLM_MODEL_TYPE if llm_model_type is None else llm_model_type
 
         # define llm
-        self.llm = LLM(self.llm_type, self.llm_model_type).get_llm()
+        self.llm = LLMCreator(self.llm_type, self.llm_model_type).get_llm()
 
     def conduct_review(self) -> None:
         '''

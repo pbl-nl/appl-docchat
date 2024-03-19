@@ -5,7 +5,8 @@ import numpy as np
 import settings
 import utils as ut
 from ingest.ingester import Ingester
-from llm_class.llm_class import LLM
+from ingest.embedder import EmbeddingsCreator
+from query.llm_creator import LLMCreator
 
 
 def initialize_centroids(data, k):
@@ -110,7 +111,10 @@ class Summarizer:
             else azureopenai_api_version
 
         # get llm object
-        self.llm = LLM(self.llm_type, self.llm_model_type, self.local_api_url, self.azureopenai_api_version).get_llm()
+        self.llm = LLMCreator(self.llm_type,
+                              self.llm_model_type,
+                              self.local_api_url,
+                              self.azureopenai_api_version).get_llm()
 
     def summarize(self) -> None:
         """
@@ -131,11 +135,13 @@ class Summarizer:
         if 'summaries' not in os.listdir(self.content_folder):
             os.mkdir(os.path.join(self.content_folder, "summaries"))
 
+        # get embeddings object
+        embeddings = EmbeddingsCreator(self.embeddings_provider,
+                                       self.embeddings_model,
+                                       self.local_api_url,
+                                       self.azureopenai_api_version).get_embeddings()
+        
         # get vector store object
-        embeddings = ut.getEmbeddings(self.embeddings_provider,
-                                      self.embeddings_model,
-                                      self.local_api_url,
-                                      self.azureopenai_api_version)
         vector_store = ut.get_chroma_vector_store(self.collection_name, embeddings, self.vectordb_folder)
 
         # loop over all files in the folder
@@ -179,7 +185,7 @@ class Summarizer:
                 # extract data from vector store
                 embeddings = np.array(collection['embeddings'])
                 # cluster (KNN)
-                number_of_cluster = 3
+                number_of_cluster = 8
                 clusters, centroids = kmeans_clustering(embeddings, number_of_cluster)
                 # find text pieces most central in the cluster
                 indices = []

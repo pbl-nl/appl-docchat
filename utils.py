@@ -1,23 +1,22 @@
 import os
 import sys
 import datetime as dt
-from loguru import logger
 from langchain_community.vectorstores.chroma import Chroma
-from langchain_community.embeddings import HuggingFaceEmbeddings
-from langchain_community.embeddings import OllamaEmbeddings
-from langchain_openai import OpenAIEmbeddings, AzureOpenAIEmbeddings
 # local imports
 import settings
 
 
 def create_vectordb_name(content_folder_name, chunk_size=None, chunk_overlap=None):
+    """"
+    Creates the content folder name and vector database path
+    """
     content_folder_path = os.path.join(settings.DOC_DIR, content_folder_name)
     # vectordb_name is created from vecdb_type, chunk_size, chunk_overlap, embeddings_type 
     if chunk_size:
         vectordb_name = "_" + settings.VECDB_TYPE + "_" + str(chunk_size) + "_" + str(chunk_overlap) + "_" + settings.EMBEDDINGS_PROVIDER
     else:
         vectordb_name = "_" + settings.VECDB_TYPE + "_" + str(settings.CHUNK_SIZE) + "_" + str(settings.CHUNK_OVERLAP) + "_" + settings.EMBEDDINGS_PROVIDER
-    vectordb_folder_path = os.path.join(settings.VECDB_DIR, content_folder_name) + vectordb_name 
+    vectordb_folder_path = os.path.join(settings.VECDB_DIR, content_folder_name) + vectordb_name
     return content_folder_path, vectordb_folder_path
 
 
@@ -71,33 +70,6 @@ def get_settings_as_dictionary(file_name):
                 # Add the variable and its value to the dictionary
                 variables_dict[variable_name] = eval(variable_name)
     return variables_dict
-
-
-def getEmbeddings(embeddings_provider, embeddings_model, local_api_url, azureopenai_api_version):
-    # determine embeddings model
-    if embeddings_provider == "openai":
-        embeddings = OpenAIEmbeddings(model=embeddings_model, client=None)
-        logger.info("Loaded openai embeddings")
-    elif embeddings_provider == "huggingface":
-        embeddings = HuggingFaceEmbeddings(model_name=embeddings_model)
-    elif embeddings_provider == "local_embeddings":
-        if local_api_url is not None:
-            embeddings = OllamaEmbeddings(
-                base_url=local_api_url,
-                model=embeddings_model)
-        else:
-            embeddings = OllamaEmbeddings(
-                model=embeddings_model)
-        logger.info("Loaded local embeddings: " + embeddings_model)
-    elif embeddings_provider == "azureopenai":
-        logger.info("Retrieve " + embeddings_model)
-        embeddings = AzureOpenAIEmbeddings(
-            azure_deployment=embeddings_model,
-            openai_api_version=azureopenai_api_version,
-            azure_endpoint=local_api_url,
-            )
-        logger.info("Loaded Azure OpenAI embeddings")
-    return embeddings
 
 
 def get_timestamp():

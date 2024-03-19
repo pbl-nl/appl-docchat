@@ -1,20 +1,20 @@
-from dotenv import load_dotenv
 from typing import Dict, Tuple, List, Any
+from dotenv import load_dotenv
 from langchain.chains import ConversationalRetrievalChain
-from langchain.schema import AIMessage
-from langchain.schema import HumanMessage
+from langchain.schema import AIMessage, HumanMessage
 from loguru import logger
 # local imports
 import settings
 import utils as ut
-from llm_class.llm_class import LLM
+from query.llm_creator import LLMCreator
+from ingest.embedder import EmbeddingsCreator
 
 
 class Querier:
-    '''
+    """
     When parameters are read from settings.py, object is initiated without parameter settings
     When parameters are read from GUI, object is initiated with parameter settings listed
-    '''
+    """
     def __init__(self, llm_type=None, llm_model_type=None, embeddings_provider=None, embeddings_model=None,
                  vecdb_type=None, chain_name=None, chain_type=None, chain_verbosity=None, search_type=None,
                  score_threshold=None, chunk_k=None, local_api_url=None, azureopenai_api_version=None):
@@ -39,7 +39,10 @@ class Querier:
             else azureopenai_api_version
 
         # define llm
-        self.llm = LLM(self.llm_type, self.llm_model_type, self.local_api_url, self.azureopenai_api_version).get_llm()
+        self.llm = LLMCreator(self.llm_type,
+                              self.llm_model_type,
+                              self.local_api_url,
+                              self.azureopenai_api_version).get_llm()
 
     def make_agent(self, input_folder, vectordb_folder):
         """
@@ -62,18 +65,15 @@ class Querier:
         return
 
     def make_chain(self, input_folder, vectordb_folder, search_filter=None) -> None:
-        self.input_folder = input_folder
-        self.vectordb_folder = vectordb_folder
-
         # get embeddings
-        embeddings = ut.getEmbeddings(self.embeddings_provider,
-                                      self.embeddings_model,
-                                      self.local_api_url,
-                                      self.azureopenai_api_version)
+        embeddings = EmbeddingsCreator(self.embeddings_provider,
+                                       self.embeddings_model,
+                                       self.local_api_url,
+                                       self.azureopenai_api_version).get_embeddings()
 
         # get chroma vector store
         if self.vecdb_type == "chromadb":
-            self.vector_store = ut.get_chroma_vector_store(self.input_folder, embeddings, self.vectordb_folder)
+            self.vector_store = ut.get_chroma_vector_store(input_folder, embeddings, vectordb_folder)
             # get retriever with some search arguments
             # maximum number of chunks to retrieve
             search_kwargs = {"k": self.chunk_k}
@@ -84,8 +84,9 @@ class Querier:
             if self.search_type == "similarity_score_threshold":
                 search_kwargs["score_threshold"] = self.score_threshold
             retriever = self.vector_store.as_retriever(search_type=self.search_type, search_kwargs=search_kwargs)
-            logger.info(f"Loaded chromadb from folder {self.vectordb_folder}")
+            logger.info(f"Loaded chromadb from folder {vectordb_folder}")
 
+        # get chain
         if self.chain_name == "conversationalretrievalchain":
             self.chain = ConversationalRetrievalChain.from_llm(
                 llm=self.llm,

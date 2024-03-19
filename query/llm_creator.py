@@ -10,8 +10,10 @@ from langchain.callbacks.streaming_stdout import StreamingStdOutCallbackHandler
 import settings_template as settings
 
 
-class LLM():
-    '''LLM class to import into other modules'''
+class LLMCreator():
+    """
+    LLM class to import into other modules
+    """
     def __init__(self, llm_type=None, llm_model_type=None, local_api_url=None, azureopenai_api_version=None) -> None:
         self.llm_type = settings.LLM_TYPE if llm_type is None else llm_type
         self.llm_model_type = settings.LLM_MODEL_TYPE if llm_model_type is None else llm_model_type
@@ -20,6 +22,11 @@ class LLM():
             if azureopenai_api_version is None and settings.AZUREOPENAI_API_VERSION is not None \
             else azureopenai_api_version
 
+
+    def get_llm(self):
+        """
+        returns, based on settings, the llm object
+        """
         # if llm_type is "chatopenai"
         if self.llm_type == "chatopenai":
             # default llm_model_type value is "gpt-3.5-turbo"
@@ -49,7 +56,8 @@ class LLM():
         elif self.llm_type == "local_llm":
             logger.info("Use Local LLM")
             logger.info("Retrieving " + self.llm_model_type)
-            if self.local_api_url is not None:  # If API URL is defined, use it
+            # If API URL is defined, use it
+            if self.local_api_url is not None:
                 logger.info("Using local api url " + self.local_api_url)
                 self.llm = Ollama(
                     model=self.llm_model_type,
@@ -62,7 +70,6 @@ class LLM():
                     callback_manager=CallbackManager([StreamingStdOutCallbackHandler()])
                 )
             logger.info("Retrieved " + self.llm_model_type)
-
         # else, if llm_type is "azureopenai"
         elif self.llm_type == "azureopenai":
             logger.info("Use Azure OpenAI LLM")
@@ -73,6 +80,5 @@ class LLM():
                 api_version=self.azureopenai_api_version,
             )
             logger.info("Retrieved " + self.llm_model_type)
-
-    def get_llm(self):
+        
         return self.llm
