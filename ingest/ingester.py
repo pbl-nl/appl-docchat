@@ -117,9 +117,8 @@ class Ingester:
                 for file in new_files:
                     file_path = os.path.join(self.content_folder, file)
                     # extract raw text pages and metadata according to file type
-                    raw_pages, metadata = file_parser.parse_file(file_path)
-                    # convert the raw text to cleaned text chunks
-                    documents = ingestutils.clean_text_to_docs(raw_pages, metadata)
+                    raw_texts, metadata = file_parser.parse_file(file_path)
+                    documents = ingestutils.clean_texts_to_docs(raw_texts, metadata)
                     logger.info(f"Extracted {len(documents)} chunks from {file}")
                     # and add the chunks to the vector store
                     # add id to file chunks for later identification
