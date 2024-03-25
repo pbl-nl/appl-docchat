@@ -24,7 +24,7 @@ def create_and_show_summary(my_summary_type,
                             my_vectordb_folder_path_selected):
     summarization_method = "Map_Reduce" if my_summary_type == "Short" else "Refine"
     # for each file in content folder
-    with st.expander(f"{my_summary_type} summary"):
+    with st.expander(f"{my_summary_type} summary", expanded=True):
         for file in os.listdir(my_folder_path_selected):
             if os.path.isfile(os.path.join(my_folder_path_selected, file)):
                 summary_name = os.path.join(my_folder_path_selected,
@@ -32,8 +32,8 @@ def create_and_show_summary(my_summary_type,
                                             file + "_" + str.lower(my_summary_type) + ".txt")
                 # if summary does not exist yet, create it
                 if not os.path.isfile(summary_name):
-                    my_spinner_message = f'''Creating summary for {file}.
-                                        Depending on the size of the file, this may take a while. Please wait...'''
+                    my_spinner_message = f"""Creating summary for {file}.
+                                             Depending on the size of the file, this may take a while. Please wait..."""
                     with st.spinner(my_spinner_message):
                         summarizer = Summarizer(content_folder=my_folder_path_selected,
                                                 collection_name=my_folder_name_selected,
