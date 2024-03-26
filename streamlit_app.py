@@ -143,20 +143,21 @@ def handle_query(my_content_folder, my_querier, my_prompt: str):
                 with exp_textcol:
                     st.write(f"**file: {document.metadata['filename']}, page {pagenr}, score: {scores[i]:.3f}**")
                     st.write(f"{document.page_content}")
-                with exp_imgcol:
-                    page = doc.load_page(pagenr)
-                    rects = page.search_for(content)
-                    for rect in rects:
-                        page.add_highlight_annot(rect)
-                    # save image of page with highlighted text, zoom factor 2 in each dimension
-                    zoom_x = 2
-                    zoom_y = 2
-                    mat = fitz.Matrix(zoom_x, zoom_y)
-                    pix = page.get_pixmap(matrix=mat)
-                    # store image as a PNG
-                    imgfile = f"{docpath}-ch{i}.png"
-                    pix.save(imgfile)
-                    st.image(imgfile)
+                if document.metadata['filename'].endswith(".pdf"):
+                    with exp_imgcol:
+                        page = doc.load_page(pagenr)
+                        rects = page.search_for(content)
+                        for rect in rects:
+                            page.add_highlight_annot(rect)
+                        # save image of page with highlighted text, zoom factor 2 in each dimension
+                        zoom_x = 2
+                        zoom_y = 2
+                        mat = fitz.Matrix(zoom_x, zoom_y)
+                        pix = page.get_pixmap(matrix=mat)
+                        # store image as a PNG
+                        imgfile = f"{docpath}-ch{i}.png"
+                        pix.save(imgfile)
+                        st.image(imgfile)
                 st.divider()
     else:
         logger.info("No source documents found relating to the question")
