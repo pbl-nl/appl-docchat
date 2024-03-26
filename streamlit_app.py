@@ -1,3 +1,4 @@
+import fitz
 import os
 import streamlit as st
 from PIL import Image
@@ -24,7 +25,7 @@ def create_and_show_summary(my_summary_type,
                             my_vectordb_folder_path_selected):
     summarization_method = "Map_Reduce" if my_summary_type == "Short" else "Refine"
     # for each file in content folder
-    with st.expander(f"{my_summary_type} summary", expanded=True):
+    with st.expander(f"{my_summary_type} summary"):
         for file in os.listdir(my_folder_path_selected):
             if os.path.isfile(os.path.join(my_folder_path_selected, file)):
                 summary_name = os.path.join(my_folder_path_selected,
@@ -32,8 +33,8 @@ def create_and_show_summary(my_summary_type,
                                             file + "_" + str.lower(my_summary_type) + ".txt")
                 # if summary does not exist yet, create it
                 if not os.path.isfile(summary_name):
-                    my_spinner_message = f"""Creating summary for {file}.
-                                             Depending on the size of the file, this may take a while. Please wait..."""
+                    my_spinner_message = f'''Creating summary for {file}.
+                                        Depending on the size of the file, this may take a while. Please wait...'''
                     with st.spinner(my_spinner_message):
                         summarizer = Summarizer(content_folder=my_folder_path_selected,
                                                 collection_name=my_folder_name_selected,
@@ -99,11 +100,11 @@ def check_vectordb(my_querier, my_folder_name_selected, my_folder_path_selected,
     if not os.path.exists(my_vectordb_folder_path_selected):
         logger.info("Creating vectordb")
         my_spinner_message = f'''Creating vector database for folder {my_folder_name_selected}.
-        Depending on the size, this may take a while. Please wait...'''
+                                 Depending on the size, this may take a while. Please wait...'''
     else:
         logger.info("Updating vectordb")
         my_spinner_message = f'''Checking if vector database needs an update for folder {my_folder_name_selected}.
-        This may take a while, please wait...'''
+                                 This may take a while, please wait...'''
     with st.spinner(my_spinner_message):
         ingester = Ingester(my_folder_name_selected,
                             my_folder_path_selected,
@@ -117,7 +118,7 @@ def check_vectordb(my_querier, my_folder_name_selected, my_folder_path_selected,
     logger.info("Executed check_vectordb")
 
 
-def handle_query(my_querier, my_prompt: str):
+def handle_query(my_content_folder, my_querier, my_prompt: str):
     # Display user message in chat message container
     with st.chat_message("user"):
         st.markdown(my_prompt)
@@ -133,14 +134,30 @@ def handle_query(my_querier, my_prompt: str):
     st.session_state['messages'].append({"role": "assistant", "content": response["answer"]})
     if len(response["source_documents"]) > 0:
         with st.expander("Paragraphs used for answer"):
-            cnt = 0
-            for document in response["source_documents"]:
-                st.markdown(f'''**page: {document.metadata['page_number']},
-                            chunk: {document.metadata['chunk']},
-                            score: {scores[cnt]:.4f},
-                            file: {document.metadata['filename']}**''')
-                cnt += 1
-                st.markdown(f"{document.page_content}")
+            for i, document in enumerate(response["source_documents"]):
+                exp_textcol, _, exp_imgcol = st.columns([0.3, 0.1, 0.6])
+                docpath = os.path.join(my_content_folder, document.metadata['filename'])
+                doc = fitz.open(docpath)
+                pagenr = document.metadata['page_number']
+                content = document.page_content
+                with exp_textcol:
+                    st.write(f"**file: {document.metadata['filename']}, page {pagenr}, score: {scores[i]:.3f}**")
+                    st.write(f"{document.page_content}")
+                with exp_imgcol:
+                    page = doc.load_page(pagenr)
+                    rects = page.search_for(content)
+                    for rect in rects:
+                        page.add_highlight_annot(rect)
+                    # save image of page with highlighted text, zoom factor 2 in each dimension
+                    zoom_x = 2
+                    zoom_y = 2
+                    mat = fitz.Matrix(zoom_x, zoom_y)
+                    pix = page.get_pixmap(matrix=mat)
+                    # store image as a PNG
+                    imgfile = f"{docpath}-ch{i}.png"
+                    pix.save(imgfile)
+                    st.image(imgfile)
+                st.divider()
     else:
         logger.info("No source documents found relating to the question")
     logger.info("Executed handle_query(querier, prompt)")
@@ -152,21 +169,13 @@ def initialize_page():
     Initializes the main page with a page header and app info
     Also prepares the sidebar with folder list
     """
-    imagecol, headercol = st.columns([0.3, 0.7])
-    logo_image = Image.open(settings.APP_LOGO)
-    with imagecol:
-        st.image(logo_image, width=250)
-    with headercol:
-        st.header(settings.APP_HEADER)
-    # set session state default for messages to fight hallucinations
-    # st.session_state.setdefault('messages', [{"role": "system", "content": "You are a helpful assistant.
     # Custom CSS to have white expander background
     st.markdown(
         '''
         <style>
         .streamlit-expanderHeader {
             background-color: white;
-            color: black; # Adjust this for expander header color
+            color: black; # Expander header color
         }
         .streamlit-expanderContent {
             background-color: white;
@@ -176,19 +185,30 @@ def initialize_page():
         ''',
         unsafe_allow_html=True
     )
-    with st.sidebar.expander("User manual"):
-        # read app explanation from file explanation.txt
-        with open(file=settings.APP_INFO, mode="r", encoding="utf8") as f:
-            explanation = f.read()
-        st.markdown(body=explanation, unsafe_allow_html=True)
-        st.image("./images/multilingual.png")
-    st.sidebar.divider()
+    logo_image = Image.open(settings.APP_LOGO)
+    st.sidebar.image(logo_image, width=250)
     # Sidebar text for folder selection
     st.sidebar.title("Select a document folder")
+
+    _, col2, _, col4 = st.columns([0.2, 0.4, 0.1, 0.3])
+    with col2:
+        st.header(settings.APP_HEADER)
+    with col4:
+        with st.expander("User manual"):
+            # read app explanation from file explanation.txt
+            with open(file=settings.APP_INFO, mode="r", encoding="utf8") as f:
+                explanation = f.read()
+            st.markdown(body=explanation, unsafe_allow_html=True)
+            st.image("./images/multilingual.png")
+    # set session state default for messages to fight hallucinations
+    # st.session_state.setdefault('messages', [{"role": "system", "content": "You are a helpful assistant.
     logger.info("Executed initialize_page()")
 
 
 def initialize_session_state():
+    """
+    Initialize the session state variables for control
+    """
     if 'is_GO_clicked' not in st.session_state:
         st.session_state['is_GO_clicked'] = False
     if 'folder_selected' not in st.session_state:
@@ -262,4 +282,4 @@ if st.session_state['is_GO_clicked']:
 
     # react to user input if a question has been asked
     if prompt := st.chat_input("Your question"):
-        handle_query(querier, prompt)
+        handle_query(folder_path_selected, querier, prompt)
