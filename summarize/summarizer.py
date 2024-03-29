@@ -185,7 +185,7 @@ class Summarizer:
                 # extract data from vector store
                 embeddings = np.array(collection['embeddings'])
                 # cluster (KNN)
-                number_of_cluster = 8
+                number_of_cluster = 3
                 clusters, centroids = kmeans_clustering(embeddings, number_of_cluster)
                 # find text pieces most central in the cluster
                 indices = []

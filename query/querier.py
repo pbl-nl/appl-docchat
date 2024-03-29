@@ -2,12 +2,14 @@ from typing import Dict, Tuple, List, Any
 from dotenv import load_dotenv
 from langchain.chains import ConversationalRetrievalChain
 from langchain.schema import AIMessage, HumanMessage
+from langchain_core.prompts import PromptTemplate
 from loguru import logger
 # local imports
 import settings
 import utils as ut
 from query.llm_creator import LLMCreator
 from ingest.embedder import EmbeddingsCreator
+import prompts.templates as pr
 
 
 class Querier:
@@ -44,25 +46,25 @@ class Querier:
                               self.local_api_url,
                               self.azureopenai_api_version).get_llm()
 
-    def make_agent(self, input_folder, vectordb_folder):
-        """
-        Create a langchain agent with selected llm and tools
-        """
-        #
-        # TODO
-        #   - generalise code from make_chain
-        #   - implement sample tools (wikipedia (standard), geocoder, soilgrids)
-        #       see:
-        #           https://python.langchain.com/docs/integrations/tools/wikipedia
-        #           https://python.langchain.com/docs/integrations/tools/requests
-        #           https://python.langchain.com/docs/modules/agents/tools/custom_tools (<-)
-        #   - implement dynamic tool selection mechanism
-        #   - create llm, tools, and initialise agent
-        #   - add __init__ parameters for agent (maybe rename some chain related params?)
-        #   - see usages of make_chain where to select between using chain and agent
-        #   - add evaluation questions and answers, e.g. based on detailed spatial location context
-        #
-        return
+    # def make_agent(self, input_folder, vectordb_folder):
+    #     """
+    #     Create a langchain agent with selected llm and tools
+    #     """
+    #     #
+    #     # TODO
+    #     #   - generalise code from make_chain
+    #     #   - implement sample tools (wikipedia (standard), geocoder, soilgrids)
+    #     #       see:
+    #     #           https://python.langchain.com/docs/integrations/tools/wikipedia
+    #     #           https://python.langchain.com/docs/integrations/tools/requests
+    #     #           https://python.langchain.com/docs/modules/agents/tools/custom_tools (<-)
+    #     #   - implement dynamic tool selection mechanism
+    #     #   - create llm, tools, and initialise agent
+    #     #   - add __init__ parameters for agent (maybe rename some chain related params?)
+    #     #   - see usages of make_chain where to select between using chain and agent
+    #     #   - add evaluation questions and answers, e.g. based on detailed spatial location context
+    #     #
+    #     return
 
     def make_chain(self, input_folder, vectordb_folder, search_filter=None) -> None:
         # get embeddings
@@ -86,6 +88,9 @@ class Querier:
             retriever = self.vector_store.as_retriever(search_type=self.search_type, search_kwargs=search_kwargs)
             logger.info(f"Loaded chromadb from folder {vectordb_folder}")
 
+        # get appropriate RAG prompt from langchainhub
+        prompt = PromptTemplate.from_template(template=pr.openai_base_rag_prompt)
+
         # get chain
         if self.chain_name == "conversationalretrievalchain":
             self.chain = ConversationalRetrievalChain.from_llm(
@@ -93,6 +98,7 @@ class Querier:
                 retriever=retriever,
                 chain_type=self.chain_type,
                 verbose=self.chain_verbosity,
+                combine_docs_chain_kwargs={'prompt': prompt},
                 return_source_documents=True
             )
         logger.info("Executed Querier.make_chain")
