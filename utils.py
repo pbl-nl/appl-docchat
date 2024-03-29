@@ -1,8 +1,7 @@
-from typing import Any, Dict, List, Tuple
+from typing import Any, Dict, Tuple
 import os
 import sys
 import datetime as dt
-import fitz
 from langchain_core.embeddings import Embeddings
 from langchain_community.vectorstores.chroma import Chroma
 # local imports
@@ -149,28 +148,3 @@ def get_timestamp():
     """
 
     return str(dt.datetime.now())
-
-
-def pdf_to_png(file_path: str, sources: List[str]) -> None:
-    """ converts all pages of a pdf to images and stores them
-
-    Parameters
-    ----------
-    file_path : str
-        full path of the file to be converted
-    """
-
-    doc = fitz.open(file_path)
-    file_name = os.path.basename(file_path)
-    file_name_no_ext = os.path.splitext(file_name)[0]
-    png_folder = os.path.join(os.path.dirname(file_path), 'pngs')
-    if not os.path.exists(png_folder):
-        os.mkdir(png_folder)
-    for i, page in enumerate(doc.pages()):
-        # render page to an image
-        zoom_x = 2  # horizontal zoom
-        zoom_y = 2  # vertical zoom
-        mat = fitz.Matrix(zoom_x, zoom_y)  # zoom factor 2 in each dimension
-        pix = page.get_pixmap(matrix=mat)
-        # store image as a PNG
-        pix.save(f"{os.path.join(png_folder, file_name_no_ext)}-pg{i}.png")
