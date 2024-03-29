@@ -22,7 +22,6 @@ class LLMCreator():
             if azureopenai_api_version is None and settings.AZUREOPENAI_API_VERSION is not None \
             else azureopenai_api_version
 
-
     def get_llm(self):
         """
         returns, based on settings, the llm object
@@ -35,7 +34,7 @@ class LLMCreator():
                 self.llm_model_type = "gpt-3.5-turbo-16k"
             elif self.llm_model_type == "gpt4":
                 self.llm_model_type = "gpt-4"
-            self.llm = ChatOpenAI(
+            llm = ChatOpenAI(
                 client=None,
                 model=self.llm_model_type,
                 temperature=0,
@@ -48,10 +47,10 @@ class LLMCreator():
             if self.llm_model_type == 'GoogleFlan':
                 self.llm_model_type = 'google/flan-t5-base'
                 max_length = 512
-            self.llm = HuggingFaceHub(repo_id=self.llm_model_type,
-                                      model_kwargs={"temperature": 0.1,
-                                                    "max_length": max_length}
-                                      )
+            llm = HuggingFaceHub(repo_id=self.llm_model_type,
+                                 model_kwargs={"temperature": 0.1,
+                                               "max_length": max_length}
+                                 )
         # else, if llm_type is "local_llm"
         elif self.llm_type == "local_llm":
             logger.info("Use Local LLM")
@@ -59,13 +58,13 @@ class LLMCreator():
             # If API URL is defined, use it
             if self.local_api_url is not None:
                 logger.info("Using local api url " + self.local_api_url)
-                self.llm = Ollama(
+                llm = Ollama(
                     model=self.llm_model_type,
                     base_url=self.local_api_url,
                     callback_manager=CallbackManager([StreamingStdOutCallbackHandler()])
                 )
             else:
-                self.llm = Ollama(
+                llm = Ollama(
                     model=self.llm_model_type,
                     callback_manager=CallbackManager([StreamingStdOutCallbackHandler()])
                 )
@@ -74,11 +73,11 @@ class LLMCreator():
         elif self.llm_type == "azureopenai":
             logger.info("Use Azure OpenAI LLM")
             logger.info("Retrieving " + self.llm_model_type)
-            self.llm = AzureChatOpenAI(
+            llm = AzureChatOpenAI(
                 azure_deployment=self.llm_model_type,
                 azure_endpoint=self.local_api_url,
                 api_version=self.azureopenai_api_version,
             )
             logger.info("Retrieved " + self.llm_model_type)
-        
-        return self.llm
+
+        return llm
