@@ -5,7 +5,7 @@ import numpy as np
 import settings
 import utils as ut
 from ingest.ingester import Ingester
-from ingest.embedder import EmbeddingsCreator
+from ingest.embeddings_creator import EmbeddingsCreator
 from query.llm_creator import LLMCreator
 
 
