@@ -12,8 +12,8 @@ import settings
 # from ingest.content_iterator import ContentIterator
 from ingest.ingest_utils import IngestUtils
 from ingest.file_parser import FileParser
-from ingest.embedder import EmbeddingsCreator
-import utils as ut
+from ingest.embeddings_creator import EmbeddingsCreator
+from ingest.vectorstore_creator import VectorStoreCreator
 
 
 class Ingester:
@@ -21,14 +21,14 @@ class Ingester:
     Create Ingester object
     When instantiating without parameters, attributes get values from settings.py
     """
-    def __init__(self, collection_name: str, content_folder: str, vectordb_folder: str,
+    def __init__(self, collection_name: str, content_folder: str, vecdb_folder: str,
                  embeddings_provider=None, embeddings_model=None, text_splitter_method=None,
                  vecdb_type=None, chunk_size=None, chunk_overlap=None, local_api_url=None,
                  file_no=None, azureopenai_api_version=None):
         load_dotenv()
         self.collection_name = collection_name
         self.content_folder = content_folder
-        self.vectordb_folder = vectordb_folder
+        self.vecdb_folder = vecdb_folder
         self.embeddings_provider = settings.EMBEDDINGS_PROVIDER if embeddings_provider is None else embeddings_provider
         self.embeddings_model = settings.EMBEDDINGS_MODEL if embeddings_model is None else embeddings_model
         self.text_splitter_method = settings.TEXT_SPLITTER_METHOD \
@@ -74,9 +74,11 @@ class Ingester:
                     logger.info(f"Skipping ingestion of file {file} because it has extension {file[-4:]}")
 
             # if the vector store already exists, get the set of ingested files from the vector store
-            if os.path.exists(self.vectordb_folder):
+            if os.path.exists(self.vecdb_folder):
                 # get chroma vector store
-                vector_store = ut.get_chroma_vector_store(self.collection_name, embeddings, self.vectordb_folder)
+                vector_store = VectorStoreCreator(self.vecdb_type).get_vectorstore(embeddings,
+                                                                                   self.collection_name,
+                                                                                   self.vecdb_folder)
                 logger.info(f"Vector store already exists for specified settings and folder {self.content_folder}")
                 # determine the files that are added or deleted
                 collection = vector_store.get()  # dict_keys(['ids', 'embeddings', 'documents', 'metadatas'])
@@ -100,12 +102,17 @@ class Ingester:
                 # determine updated maximum id from collection after deletions
                 collection = vector_store.get()  # dict_keys(['ids', 'embeddings', 'documents', 'metadatas'])
                 collection_ids = [int(id) for id in collection['ids']]
-                start_id = max(collection_ids) + 1
+                if len(collection_ids) > 0:
+                    start_id = max(collection_ids) + 1
+                else:
+                    start_id = 0
             # else it needs to be created first
             else:
                 logger.info(f"Vector store to be created for folder {self.content_folder}")
                 # get chroma vector store
-                vector_store = ut.get_chroma_vector_store(self.collection_name, embeddings, self.vectordb_folder)
+                vector_store = VectorStoreCreator(self.vecdb_type).get_vectorstore(embeddings,
+                                                                                   self.collection_name,
+                                                                                   self.vecdb_folder)
                 collection = vector_store.get()  # dict_keys(['ids', 'embeddings', 'documents', 'metadatas'])
                 # all files in the folder are to be ingested into the vector store
                 new_files = list(relevant_files_in_folder)
@@ -126,7 +133,7 @@ class Ingester:
                         documents=documents,
                         embedding=embeddings,
                         collection_name=self.collection_name,
-                        persist_directory=self.vectordb_folder,
+                        persist_directory=self.vecdb_folder,
                         ids=[str(id) for id in list(range(start_id, start_id + len(documents)))]
                     )
                     # dict_keys(['ids', 'embeddings', 'documents', 'metadatas'])

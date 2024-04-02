@@ -93,3 +93,11 @@ CHUNK_K = 4
 
 # CHUNK_OVERLAP represents the overlap between 2 sequential text chunks, value must be integer (>=0 and < CHUNK_SIZE)
 CHUNK_OVERLAP = 200
+
+# RETRIEVER_TYPE represents the type of retriever that is used to extract chunks from the vectorstore
+# value must be one of "vectorstore",
+RETRIEVER_TYPE = "vectorstore"
+
+# RETRIEVER_PROMPT represents the type of retriever that is used to extract chunks from the vectorstore
+# value must be one of "openai_rag", "openai_rag_concise", "openai_rag_language",
+RETRIEVER_PROMPT = "openai_rag"

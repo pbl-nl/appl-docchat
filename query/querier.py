@@ -6,9 +6,9 @@ from langchain_core.prompts import PromptTemplate
 from loguru import logger
 # local imports
 import settings
-import utils as ut
+from ingest.embeddings_creator import EmbeddingsCreator
+from ingest.vectorstore_creator import VectorStoreCreator
 from query.llm_creator import LLMCreator
-from ingest.embedder import EmbeddingsCreator
 import prompts.templates as pr
 
 
@@ -45,51 +45,34 @@ class Querier:
                               self.llm_model_type,
                               self.local_api_url,
                               self.azureopenai_api_version).get_llm()
+        
+        # define embeddings
+        self.embeddings = EmbeddingsCreator(self.embeddings_provider,
+                                            self.embeddings_model,
+                                            self.local_api_url,
+                                            self.azureopenai_api_version).get_embeddings()
+        
+    def make_chain(self, input_folder, vecdb_folder, search_filter=None) -> None:
+        # get vector store
+        self.vector_store = VectorStoreCreator(self.vecdb_type).get_vectorstore(self.embeddings,
+                                                                                input_folder,
+                                                                                vecdb_folder)
+        # get retriever with some search arguments
+        # maximum number of chunks to retrieve
+        search_kwargs = {"k": self.chunk_k}
+        # filter, if set
+        if search_filter is not None:
+            logger.info(f"querying vector store with filter {search_filter}")
+            search_kwargs["filter"] = search_filter
+        if self.search_type == "similarity_score_threshold":
+            search_kwargs["score_threshold"] = self.score_threshold
+        logger.info(f"Loaded vector store from folder {vecdb_folder}")
 
-    # def make_agent(self, input_folder, vectordb_folder):
-    #     """
-    #     Create a langchain agent with selected llm and tools
-    #     """
-    #     #
-    #     # TODO
-    #     #   - generalise code from make_chain
-    #     #   - implement sample tools (wikipedia (standard), geocoder, soilgrids)
-    #     #       see:
-    #     #           https://python.langchain.com/docs/integrations/tools/wikipedia
-    #     #           https://python.langchain.com/docs/integrations/tools/requests
-    #     #           https://python.langchain.com/docs/modules/agents/tools/custom_tools (<-)
-    #     #   - implement dynamic tool selection mechanism
-    #     #   - create llm, tools, and initialise agent
-    #     #   - add __init__ parameters for agent (maybe rename some chain related params?)
-    #     #   - see usages of make_chain where to select between using chain and agent
-    #     #   - add evaluation questions and answers, e.g. based on detailed spatial location context
-    #     #
-    #     return
-
-    def make_chain(self, input_folder, vectordb_folder, search_filter=None) -> None:
-        # get embeddings
-        embeddings = EmbeddingsCreator(self.embeddings_provider,
-                                       self.embeddings_model,
-                                       self.local_api_url,
-                                       self.azureopenai_api_version).get_embeddings()
-
-        # get chroma vector store
-        if self.vecdb_type == "chromadb":
-            self.vector_store = ut.get_chroma_vector_store(input_folder, embeddings, vectordb_folder)
-            # get retriever with some search arguments
-            # maximum number of chunks to retrieve
-            search_kwargs = {"k": self.chunk_k}
-            # filter, if set
-            if search_filter is not None:
-                logger.info(f"querying vector store with filter {search_filter}")
-                search_kwargs["filter"] = search_filter
-            if self.search_type == "similarity_score_threshold":
-                search_kwargs["score_threshold"] = self.score_threshold
-            retriever = self.vector_store.as_retriever(search_type=self.search_type, search_kwargs=search_kwargs)
-            logger.info(f"Loaded chromadb from folder {vectordb_folder}")
+        # get retriever
+        retriever = self.vector_store.as_retriever(search_type=self.search_type, search_kwargs=search_kwargs)
 
         # get appropriate RAG prompt from langchainhub
-        prompt = PromptTemplate.from_template(template=pr.openai_base_rag_prompt)
+        prompt = PromptTemplate.from_template(template=pr.get_prompt(settings.RETRIEVER_PROMPT))
 
         # get chain
         if self.chain_name == "conversationalretrievalchain":
@@ -106,7 +89,7 @@ class Querier:
     def ask_question(self, question: str) -> Tuple[Dict[str, Any], List[float]]:
         """"
         Finds most similar docs to prompt in vectorstore and determines the response
-        If the closest doc found is not similar enough to the prompt, any answer from the LM is overruled by a message
+        If the closest doc found is not similar enough to the prompt, any answer from the LLM is overruled by a message
         """
         # check if any chunk will qualify given the similarity threshold
         most_similar_docs = \
@@ -130,6 +113,6 @@ class Querier:
     def clear_history(self) -> None:
         """"
         Clears the chat history
-        Used by "Clear Conversation" button in streamlit_app.py  
+        Used by "Clear Conversation" button in streamlit_app.py
         """
         self.chat_history = []
