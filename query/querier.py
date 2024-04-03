@@ -109,6 +109,7 @@ class Querier:
         scores = [most_similar_docs[i][0] for i in range(len(most_similar_docs))]
         logger.info(f"current question: {question}")
         logger.info(f"current chat history: {self.chat_history}")
+        logger.info(f"current document chunks: ", most_similar_docs[0])
         # generate response from chain
         response = self.chain.invoke({"question": question, "chat_history": self.chat_history})
         logger.info('Most Similar Docs: ', most_similar_docs)

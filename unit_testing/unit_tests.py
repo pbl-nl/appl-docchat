@@ -20,7 +20,7 @@ class TestIngester(unittest.TestCase):
             embeddings_provider = "openai"
             embeddings_model = "text-embedding-ada-002"
 
-            content_folder_name = 'unit_test_openai'
+            content_folder_name = 'unit_test_openai/'
             content_folder_path, vectordb_folder_path = ut.create_vectordb_name(content_folder_name)
             # delete a vector base if one is in place
             if os.path.exists(vectordb_folder_path):
@@ -44,7 +44,7 @@ class TestIngester(unittest.TestCase):
             embeddings_provider = "huggingface"
             embeddings_model = "all-mpnet-base-v2"
 
-            content_folder_name = 'unit_test_huggingface'
+            content_folder_name = 'unit_test_huggingface/'
             content_folder_path, vectordb_folder_path = ut.create_vectordb_name(content_folder_name)
             # delete vector base if it exists
             if os.path.exists(vectordb_folder_path):
@@ -70,7 +70,7 @@ class TestQuery(unittest.TestCase):
     def test_openai(self):
         llm_type = "chatopenai"
         llm_model_type = "gpt-3.5-turbo"
-        content_folder_name = 'unit_test_openai'
+        content_folder_name = 'unit_test_openai/'
         _, vectordb_folder_path = ut.create_vectordb_name(content_folder_name)
         querier = Querier(llm_type=llm_type, llm_model_type=llm_model_type)
         querier.make_chain(content_folder_name, vectordb_folder_path)
@@ -80,7 +80,7 @@ class TestQuery(unittest.TestCase):
     def test_huggingface(self):
         llm_type = "huggingface"
         llm_model_type = "meta-llama/Llama-2-7b-chat-hf"
-        content_folder_name = 'unit_test_openai'
+        content_folder_name = 'unit_test_openai/'
         _, vectordb_folder_path = ut.create_vectordb_name(content_folder_name)
         querier = Querier(llm_type=llm_type, llm_model_type=llm_model_type)
         querier.make_chain(content_folder_name, vectordb_folder_path)

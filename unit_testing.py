@@ -1,4 +1,4 @@
-from unit_testing.ingest_test import TestQuery, TestIngester
+from unit_testing.unit_tests import TestQuery, TestIngester
 import unittest
 
 if __name__ == '__main__':
