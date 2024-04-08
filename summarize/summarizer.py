@@ -5,7 +5,7 @@ import numpy as np
 import settings
 import utils as ut
 from ingest.ingester import Ingester
-from ingest.embedder import EmbeddingsCreator
+from ingest.embeddings_creator import EmbeddingsCreator
 from query.llm_creator import LLMCreator
 
 
@@ -185,7 +185,7 @@ class Summarizer:
                 # extract data from vector store
                 embeddings = np.array(collection['embeddings'])
                 # cluster (KNN)
-                number_of_cluster = 8
+                number_of_cluster = 3
                 clusters, centroids = kmeans_clustering(embeddings, number_of_cluster)
                 # find text pieces most central in the cluster
                 indices = []

@@ -1,10 +1,7 @@
-from typing import Any, Dict, List, Tuple
+from typing import Any, Dict, Tuple
 import os
 import sys
 import datetime as dt
-import fitz
-from langchain_core.embeddings import Embeddings
-from langchain_community.vectorstores.chroma import Chroma
 # local imports
 import settings
 
@@ -67,35 +64,6 @@ def getattr_or_default(obj: Any,
     value = getattr(obj, attr, default)
 
     return value if value is not None else default
-
-
-def get_chroma_vector_store(collection_name: str,
-                            embeddings: Embeddings,
-                            vectordb_folder: str) -> Chroma:
-    """ Creates a Chroma vector database using the given Embeddins and the folder to persist the database
-
-    Parameters
-    ----------
-    collection_name : str
-        name of the collection to create
-    embeddings : Embeddings
-        LangChain embeddings from the chosen embedding model
-    vectordb_folder : str
-        the name of the persist folder
-
-    Returns
-    -------
-    Chroma
-        Chroma vector database object
-    """
-    vector_store = Chroma(
-        collection_name=collection_name,
-        embedding_function=embeddings,
-        persist_directory=vectordb_folder,
-        collection_metadata={"hnsw:space": "cosine"}
-    )
-
-    return vector_store
 
 
 def get_settings_as_dictionary(file_name: str) -> Dict[str, Any]:
