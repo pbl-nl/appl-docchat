@@ -21,7 +21,7 @@ def click_go_button():
 def create_and_show_summary(my_summary_type,
                             my_folder_path_selected,
                             my_folder_name_selected,
-                            my_vectordb_folder_path_selected):
+                            my_vecdb_folder_path_selected):
     summarization_method = "Map_Reduce" if my_summary_type == "Short" else "Refine"
     # for each file in content folder
     with st.expander(f"{my_summary_type} summary", expanded=True):
@@ -38,7 +38,7 @@ def create_and_show_summary(my_summary_type,
                         summarizer = Summarizer(content_folder=my_folder_path_selected,
                                                 collection_name=my_folder_name_selected,
                                                 summary_method=summarization_method,
-                                                vectordb_folder=my_vectordb_folder_path_selected)
+                                                vecdb_folder=my_vecdb_folder_path_selected)
                         summarizer.summarize()
                 # show summary
                 st.write(f"**{file}:**\n")
@@ -77,16 +77,16 @@ def folder_selector(folders):
     my_folder_name_selected = st.sidebar.selectbox("label=folder_selector", options=folders, label_visibility="hidden")
     logger.info(f"folder_name_selected is now {my_folder_name_selected}")
     # get associated source folder path and vectordb path
-    my_folder_path_selected, my_vectordb_folder_path_selected = ut.create_vectordb_name(my_folder_name_selected)
-    logger.info(f"vectordb_folder_path_selected is now {my_vectordb_folder_path_selected}")
+    my_folder_path_selected, my_vecdb_folder_path_selected = ut.create_vectordb_name(my_folder_name_selected)
+    logger.info(f"vectordb_folder_path_selected is now {my_vecdb_folder_path_selected}")
     if my_folder_name_selected != st.session_state['folder_selected']:
         st.session_state['is_GO_clicked'] = False
     # set session state of selected folder to new source folder
     st.session_state['folder_selected'] = my_folder_name_selected
-    return my_folder_name_selected, my_folder_path_selected, my_vectordb_folder_path_selected
+    return my_folder_name_selected, my_folder_path_selected, my_vecdb_folder_path_selected
 
 
-def check_vectordb(my_querier, my_folder_name_selected, my_folder_path_selected, my_vectordb_folder_path_selected):
+def check_vectordb(my_querier, my_folder_name_selected, my_folder_path_selected, my_vecdb_folder_path_selected):
     # If a folder is chosen that is not equal to the last known source folder
     if folder_name_selected != st.session_state['folder_selected']:
         # set session state of is_GO_clicked to False (will be set to True when OK button is clicked)
@@ -96,7 +96,7 @@ def check_vectordb(my_querier, my_folder_name_selected, my_folder_path_selected,
         my_querier.clear_history()
     # When the associated vector database of the chosen content folder doesn't exist with the settings as given
     # in settings.py, create it first
-    if not os.path.exists(my_vectordb_folder_path_selected):
+    if not os.path.exists(my_vecdb_folder_path_selected):
         logger.info("Creating vectordb")
         my_spinner_message = f'''Creating vector database for folder {my_folder_name_selected}.
         Depending on the size, this may take a while. Please wait...'''
@@ -107,11 +107,11 @@ def check_vectordb(my_querier, my_folder_name_selected, my_folder_path_selected,
     with st.spinner(my_spinner_message):
         ingester = Ingester(my_folder_name_selected,
                             my_folder_path_selected,
-                            my_vectordb_folder_path_selected)
+                            my_vecdb_folder_path_selected)
         ingester.ingest()
 
     # create a new chain based on the new source folder
-    my_querier.make_chain(my_folder_name_selected, my_vectordb_folder_path_selected)
+    my_querier.make_chain(my_folder_name_selected, my_vecdb_folder_path_selected)
     # set session state of selected folder to new source folder
     st.session_state['folder_selected'] = my_folder_name_selected
     logger.info("Executed check_vectordb")
@@ -227,7 +227,7 @@ initialize_session_state()
 # creation of Querier object, executed only once per session
 querier = initialize_querier()
 # chosen folder and associated vector database
-folder_name_selected, folder_path_selected, vectordb_folder_path_selected = folder_selector(source_folders_available)
+folder_name_selected, folder_path_selected, vecdb_folder_path_selected = folder_selector(source_folders_available)
 
 # create button to confirm folder selection. This button sets session_state['is_GO_clicked'] to True
 st.sidebar.button("GO", type="primary", on_click=click_go_button)
@@ -235,7 +235,7 @@ st.sidebar.button("GO", type="primary", on_click=click_go_button)
 # only start a conversation when a folder is selected and selection is confirmed with "GO" button
 if st.session_state['is_GO_clicked']:
     # create or update vector database if necessary
-    check_vectordb(querier, folder_name_selected, folder_path_selected, vectordb_folder_path_selected)
+    check_vectordb(querier, folder_name_selected, folder_path_selected, vecdb_folder_path_selected)
     summary_type = st.sidebar.radio(
         "Start with summary?",
         ["No", "Short", "Long"],
@@ -244,7 +244,7 @@ if st.session_state['is_GO_clicked']:
     # if a short or long summary is chosen
     if summary_type in ["Short", "Long"]:
         # show the summary at the top of the screen
-        create_and_show_summary(summary_type, folder_path_selected, folder_name_selected, vectordb_folder_path_selected)
+        create_and_show_summary(summary_type, folder_path_selected, folder_name_selected, vecdb_folder_path_selected)
 
     # show button "Clear Conversation"
     clear_messages_button = st.button("Clear Conversation", key="clear")
