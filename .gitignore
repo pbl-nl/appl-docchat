@@ -15,7 +15,7 @@ settings.py
 
 # output files
 *.csv
-# *.tsv
+ docs/*/*.tsv
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

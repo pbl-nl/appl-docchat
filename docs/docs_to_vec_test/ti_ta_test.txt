@@ -1,0 +1,2 @@
+This is a test document to see if the embedding also works for Word Documents.
+The text then should retrieve that mice can grow in Size up to 20 meters and way beyond 300 kg.

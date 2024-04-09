@@ -6,6 +6,7 @@ import settings
 import utils as ut
 from ingest.ingester import Ingester
 from ingest.embeddings_creator import EmbeddingsCreator
+from ingest.vectorstore_creator import VectorStoreCreator
 from query.llm_creator import LLMCreator
 
 
@@ -81,7 +82,7 @@ class Summarizer:
     The summarizer class  parameters are read from settings.py, object is initiated without parameter settings
     When parameters are read from GUI, object is initiated with parameter settings listed
     """
-    def __init__(self, collection_name: str, content_folder: str, vectordb_folder: str, summary_method: str,
+    def __init__(self, collection_name: str, content_folder: str, vecdb_folder: str, summary_method: str,
                  embeddings_provider=None, embeddings_model=None, text_splitter_method=None,
                  vecdb_type=None, chunk_size=None, chunk_overlap=None, local_api_url=None,
                  file_no=None, llm_type=None, llm_model_type=None, azureopenai_api_version=None):
@@ -93,7 +94,7 @@ class Summarizer:
         self.collection_name = collection_name
         self.summary_method = summary_method
         self.content_folder = content_folder
-        self.vectordb_folder = vectordb_folder
+        self.vecdb_folder = vecdb_folder
         self.embeddings_provider = settings.EMBEDDINGS_PROVIDER if embeddings_provider is None else embeddings_provider
         self.embeddings_model = settings.EMBEDDINGS_MODEL if embeddings_model is None else embeddings_model
         self.text_splitter_method = settings.TEXT_SPLITTER_METHOD \
@@ -124,7 +125,7 @@ class Summarizer:
         # create or update vector store for the documents
         ingester = Ingester(collection_name=self.collection_name,
                             content_folder=self.content_folder,
-                            vectordb_folder=self.vectordb_folder)
+                            vecdb_folder=self.vecdb_folder)
         ingester.ingest()
 
         # list of files to summarize
@@ -140,9 +141,11 @@ class Summarizer:
                                        self.embeddings_model,
                                        self.local_api_url,
                                        self.azureopenai_api_version).get_embeddings()
-        
+
         # get vector store object
-        vector_store = ut.get_chroma_vector_store(self.collection_name, embeddings, self.vectordb_folder)
+        vector_store = VectorStoreCreator(self.vecdb_type).get_vectorstore(embeddings,
+                                                                           self.collection_name,
+                                                                           self.vecdb_folder)
 
         # loop over all files in the folder
         for _, file in enumerate(files_in_folder):
