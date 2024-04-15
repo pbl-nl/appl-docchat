@@ -67,6 +67,13 @@ The flask UI can be started in the activated virtual environment with <code>pyth
 The Flask UI is tailored for future use in production and contains more insight into the chunks (used) and also contains user admin functionality among others.<br>
 For a more detailed description and installation, see the readme file in the flask_app folder
 
+### Summarizing documents
+The file summarize.py can be used to summarize every file individually in a document folder. Two options for summarization are implemented:
+* Map Reduce: this will create a summary in a fast way. The time (and quality) to create a summary depends on the number of centroids chosen. This is a parameter in settings.py<br>
+* Refine: this will create a more refined summary, but can take a long time to run, especially for larger documents
+
+Execution is done in the activated virtual environment with <code>python summarize.py</code>. The user will be prompted for the summarization method, either "Map_Reduce" or "Refine"
+
 ### Evaluation of Question Answer results
 The file evaluate.py can be used to evaluate the generated answers for a list of questions, provided that the file eval.json exists, containing 
 not only the list of questions but also the related list of desired answers (ground truth).<br>
