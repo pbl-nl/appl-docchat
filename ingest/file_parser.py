@@ -8,6 +8,7 @@ from pypdf import PdfReader
 import fitz
 from unidecode import unidecode
 import pprint
+from langdetect import detect
 # local imports
 import utils as ut
 import settings_template as settings
@@ -64,6 +65,7 @@ class FileParser:
         metadata_text = data[0].metadata
         logger.info(f"{getattr(metadata_text, 'title', 'no title')}")
         metadata = self.get_metadata(file_path, metadata_text)
+        metadata['Language'] = metadata['Language'] if 'Language' in metadata.keys() else self._detect_language(raw_text)
         return pages, metadata
 
     def parse_pdf(self, file_path: str) -> Tuple[List[Tuple[int, str]], Dict[str, str]]:
@@ -76,11 +78,13 @@ class FileParser:
             metadata_text = reader.metadata
             logger.info(f"{getattr(metadata_text, 'title', 'no title')}")
             metadata = self.get_metadata(file_path, metadata_text)
+            print('METADATA: ', metadata)
             logger.info("Extracting pages")
             for _, page in enumerate(reader.pages):
                 page_text = unidecode(page.extract_text()).strip()
                 print(f"{page_text}\n")
             pages = [(i + 1, p.extract_text()) for i, p in enumerate(reader.pages) if p.extract_text().strip()]
+        metadata['Language'] = metadata['Language'] if 'Language' in metadata.keys() else self._detect_language(pages[0][1])
         return pages, metadata
 
     def parse_pymupdf(self, file_path: str) -> Tuple[str, List[Tuple[int, str]], Dict[str, str]]:
@@ -92,9 +96,7 @@ class FileParser:
         logger.info("Extracting pdf metadata")
         doc = fitz.open(file_path)
         metadata_text = doc.metadata
-        print(f"metadata = {metadata_text}")
         metadata = self.get_metadata(file_path, metadata_text)
-
         pages = []
         toc = doc.get_toc()
         toc_paragraph_titles = [item[1] for item in toc]
@@ -201,6 +203,7 @@ class FileParser:
             # print(f"{len(tabs.tables)} table found on {page}") # display number of found tables
             # if tabs.tables:  # at least one table found?
             #     pprint.pprint(tabs[0].extract())  # print content of first table
+        metadata['Language'] = metadata['Language'] if 'Language' in metadata.keys() else self._detect_language(pages[0][1])
         return pages, metadata
 
     def parse_txt(self, file_path: str) -> Tuple[List[Tuple[int, str]], Dict[str, str]]:
@@ -218,6 +221,7 @@ class FileParser:
         metadata_text = text[0].metadata
         logger.info(f"{getattr(metadata_text, 'title', 'no title')}")
         metadata = self.get_metadata(file_path, metadata_text)
+        metadata['Language'] = metadata['Language'] if 'Language' in metadata.keys() else self._detect_language(raw_text)
         return pages, metadata
 
     def parse_word(self, file_path: str) -> Tuple[List[Tuple[int, str]], Dict[str, str]]:
@@ -235,4 +239,13 @@ class FileParser:
         metadata_text = text[0].metadata
         logger.info(f"{getattr(metadata_text, 'title', 'no title')}")
         metadata = self.get_metadata(file_path, metadata_text)
+        metadata['Language'] = metadata['Language'] if 'Language' in metadata.keys() else self._detect_language(raw_text)
         return pages, metadata
+    
+    def _detect_language(self, text: str, number_of_characters: int = 1000) -> str:
+        '''
+        Detects language based on the first X number of characters
+        '''
+        text_snippet = text[:number_of_characters] if len(text) > number_of_characters else text
+        return detect(text_snippet)
+
