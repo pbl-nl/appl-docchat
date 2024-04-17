@@ -3,7 +3,6 @@ from dotenv import load_dotenv
 import numpy as np
 # local imports
 import settings
-import utils as ut
 from ingest.ingester import Ingester
 from ingest.embeddings_creator import EmbeddingsCreator
 from ingest.vectorstore_creator import VectorStoreCreator
@@ -128,10 +127,6 @@ class Summarizer:
                             vecdb_folder=self.vecdb_folder)
         ingester.ingest()
 
-        # list of files to summarize
-        files_in_folder = [f for f in os.listdir(self.content_folder)
-                           if os.path.isfile(os.path.join(self.content_folder, f))]
-
         # create subfolder "summaries" if not existing
         if 'summaries' not in os.listdir(self.content_folder):
             os.mkdir(os.path.join(self.content_folder, "summaries"))
@@ -147,65 +142,111 @@ class Summarizer:
                                                                            self.collection_name,
                                                                            self.vecdb_folder)
 
+        # list of files to summarize
+        files_in_folder = [f for f in os.listdir(self.content_folder)
+                           if (os.path.isfile(os.path.join(self.content_folder, f)) and
+                               os.path.splitext(f)[1] in [".docx", ".html", ".md", ".pdf", ".txt"])]
+
         # loop over all files in the folder
         for _, file in enumerate(files_in_folder):
+            file_name, _ = os.path.splitext(file)
             # get all the chunks from the vector store related to the file
             # dict_keys(['ids', 'embeddings', 'documents', 'metadatas'])
             collection = vector_store.get(where={"filename": file}, include=["metadatas", "embeddings", "documents"])
+
             chunks = []
             # for item in collection.items():
             for idx in range(len(collection['ids'])):
                 idx_id = collection['ids'][idx]
                 idx_text = collection['documents'][idx]
+                # print(f"chunk found with index {idx_id} and text {idx_text}")
+                # convert index to int for sorting purposes
                 chunks.append((int(idx_id), idx_text))
-            # sort the chunks on id!
+            # sort the chunks on id
             chunks.sort(key=lambda x: x[0])
+
             # if refine method is chosen
             if self.summary_method == "Refine":
                 first = True
                 for idx, text in enumerate(chunks):
-                    # print(idx)
+                    print(f"REFINE: chunk processed = {idx} of {len(chunks)}")
                     if first:
-                        summarize_text = f'''
+                        summarize_prompt = f'''
                                           Summarize the following text: {text}.
                                           Only return the summary, no explanation.
                                           '''
-                        summary = self.llm.invoke(summarize_text)
+                        summary = self.llm.invoke(summarize_prompt)
                         first = False
                     else:
-                        refined_text = f'''
+                        refine_prompt = f'''
                                         Given the following summary: {summary}
-                                        Refine the summary, with the newly added information below:
-                                        {text}
-                                        Only return the summary, no other text.
+                                        \nRefine the summary, with the following added information: {text}
+                                        \nOnly return the summary, no other text.
                                         '''
-                        summary = self.llm.invoke(refined_text)
-                # define output file
-                result = os.path.join(self.content_folder, "summaries", str(file) + "_long.txt")
-
-            # if Map Reduce method is chosen
-            if self.summary_method == "Map_Reduce":
+                        summary = self.llm.invoke(refine_prompt)
+            # else if Map Reduce method is chosen
+            elif self.summary_method == "Map_Reduce":
                 # extract data from vector store
                 embeddings = np.array(collection['embeddings'])
                 # cluster (KNN)
-                number_of_cluster = 3
-                clusters, centroids = kmeans_clustering(embeddings, number_of_cluster)
+                number_of_clusters = settings.SUMMARIZER_CENTROIDS
+                _, centroids = kmeans_clustering(embeddings, number_of_clusters)
                 # find text pieces most central in the cluster
                 indices = []
                 for centroid in centroids:
                     _, index = nearest_neighbor(embeddings, centroid)
                     indices.append(index)
-                text_pieces = [collection['documents'][index] for index in indices]
-                text_pieces_joined = 'Next Summary Piece: '.join(text_pieces)
-                prompt = f'''
+                chunk_texts = [collection['documents'][index] for index in indices]
+                chunk_ids = [collection['ids'][index] for index in indices]
+                chunks = zip(chunk_ids, chunk_texts)
+                for chunk in chunks:
+                    print(f"MAP_REDUCE: chunk processed = {chunk[0]}, text = {chunk[1]}")
+
+                chunks_joined = '\n\nNext Summary Piece: '.join(chunk_texts)
+                print(f"chunks_joined = {chunks_joined}")
+
+                summarize_prompt = f'''
                           Join the following text pieces and write a combined summary.
                           Be elaborate and write a comprehensible, nice summary.
-                          Return only the summary, no other text. {str(text_pieces_joined)}
+                          Return only the summary, no other text. {str(chunks_joined)}
                           '''
-                summary = self.llm.invoke(prompt)
-                # define output file
-                result = os.path.join(self.content_folder, "summaries", str(file) + "_short.txt")
+                summary = self.llm.invoke(summarize_prompt)
+            # else if Hybrid method is chosen
+            elif self.summary_method == "Hybrid":
+                # extract data from vector store
+                embeddings = np.array(collection['embeddings'])
+                # cluster (KNN)
+                number_of_clusters = settings.SUMMARIZER_CENTROIDS
+                _, centroids = kmeans_clustering(embeddings, number_of_clusters)
+                # find text pieces most central in the cluster
+                indices = []
+                for centroid in centroids:
+                    _, index = nearest_neighbor(embeddings, centroid)
+                    indices.append(index)
+                chunk_ids = [collection['ids'][index] for index in indices]
+                chunk_texts = [collection['documents'][index] for index in indices]
+                chunks = zip(chunk_ids, chunk_texts)
+                first = True
+                for chunk in chunks:
+                    print(chunk[0])
+                    text = chunk[1]
+                    if first:
+                        summarize_prompt = f'''
+                                          Summarize the following text: {text}.
+                                          Only return the summary, no explanation.
+                                          '''
+                        summary = self.llm.invoke(summarize_prompt)
+                        first = False
+                    else:
+                        refine_prompt = f'''
+                                        Given the following summary: {summary}
+                                        \nRefine the summary, with the following added information: {text}
+                                        \nOnly return the summary, no other text.
+                                        '''
+                        summary = self.llm.invoke(refine_prompt)
 
-            # store summary
+            # define output file and store summary
+            result = os.path.join(self.content_folder, "summaries", str(file_name) + "_" +
+                                  str.lower(self.summary_method) + ".txt")
             with open(file=result, mode="w", encoding="utf8") as f:
                 f.write(summary.content)

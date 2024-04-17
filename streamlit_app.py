@@ -28,24 +28,25 @@ def create_and_show_summary(my_summary_type,
     with st.expander(f"{my_summary_type} summary"):
         for file in os.listdir(my_folder_path_selected):
             if os.path.isfile(os.path.join(my_folder_path_selected, file)):
-                summary_name = os.path.join(my_folder_path_selected,
-                                            "summaries",
-                                            file + "_" + str.lower(my_summary_type) + ".txt")
-                # if summary does not exist yet, create it
-                if not os.path.isfile(summary_name):
-                    my_spinner_message = f'''Creating summary for {file}.
-                                        Depending on the size of the file, this may take a while. Please wait...'''
-                    with st.spinner(my_spinner_message):
-                        summarizer = Summarizer(content_folder=my_folder_path_selected,
-                                                collection_name=my_folder_name_selected,
-                                                summary_method=summarization_method,
-                                                vecdb_folder=my_vecdb_folder_path_selected)
-                        summarizer.summarize()
-                # show summary
-                st.write(f"**{file}:**\n")
-                with open(file=summary_name, mode="r", encoding="utf8") as f:
-                    st.write(f.read())
-                    st.divider()
+                file_name, file_extension = os.path.splitext(file)
+                if file_extension in [".docx", ".html", ".md", ".pdf", ".txt"]:
+                    summary_name = os.path.join(my_folder_path_selected, "summaries",
+                                                file_name + "_" + str.lower(summarization_method) + ".txt")
+                    # if summary does not exist yet, create it
+                    if not os.path.isfile(summary_name):
+                        my_spinner_message = f'''Creating summary for {file}.
+                                            Depending on the size of the file, this may take a while. Please wait...'''
+                        with st.spinner(my_spinner_message):
+                            summarizer = Summarizer(content_folder=my_folder_path_selected,
+                                                    collection_name=my_folder_name_selected,
+                                                    summary_method=summarization_method,
+                                                    vecdb_folder=my_vecdb_folder_path_selected)
+                            summarizer.summarize()
+                    # show summary
+                    st.write(f"**{file}:**\n")
+                    with open(file=summary_name, mode="r", encoding="utf8") as f:
+                        st.write(f.read())
+                        st.divider()
 
 
 def display_chat_history():
@@ -189,7 +190,7 @@ def initialize_page():
     logo_image = Image.open(settings.APP_LOGO)
     st.sidebar.image(logo_image, width=250)
     # Sidebar text for folder selection
-    st.sidebar.title("Select a document folder")
+    st.sidebar.title("Select a folder")
 
     _, col2, _, col4 = st.columns([0.2, 0.4, 0.1, 0.3])
     with col2:

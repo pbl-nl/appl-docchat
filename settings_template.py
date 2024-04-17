@@ -10,7 +10,7 @@ APP_HEADER = "ChatNMDC: chat with your documents"
 # relative filepath of folder with input documents, e.g. "./docs"
 DOC_DIR = "./docs"
 
-# relative filepath of folder with chunkss, e.g. "./chunks"
+# relative filepath of folder with chunks, e.g. "./chunks"
 CHUNK_DIR = "./chunks"
 
 # relative filepath of persistent vector databases, e.g. "./vector_stores"
@@ -75,9 +75,10 @@ CHAIN_NAME = "conversationalretrievalchain"
 CHAIN_TYPE = "stuff"
 
 # SEARCH_TYPE must be one of: "similarity", "similarity_score_threshold"
-SEARCH_TYPE = "similarity"
+SEARCH_TYPE = "similarity_score_threshold"
 
-# SCORE_THRESHOLD represents the similarity value that chunks must exceed to qualify for the context, value must be between 0.0 and 1.0, e.g. 0.8
+# SCORE_THRESHOLD represents the similarity value that chunks must exceed to qualify for the context.
+# Value must be between 0.0 and 1.0, e.g. 0.8
 # This value is only relevant when SEARCH_TYPE has been set to "similarity_score_threshold"
 SCORE_THRESHOLD = 0.8
 
@@ -87,7 +88,8 @@ VECDB_TYPE = "chromadb"
 # CHUNK_SIZE represents the maximum allowed size of text chunks, value must be integer
 CHUNK_SIZE = 1000
 
-# CHUNK_K represents the number of chunks that is returned from the vector database as input for the LLM, value must be integer (>=1)
+# CHUNK_K represents the number of chunks that is returned from the vector database as input for the LLM
+# Value must be integer (>=1)
 # NB: CHUNK_SIZE and CHUNK_K are related, make sure that CHUNK_K * CHUNK_SIZE < LLM window size
 CHUNK_K = 4
 
@@ -101,3 +103,8 @@ RETRIEVER_TYPE = "vectorstore"
 # RETRIEVER_PROMPT represents the type of retriever that is used to extract chunks from the vectorstore
 # value must be one of "openai_rag", "openai_rag_concise", "openai_rag_language",
 RETRIEVER_PROMPT = "openai_rag"
+
+# SUMMARIZER_CENTROIDS represents the number of centroids that is chosen for the "Map Reduce" summarization method.
+# A higher value will create a more refined summary, however will take longer to create
+# Value should be a positive integer
+SUMMARIZER_CENTROIDS = 8
