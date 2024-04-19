@@ -1,2 +1,3 @@
-How does the robustness of the agribusiness be improved?
-What measures are taken to mitigate climate change?
+Question Type	Question
+Initial	How does the robustness of the agribusiness be improved?
+Initial	What measures are taken to mitigate climate change?

@@ -117,3 +117,13 @@ class Querier:
         Used by "Clear Conversation" button in streamlit_app.py
         """
         self.chat_history = []
+
+    def _get_meta_data_by_file_name(self, filename: str) -> dict[str: str]:
+        '''
+        Returns the meta data of a specific file
+        Need to run make_chain first
+        '''
+        # currently not efficient
+        sources = self.vector_store.get() #sources keys: ['ids', 'embeddings', 'metadatas', 'documents', 'uris', 'data']
+        metadata = [metadata for metadata in sources['metadatas'] if metadata['filename'] == filename]
+        return metadata[0] # return only the first chunk, as documents have several chunks and the meta data is all the same (meta data on the page of the chunk varies)

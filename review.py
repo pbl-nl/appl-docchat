@@ -107,15 +107,17 @@ def main() -> None:
             logger.info(f"current file: {review_file}")
             # create the query chain with a search filter and answer each question for each paper
             querier.make_chain(content_folder_name, vectordb_folder_path, search_filter={"filename": review_file})
+            metadata = querier._get_meta_data_by_file_name(review_file)
             for review_question in review_questions:
                 cntrow += 1
                 # Generate answer
                 answer, sources = generate_answer(querier, review_question)
+                answer_plus_name = f"This answer is from {metadata['title']}:\n {answer}"
                 df_result.loc[cntrow] = [review_file,
                                          review_question[0],
                                          review_question[1],
                                          review_question[2],
-                                         answer,
+                                         answer_plus_name,
                                          sources]
     output_path = os.path.join(content_folder_path, "review", "result.tsv")
     # sort on question, then on document
