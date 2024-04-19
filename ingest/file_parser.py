@@ -204,6 +204,7 @@ class FileParser:
             # if tabs.tables:  # at least one table found?
             #     pprint.pprint(tabs[0].extract())  # print content of first table
         metadata['Language'] = metadata['Language'] if 'Language' in metadata.keys() else self._detect_language(pages[0][1])
+        logger.info(f"The language detected for this document is {metadata['Language']}")
         return pages, metadata
 
     def parse_txt(self, file_path: str) -> Tuple[List[Tuple[int, str]], Dict[str, str]]:

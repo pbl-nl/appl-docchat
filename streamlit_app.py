@@ -23,9 +23,16 @@ def create_and_show_summary(my_summary_type,
                             my_folder_path_selected,
                             my_folder_name_selected,
                             my_vecdb_folder_path_selected):
-    summarization_method = "Map_Reduce" if my_summary_type == "Short" else "Refine"
+    if my_summary_type == "Short":
+        summarization_method = "Map_Reduce"
+    elif my_summary_type == "Long":
+        summarization_method = "Refine"
+    elif my_summary_type == "Middle":
+        summarization_method = "Hybrid"
+
     # for each file in content folder
     with st.expander(f"{my_summary_type} summary"):
+        first_summary = True
         for file in os.listdir(my_folder_path_selected):
             if os.path.isfile(os.path.join(my_folder_path_selected, file)):
                 file_name, file_extension = os.path.splitext(file)
@@ -43,10 +50,12 @@ def create_and_show_summary(my_summary_type,
                                                     vecdb_folder=my_vecdb_folder_path_selected)
                             summarizer.summarize()
                     # show summary
-                    st.write(f"**{file}:**\n")
-                    with open(file=summary_name, mode="r", encoding="utf8") as f:
-                        st.write(f.read())
+                    if not first_summary:
                         st.divider()
+                    with open(file=summary_name, mode="r", encoding="utf8") as f:
+                        st.write(f"**{file}:**\n")
+                        st.write(f.read())
+                    first_summary = False
 
 
 def display_chat_history():
@@ -85,6 +94,9 @@ def folder_selector(folders):
         st.session_state['is_GO_clicked'] = False
     # set session state of selected folder to new source folder
     st.session_state['folder_selected'] = my_folder_name_selected
+    # determine the relevant files that are in the folder
+    # files_selected = st.sidebar.multiselect('Select file(s)', files_in_folder)
+
     return my_folder_name_selected, my_folder_path_selected, my_vecdb_folder_path_selected
 
 
@@ -260,11 +272,11 @@ if st.session_state['is_GO_clicked']:
     check_vectordb(querier, folder_name_selected, folder_path_selected, vecdb_folder_path_selected)
     summary_type = st.sidebar.radio(
         "Start with summary?",
-        ["No", "Short", "Long"],
-        captions=["No, start the conversation", "Quick but lower quality", "Slow but higher quality"],
+        ["No", "Short", "Long", "Middle"],
+        captions=["No, start the conversation", "Quick but lower quality", "Slow but higher quality", "Hybrid of quick and slow"],
         index=0)
-    # if a short or long summary is chosen
-    if summary_type in ["Short", "Long"]:
+    # if one of the options is chosen
+    if summary_type in ["Short", "Long", "Middle"]:
         # show the summary at the top of the screen
         create_and_show_summary(summary_type, folder_path_selected, folder_name_selected, vecdb_folder_path_selected)
 
