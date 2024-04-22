@@ -83,7 +83,7 @@ def folderlist_creator():
     return folders
 
 
-def folder_selector(folders):
+def folder_and_files_selector(folders):
     # Select source folder with docs
     my_folder_name_selected = st.sidebar.selectbox("label=folder_selector", options=folders, label_visibility="hidden")
     logger.info(f"folder_name_selected is now {my_folder_name_selected}")
@@ -95,9 +95,10 @@ def folder_selector(folders):
     # set session state of selected folder to new source folder
     st.session_state['folder_selected'] = my_folder_name_selected
     # determine the relevant files that are in the folder
-    # files_selected = st.sidebar.multiselect('Select file(s)', files_in_folder)
+    files_in_folder = ut.get_relevant_files_from_folder(my_folder_path_selected)
+    files_selected = st.sidebar.multiselect('Select file(s)', files_in_folder)
 
-    return my_folder_name_selected, my_folder_path_selected, my_vecdb_folder_path_selected
+    return my_folder_name_selected, my_folder_path_selected, my_vecdb_folder_path_selected, files_selected
 
 
 def check_vectordb(my_querier, my_folder_name_selected, my_folder_path_selected, my_vecdb_folder_path_selected):
@@ -261,7 +262,7 @@ initialize_session_state()
 # creation of Querier object, executed only once per session
 querier = initialize_querier()
 # chosen folder and associated vector database
-folder_name_selected, folder_path_selected, vecdb_folder_path_selected = folder_selector(source_folders_available)
+folder_name_selected, folder_path_selected, vecdb_folder_path_selected, files_selected = folder_and_files_selector(source_folders_available)
 
 # create button to confirm folder selection. This button sets session_state['is_GO_clicked'] to True
 st.sidebar.button("GO", type="primary", on_click=click_go_button)

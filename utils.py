@@ -1,4 +1,5 @@
 from typing import Any, Dict, Tuple
+import numpy as np
 import os
 import sys
 import datetime as dt
@@ -117,3 +118,24 @@ def get_timestamp():
     """
 
     return str(dt.datetime.now())
+
+
+def euclidean_distance(a, b):
+    """
+    Calculation of euclidian distance between a and b
+    """
+
+    return np.sqrt(np.sum((a - b) ** 2))
+
+
+def get_relevant_files_from_folder(content_folder):
+    files_in_folder = [f for f in os.listdir(content_folder)
+                       if os.path.isfile(os.path.join(content_folder, f))]
+    relevant_files_in_folder = []
+    for file in files_in_folder:
+        # file_path = os.path.join(self.content_folder, file)
+        _, file_extension = os.path.splitext(file)
+        if file_extension in [".docx", ".html", ".md", ".pdf", ".txt"]:
+            relevant_files_in_folder.append(file)
+
+    return relevant_files_in_folder
