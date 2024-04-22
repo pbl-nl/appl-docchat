@@ -39,20 +39,24 @@ class Querier:
         self.azureopenai_api_version = settings.AZUREOPENAI_API_VERSION \
             if azureopenai_api_version is None and settings.AZUREOPENAI_API_VERSION is not None \
             else azureopenai_api_version
+        self.chain = None
 
         # define llm
         self.llm = LLMCreator(self.llm_type,
                               self.llm_model_type,
                               self.local_api_url,
                               self.azureopenai_api_version).get_llm()
-        
+
         # define embeddings
         self.embeddings = EmbeddingsCreator(self.embeddings_provider,
                                             self.embeddings_model,
                                             self.local_api_url,
                                             self.azureopenai_api_version).get_embeddings()
-        
+
     def make_chain(self, input_folder, vecdb_folder, search_filter=None) -> None:
+        """
+        creates a chain based on parameters settings
+        """
         # get vector store
         self.vector_store = VectorStoreCreator(self.vecdb_type).get_vectorstore(self.embeddings,
                                                                                 input_folder,
@@ -112,18 +116,20 @@ class Querier:
         return response, scores
 
     def clear_history(self) -> None:
-        """"
+        """
         Clears the chat history
         Used by "Clear Conversation" button in streamlit_app.py
         """
         self.chat_history = []
 
     def _get_meta_data_by_file_name(self, filename: str) -> dict[str: str]:
-        '''
+        """
         Returns the meta data of a specific file
         Need to run make_chain first
-        '''
+        """
         # currently not efficient
-        sources = self.vector_store.get() #sources keys: ['ids', 'embeddings', 'metadatas', 'documents', 'uris', 'data']
+        sources = self.vector_store.get()  # keys: ['ids', 'embeddings', 'metadatas', 'documents', 'uris', 'data']
         metadata = [metadata for metadata in sources['metadatas'] if metadata['filename'] == filename]
-        return metadata[0] # return only the first chunk, as documents have several chunks and the meta data is all the same (meta data on the page of the chunk varies)
+        # return only the first chunk, as filename metadata is the same for every chunk of a document
+
+        return metadata[0]
