@@ -102,9 +102,15 @@ RETRIEVER_TYPE = "vectorstore"
 
 # RETRIEVER_PROMPT represents the type of retriever that is used to extract chunks from the vectorstore
 # value must be one of "openai_rag", "openai_rag_concise", "openai_rag_language",
-RETRIEVER_PROMPT = "openai_rag"
+RETRIEVER_PROMPT_TEMPLATE = "openai_rag"
 
 # SUMMARIZER_CENTROIDS represents the number of centroids that is chosen for the "Map Reduce" summarization method.
-# A higher value will create a more refined summary, however will take longer to create
+# A higher value will create a more diverse summary, however will take longer to create
 # Value should be a positive integer
-SUMMARIZER_CENTROIDS = 8
+SUMMARIZER_CENTROIDS = 4
+
+# SUMMARIZER_CENTROID_NEIGHBORS represents the number of closest neighbors to each centroid that is taken into account
+# with the "Map Reduce" and "Hybrid" summarization method.
+# A higher value will create a more elaborate summary, however will take longer to create
+# Value should be a positive integer
+SUMMARIZER_CENTROID_NEIGHBORS = 2

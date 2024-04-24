@@ -9,7 +9,7 @@ import settings
 from ingest.embeddings_creator import EmbeddingsCreator
 from ingest.vectorstore_creator import VectorStoreCreator
 from query.llm_creator import LLMCreator
-import prompts.templates as pr
+import prompts.prompt_templates as pr
 
 
 class Querier:
@@ -39,24 +39,29 @@ class Querier:
         self.azureopenai_api_version = settings.AZUREOPENAI_API_VERSION \
             if azureopenai_api_version is None and settings.AZUREOPENAI_API_VERSION is not None \
             else azureopenai_api_version
+        self.chain = None
 
         # define llm
         self.llm = LLMCreator(self.llm_type,
                               self.llm_model_type,
                               self.local_api_url,
                               self.azureopenai_api_version).get_llm()
-        
+
         # define embeddings
         self.embeddings = EmbeddingsCreator(self.embeddings_provider,
                                             self.embeddings_model,
                                             self.local_api_url,
                                             self.azureopenai_api_version).get_embeddings()
-        
+
     def make_chain(self, input_folder, vecdb_folder, search_filter=None) -> None:
+        """"
+        Creates the chain that is used for question answering
+        """
         # get vector store
         self.vector_store = VectorStoreCreator(self.vecdb_type).get_vectorstore(self.embeddings,
                                                                                 input_folder,
                                                                                 vecdb_folder)
+
         # get retriever with some search arguments
         # maximum number of chunks to retrieve
         search_kwargs = {"k": self.chunk_k}
@@ -66,13 +71,11 @@ class Querier:
             search_kwargs["filter"] = search_filter
         if self.search_type == "similarity_score_threshold":
             search_kwargs["score_threshold"] = self.score_threshold
+        retriever = self.vector_store.as_retriever(search_type=self.search_type, search_kwargs=search_kwargs)
         logger.info(f"Loaded vector store from folder {vecdb_folder}")
 
-        # get retriever
-        retriever = self.vector_store.as_retriever(search_type=self.search_type, search_kwargs=search_kwargs)
-
-        # get appropriate RAG prompt from langchainhub
-        prompt = PromptTemplate.from_template(template=pr.get_prompt(settings.RETRIEVER_PROMPT))
+        # get appropriate RAG prompt
+        prompt = PromptTemplate.from_template(template=pr.get_prompt_from_settings(settings.RETRIEVER_PROMPT_TEMPLATE))
 
         # get chain
         if self.chain_name == "conversationalretrievalchain":
@@ -112,18 +115,20 @@ class Querier:
         return response, scores
 
     def clear_history(self) -> None:
-        """"
+        """
         Clears the chat history
         Used by "Clear Conversation" button in streamlit_app.py
         """
         self.chat_history = []
 
-    def _get_meta_data_by_file_name(self, filename: str) -> dict[str: str]:
-        '''
+    def get_meta_data_by_file_name(self, filename: str) -> dict[str: str]:
+        """
         Returns the meta data of a specific file
         Need to run make_chain first
-        '''
-        # currently not efficient
-        sources = self.vector_store.get() #sources keys: ['ids', 'embeddings', 'metadatas', 'documents', 'uris', 'data']
+        """
+        # sources keys: ['ids', 'embeddings', 'metadatas', 'documents', 'uris', 'data']
+        sources = self.vector_store.get()
         metadata = [metadata for metadata in sources['metadatas'] if metadata['filename'] == filename]
-        return metadata[0] # return only the first chunk, as documents have several chunks and the meta data is all the same (meta data on the page of the chunk varies)
+
+        # return only the first chunk, as filename metadata is the same for all chunks
+        return metadata[0]
