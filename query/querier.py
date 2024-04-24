@@ -74,8 +74,14 @@ class Querier:
         retriever = self.vector_store.as_retriever(search_type=self.search_type, search_kwargs=search_kwargs)
         logger.info(f"Loaded vector store from folder {vecdb_folder}")
 
-        # get appropriate RAG prompt
-        prompt = PromptTemplate.from_template(template=pr.get_prompt_from_settings(settings.RETRIEVER_PROMPT_TEMPLATE))
+        # get appropriate RAG prompt for querying
+        if settings.RETRIEVER_PROMPT_TEMPLATE == "openai_rag":
+            current_template = pr.OPENAI_RAG_TEMPLATE
+        elif settings.RETRIEVER_PROMPT_TEMPLATE == "openai_rag_concise":
+            current_template = pr.OPENAI_RAG_CONCISE_TEMPLATE
+        elif settings.RETRIEVER_PROMPT_TEMPLATE == "openai_rag_language":
+            current_template = pr.OPENAI_RAG_LANGUAGE_TEMPLATE
+        prompt = PromptTemplate.from_template(template=current_template)
 
         # get chain
         if self.chain_name == "conversationalretrievalchain":
@@ -90,7 +96,7 @@ class Querier:
         logger.info("Executed Querier.make_chain")
 
     def ask_question(self, question: str) -> Tuple[Dict[str, Any], List[float]]:
-        """"
+        """
         Finds most similar docs to prompt in vectorstore and determines the response
         If the closest doc found is not similar enough to the prompt, any answer from the LLM is overruled by a message
         """

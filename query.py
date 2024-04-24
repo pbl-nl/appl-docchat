@@ -24,8 +24,6 @@ def main():
             # Get question from user
             question = input("Question: ")
             if question not in ["exit", "quit", "q"]:
-                # log the question
-                logger.info(f"\nQuestion: {question}")
                 # Generate answer and include sources used to produce that answer
                 response, scores = querier.ask_question(question)
                 logger.info(f"\nAnswer: {response['answer']}")
