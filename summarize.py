@@ -1,7 +1,8 @@
 """
-Summarization is implemented in 2 ways:
+Summarization is implemented in 3 ways:
 - Quick summarization (Map Reduce method)
-- More extensive summariation (Refine method)
+- Extensive summarization (Refine method)
+- Combination of quick summarization and refinement (Hybrid method)
 """
 from loguru import logger
 # local imports
