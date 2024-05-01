@@ -28,11 +28,11 @@ SUMMARY_TEMPLATE = """Summarize the following text: {text}.\n
     Helpful answer:"""
 
 REFINE_TEMPLATE = """Given the following summary: {summary}\n
-    Refine this summary by adding the following information: {text}\n
+    Refine the summary, with the following added information: {text}\n
     Only return the refined summary, no other text.
-    Helpful answer:"""
+    Answer:"""
 
-SYNTHESIZE_PROMPT_TEMPLATE = """For the following question: \n {question} \n
+SYNTHESIZE_PROMPT_TEMPLATE = """For the question: \n {question} \n
     Please synthesize/summarize the text below. Hereby cluster which papers have things in common and in which way 
     the clusters differ. Finally, summarize the clusters. \n\n
     Answer: {answer_string}"""
