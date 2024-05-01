@@ -24,7 +24,7 @@ class Summarizer:
     def __init__(self, collection_name: str, content_folder: str, vecdb_folder: str, summary_method: str,
                  embeddings_provider=None, embeddings_model=None, text_splitter_method=None,
                  vecdb_type=None, chunk_size=None, chunk_overlap=None, local_api_url=None,
-                 file_no=None, llm_type=None, llm_model_type=None, azureopenai_api_version=None):
+                 file_no=None, llm_type=None, llm_model_type=None, azureopenai_api_version=None) -> None:
         """
         When parameters are read from settings.py, object is initiated without parameter settings
         When parameters are read from GUI, object is initiated with parameter settings listed
@@ -62,7 +62,7 @@ class Summarizer:
 
         Parameters
         ----------
-        embeddings : np.ndarray
+        embeddings : np.array
             the embeddings of the chunks
 
         Returns
@@ -83,15 +83,15 @@ class Summarizer:
 
         Parameters
         ----------
-        embeddings : np.ndarray
-            numpy array of numpy arrays (each sub-array is an embedding)
         centroid : np.ndarray
-            numpy array representing the centroid for which we want to find the nearest neighbor.
+            numpy array representing the centroid for which we want to find the nearest neighbors
+        collection : list
+            the vector database collection
 
         Returns
         -------
-        _type_
-            the nearest neighbor and its index in the vector database.
+        List[Tuple[int, np.ndarray]]
+            list of tuples with first element the chunk id and second element the chunk text
         """
         distances = []
 
@@ -110,7 +110,7 @@ class Summarizer:
 
         return nearest_chunks
 
-    def get_chunks(self, collection: List) -> Tuple[List[str], List[str], List[Tuple[str, str]]]:
+    def get_chunks(self, collection: List) -> List[str]:
         """
         Gets the chunks that are nearest to the centroids of the clusters
 
@@ -121,8 +121,8 @@ class Summarizer:
 
         Returns
         -------
-        Tuple[List[str], List[str], List[Tuple[str, str]]]
-            list of chunk texts, list of chunk ids and list of tuples of chunk text and chunk id
+        List[str]
+            list of chunk texts, sorted on chunk id
         """
         # extract embeddings from vector store
         embeddings = np.array(collection['embeddings'])
@@ -153,11 +153,12 @@ class Summarizer:
 
     def get_summary(self, chunk_texts: List[str]) -> str:
         """
-        _summary_
+        creates a summary from a chunk text, using different prompts based on whether the chunk text is the
+        first text or an addition to a previously created summary
 
         Parameters
         ----------
-        chunks : List[Tuple[str, str]]
+        chunk_texts : List[str]
             _description_
 
         Returns
@@ -181,8 +182,7 @@ class Summarizer:
 
     def summarize(self) -> None:
         """
-        Creates instances of all parsers, iterates over all files in the folder
-        When parameters are read from GUI, object is initiated with parameter settings listed
+        creates summaries of all files in the folder, using the chosen summarization method. One summary per file.
         """
         # create subfolder "summaries" if not existing
         if 'summaries' not in os.listdir(self.content_folder):
