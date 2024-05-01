@@ -1,4 +1,5 @@
-from typing import Any, Dict, Tuple
+from typing import Any, Dict, List, Tuple
+import numpy as np
 import os
 import sys
 import datetime as dt
@@ -72,7 +73,7 @@ def get_settings_as_dictionary(file_name: str) -> Dict[str, Any]:
     Parameters
     ----------
     file_name : str
-        name of the settings file
+        name of the settings file path
 
     Returns
     -------
@@ -117,3 +118,45 @@ def get_timestamp():
     """
 
     return str(dt.datetime.now())
+
+
+def cosine_similarity(a: np.ndarray, b: np.ndarray) -> np.float64:
+    """
+    _summary_
+
+    Parameters
+    ----------
+    a : np.ndarray
+        first array of numbers
+    b : np.ndarray
+        second array of numbers
+
+    Returns
+    -------
+    np.float64
+        the calculated cosine similarity between the two arrays of numbers
+    """
+    cos_sim = np.dot(a, b)/(np.linalg.norm(a) * np.linalg.norm(b))
+
+    return cos_sim
+
+
+def euclidean_distance(a: np.ndarray, b: np.ndarray) -> np.float64:
+    """
+    Calculation of euclidean distance between a and b
+
+    Parameters
+    ----------
+    a : np.ndarray
+        first array of numbers
+    b : np.ndarray
+        second array of numbers
+
+    Returns
+    -------
+    np.float64
+        the calculated euclidean distance between the two arrays of numbers
+    """
+    eucl_dist = np.sqrt(np.sum((a - b) ** 2))
+
+    return eucl_dist
