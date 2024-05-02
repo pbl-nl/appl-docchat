@@ -10,6 +10,7 @@ from loguru import logger
 # local imports
 import settings
 # from ingest.content_iterator import ContentIterator
+import utils as ut
 from ingest.ingest_utils import IngestUtils
 from ingest.file_parser import FileParser
 from ingest.embeddings_creator import EmbeddingsCreator
@@ -64,13 +65,9 @@ class Ingester:
             # get all relevant files in the folder
             files_in_folder = [f for f in os.listdir(self.content_folder)
                                if os.path.isfile(os.path.join(self.content_folder, f))]
-            relevant_files_in_folder = []
+            relevant_files_in_folder = ut.get_relevant_files_in_folder(self.content_folder)
             for file in files_in_folder:
-                # file_path = os.path.join(self.content_folder, file)
-                _, file_extension = os.path.splitext(file)
-                if file_extension in [".docx", ".html", ".md", ".pdf", ".txt"]:
-                    relevant_files_in_folder.append(file)
-                else:
+                if file not in relevant_files_in_folder:
                     logger.info(f"Skipping ingestion of file {file} because it has extension {file[-4:]}")
 
             # if the vector store already exists, get the set of ingested files from the vector store

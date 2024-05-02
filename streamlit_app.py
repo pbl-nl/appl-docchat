@@ -27,35 +27,37 @@ def create_and_show_summary(my_summary_type,
         summarization_method = "Map_Reduce"
     elif my_summary_type == "Long":
         summarization_method = "Refine"
-    elif my_summary_type == "Middle":
+    elif my_summary_type == "Hybrid":
         summarization_method = "Hybrid"
 
     # for each file in content folder
     with st.expander(f"{my_summary_type} summary"):
         first_summary = True
-        for file in os.listdir(my_folder_path_selected):
-            if os.path.isfile(os.path.join(my_folder_path_selected, file)):
-                file_name, file_extension = os.path.splitext(file)
-                if file_extension in [".docx", ".html", ".md", ".pdf", ".txt"]:
-                    summary_name = os.path.join(my_folder_path_selected, "summaries",
-                                                file_name + "_" + str.lower(summarization_method) + ".txt")
-                    # if summary does not exist yet, create it
-                    if not os.path.isfile(summary_name):
-                        my_spinner_message = f'''Creating summary for {file}.
-                                            Depending on the size of the file, this may take a while. Please wait...'''
-                        with st.spinner(my_spinner_message):
-                            summarizer = Summarizer(content_folder=my_folder_path_selected,
-                                                    collection_name=my_folder_name_selected,
-                                                    summary_method=summarization_method,
-                                                    vecdb_folder=my_vecdb_folder_path_selected)
-                            summarizer.summarize()
-                    # show summary
-                    if not first_summary:
-                        st.divider()
-                    with open(file=summary_name, mode="r", encoding="utf8") as f:
-                        st.write(f"**{file}:**\n")
-                        st.write(f.read())
-                    first_summary = False
+        files_in_folder = ut.get_relevant_files_in_folder(my_folder_path_selected)
+        for file in files_in_folder:
+            file_name, _ = os.path.splitext(file)
+            print(file)
+            print(file_name)
+            summary_name = os.path.join(my_folder_path_selected, "summaries",
+                                        str(file_name) + "_" + str.lower(summarization_method) + ".txt")
+            # if summary does not exist yet, create it
+            print(summary_name)
+            if not os.path.isfile(summary_name):
+                my_spinner_message = f'''Creating summary for {file}.
+                                    Depending on the size of the file, this may take a while. Please wait...'''
+                with st.spinner(my_spinner_message):
+                    summarizer = Summarizer(content_folder=my_folder_path_selected,
+                                            collection_name=my_folder_name_selected,
+                                            summary_method=summarization_method,
+                                            vecdb_folder=my_vecdb_folder_path_selected)
+                    summarizer.summarize()
+            # show summary
+            if not first_summary:
+                st.divider()
+            with open(file=summary_name, mode="r", encoding="utf8") as f:
+                st.write(f"**{file}:**\n")
+                st.write(f.read())
+            first_summary = False
 
 
 def display_chat_history():
@@ -272,11 +274,11 @@ if st.session_state['is_GO_clicked']:
     check_vectordb(querier, folder_name_selected, folder_path_selected, vecdb_folder_path_selected)
     summary_type = st.sidebar.radio(
         "Start with summary?",
-        ["No", "Short", "Long", "Middle"],
-        captions=["No, start the conversation", "Quick but lower quality", "Slow but higher quality", "Hybrid of quick and slow"],
+        ["No", "Short", "Long", "Hybrid"],
+        captions=["", "Quick but lower quality", "Slow but higher quality", "Hybrid of quick and slow"],
         index=0)
     # if one of the options is chosen
-    if summary_type in ["Short", "Long", "Middle"]:
+    if summary_type in ["Short", "Long", "Hybrid"]:
         # show the summary at the top of the screen
         create_and_show_summary(summary_type, folder_path_selected, folder_name_selected, vecdb_folder_path_selected)
 

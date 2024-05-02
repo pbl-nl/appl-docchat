@@ -36,7 +36,27 @@ def create_vectordb_name(content_folder_name: str,
     return content_folder_path, vectordb_folder_path
 
 
-def exit_program():
+def get_relevant_files_in_folder(content_folder_path: str) -> List[str]:
+    """ Creates the content folder path and vector database folder path
+
+    Parameters
+    ----------
+    content_folder : str
+        name of the content folder (including the path)
+
+    Returns
+    -------
+    List[str]
+        tuple of content folder path and vector database folder path
+    """
+    files_in_folder = [f for f in os.listdir(content_folder_path) 
+                       if (os.path.isfile(os.path.join(content_folder_path, f)) and 
+                           os.path.splitext(f)[1] in [".docx", ".html", ".md", ".pdf", ".txt"])]
+
+    return files_in_folder
+
+
+def exit_program() -> None:
     """ Exits the Python process
     """
     print("Exiting the program...")
@@ -108,7 +128,7 @@ def get_settings_as_dictionary(file_name: str) -> Dict[str, Any]:
     return variables_dict
 
 
-def get_timestamp():
+def get_timestamp() -> str:
     """ returns the current time as a string, used for logging
 
     Returns
