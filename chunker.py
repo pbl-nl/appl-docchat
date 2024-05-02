@@ -117,7 +117,7 @@ def main():
     content_folder_name = input("Source folder of documents to chunk (without path): ")
     # get associated source folder path and vectordb path
     content_folder_path, _ = ut.create_vectordb_name(content_folder_name)
-    files_in_folder = os.listdir(content_folder_path)
+    files_in_folder = ut.get_relevant_files_in_folder(content_folder_path)
     for file in files_in_folder:
         file_path = os.path.join(content_folder_path, file)
         raw_pages, _ = file_parser.parse_file(file_path)

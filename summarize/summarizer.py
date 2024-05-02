@@ -206,9 +206,7 @@ class Summarizer:
                                                                            self.vecdb_folder)
 
         # list of relevant files to summarize
-        files_in_folder = [f for f in os.listdir(self.content_folder)
-                           if (os.path.isfile(os.path.join(self.content_folder, f)) and
-                               os.path.splitext(f)[1] in [".docx", ".html", ".md", ".pdf", ".txt"])]
+        files_in_folder = ut.get_relevant_files_in_folder(self.content_folder)
 
         # loop over all files in the folder
         for file in files_in_folder:
