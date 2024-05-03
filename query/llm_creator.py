@@ -7,7 +7,7 @@ from langchain_openai import ChatOpenAI, AzureChatOpenAI
 from langchain.callbacks.manager import CallbackManager
 from langchain.callbacks.streaming_stdout import StreamingStdOutCallbackHandler
 # local imports
-import settings_template as settings
+import settings
 
 
 class LLMCreator():

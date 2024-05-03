@@ -64,7 +64,7 @@ def generate_answer(querier: Querier,
     # Generate the answer for the question
     if review_question[1] == "initial":
         querier.clear_history()
-    response, _ = querier.ask_question(review_question[2])
+    response = querier.ask_question(review_question[2])
     source_docs = ""
     for doc in response["source_documents"]:
         source_docs += f"page {str(doc.metadata['page_number'])}\n{doc.page_content}\n\n"
@@ -179,7 +179,7 @@ def main() -> None:
     # check if synthsis already exists, if not create one
     output_path_synthesis = os.path.join(content_folder_path, "review", "synthesis.tsv")
     if os.path.exists(output_path_synthesis):
-        logger.info("A synthesis result file (synthesis) already exists, skipping the answer creation")
+        logger.info("A synthesis result file (synthesis.tsv) already exists, skipping the answer creation")
     else:
         # second phase: synthesize the results
         synthesize_results(querier, output_path_review, output_path_synthesis)

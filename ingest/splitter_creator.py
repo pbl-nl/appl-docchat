@@ -1,6 +1,6 @@
 import langchain.text_splitter as splitter
 # local imports
-import settings_template as settings
+import settings
 
 
 class SplitterCreator():
