@@ -6,36 +6,33 @@ import utils as ut
 
 
 def main():
-    # Create instance of Querier once
+    # create instance of Querier once
     querier = Querier()
-    # Get source folder with docs from user
+    # get source folder with docs from user
     content_folder_name = input("Source folder of documents (without path): ")
     # get associated vectordb path
     _, vecdb_folder_path = ut.create_vectordb_name(content_folder_name)
 
-    # If vector store folder does not exist, stop
+    # if vector store folder does not exist, stop
     if not os.path.exists(vecdb_folder_path):
         logger.info("There is no vector database for this folder yet. First run \"python ingest.py\"")
         ut.exit_program()
     else:
-        # create the query chain
+        # else create the query chain
         querier.make_chain(content_folder_name, vecdb_folder_path)
         while True:
-            # Get question from user
+            # get question from user
             question = input("Question: ")
             if question not in ["exit", "quit", "q"]:
-                # Generate answer and include sources used to produce that answer
-                response, scores = querier.ask_question(question)
+                # generate answer and include sources used to produce that answer
+                response = querier.ask_question(question)
                 logger.info(f"\nAnswer: {response['answer']}")
                 # if the retriever returns one or more chunks with a score above the threshold
-                if scores[0] >= querier.score_threshold:
+                if len(response["source_documents"]) > 0:
                     # log the answer to the question and the sources used for creating the answer
                     logger.info("\nSources:\n")
-                    cnt = 0
                     for document in response["source_documents"]:
-                        logger.info(f"score: {scores[cnt]}")
-                        cnt += 1
-                        logger.info(f"Page {document.metadata['page_number']} chunk used: {document.page_content}\n")
+                        logger.info(f"Page {document.metadata['page_number']}, chunk text: {document.page_content}\n")
             else:
                 ut.exit_program()
 

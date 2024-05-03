@@ -97,8 +97,12 @@ CHUNK_K = 4
 CHUNK_OVERLAP = 200
 
 # RETRIEVER_TYPE represents the type of retriever that is used to extract chunks from the vectorstore
-# value must be one of "vectorstore",
+# Value must be one of "vectorstore"
 RETRIEVER_TYPE = "vectorstore"
+
+# MULTIQUERY indicator for whether or not defining multiple queries from users' query
+# Value must be False or True
+MULTIQUERY = False
 
 # RETRIEVER_PROMPT represents the type of retriever that is used to extract chunks from the vectorstore
 # value must be one of "openai_rag", "openai_rag_concise", "openai_rag_language",
@@ -113,4 +117,4 @@ SUMMARIZER_CENTROIDS = 4
 # with the "Map Reduce" and "Hybrid" summarization method.
 # A higher value will create a more elaborate summary, however will take longer to create
 # Value should be a positive integer
-SUMMARIZER_CENTROID_NEIGHBORS = 2
+SUMMARIZER_CENTROID_NEIGHBORS = 3

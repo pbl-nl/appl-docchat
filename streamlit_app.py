@@ -36,12 +36,9 @@ def create_and_show_summary(my_summary_type,
         files_in_folder = ut.get_relevant_files_in_folder(my_folder_path_selected)
         for file in files_in_folder:
             file_name, _ = os.path.splitext(file)
-            print(file)
-            print(file_name)
             summary_name = os.path.join(my_folder_path_selected, "summaries",
                                         str(file_name) + "_" + str.lower(summarization_method) + ".txt")
             # if summary does not exist yet, create it
-            print(summary_name)
             if not os.path.isfile(summary_name):
                 my_spinner_message = f'''Creating summary for {file}.
                                     Depending on the size of the file, this may take a while. Please wait...'''
@@ -141,7 +138,8 @@ def handle_query(my_content_folder, my_querier, my_prompt: str):
     st.session_state['messages'].append({"role": "user", "content": my_prompt})
     with st.spinner("Thinking..."):
         # Generate a response
-        response, scores = my_querier.ask_question(my_prompt)
+        # response, scores = my_querier.ask_question(my_prompt)
+        response = my_querier.ask_question(my_prompt)
     # Display the response in chat message container
     with st.chat_message("assistant"):
         st.markdown(response["answer"])
@@ -150,16 +148,21 @@ def handle_query(my_content_folder, my_querier, my_prompt: str):
     if len(response["source_documents"]) > 0:
         with st.expander("Paragraphs used for answer"):
             for i, document in enumerate(response["source_documents"]):
-                exp_textcol, _, exp_imgcol = st.columns([0.3, 0.1, 0.6])
-                docpath = os.path.join(my_content_folder, document.metadata['filename'])
-                doc = fitz.open(docpath)
+                filename = document.metadata['filename']
+                docpath = os.path.join(my_content_folder, filename)
                 pagenr = document.metadata['page_number']
                 content = document.page_content
+                if filename.endswith(".pdf"):
+                    exp_textcol, _, exp_imgcol = st.columns([0.3, 0.1, 0.6])
+                else:
+                    exp_textcol, _ = st.columns([0.9, 0.1])
                 with exp_textcol:
-                    st.write(f"**file: {document.metadata['filename']}, page {pagenr}, score: {scores[i]:.3f}**")
+                    # add 1 to metadata page_number because that starts at 0
+                    st.write(f"**file: {filename}, page {pagenr + 1}**")
                     st.write(f"{document.page_content}")
-                if document.metadata['filename'].endswith(".pdf"):
+                if filename.endswith(".pdf"):
                     with exp_imgcol:
+                        doc = fitz.open(docpath)
                         page = doc.load_page(pagenr)
                         rects = page.search_for(content)
                         for rect in rects:
