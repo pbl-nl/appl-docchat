@@ -113,16 +113,14 @@ def folder_selector(folders):
 
 def document_selector(documents):
     # Select source folder with docs
-    st.sidebar.text('Select Any/All Documents')
-    my_document_name_selected = st.sidebar.selectbox("label=document_selector", options=documents, label_visibility="hidden")
+    # Creating a multi-select dropdown
+    my_document_name_selected = st.sidebar.multiselect("Select Any/All Documents", documents, default=documents[0], key='document_selector')
     logger.info(f"document_name_selected is now {my_document_name_selected}")
     if my_document_name_selected != st.session_state['document_selected']:
         st.session_state['is_GO_clicked'] = False
     # set session state of selected folder to new source folder
     st.session_state['document_selected'] = my_document_name_selected
     # determine the relevant files that are in the folder
-    # files_selected = st.sidebar.multiselect('Select file(s)', files_in_folder)
-
     return my_document_name_selected
 
 
@@ -157,7 +155,7 @@ def check_vectordb(my_querier, my_folder_name_selected, my_folder_path_selected,
     logger.info("Executed check_vectordb")
 
 
-def handle_query(my_content_folder, my_querier, my_prompt: str):
+def handle_query(my_content_folder, my_querier, my_prompt: str, document_selection: list, my_folder_name_selected, my_vecdb_folder_path_selected):
     # Display user message in chat message container
     with st.chat_message("user"):
         st.markdown(my_prompt)
@@ -166,6 +164,13 @@ def handle_query(my_content_folder, my_querier, my_prompt: str):
     with st.spinner("Thinking..."):
         # Generate a response
         # response, scores = my_querier.ask_question(my_prompt)
+        if 'All' not in document_selection:
+            # create a filter for the selected documents
+            filter = {'filename': document_name for document_name in document_selection}
+            logger.info(f'Document Selection: {filter}')
+            my_querier.make_chain(my_folder_name_selected, my_vecdb_folder_path_selected, search_filter=filter)
+        else:
+            my_querier.make_chain(my_folder_name_selected, my_vecdb_folder_path_selected)
         response = my_querier.ask_question(my_prompt)
     # Display the response in chat message container
     with st.chat_message("assistant"):
@@ -296,13 +301,19 @@ initialize_session_state()
 querier = initialize_querier()
 # chosen folder and associated vector database
 folder_name_selected, folder_path_selected, vecdb_folder_path_selected = folder_selector(source_folders_available)
+# show select folder button
 document_names = documentlist_creator(folder_path_selected)
+logger.info(f'Selectable documents: {document_names}')
+document_selection = document_selector(document_names)
 
 # create button to confirm folder selection. This button sets session_state['is_GO_clicked'] to True
 st.sidebar.button("GO", type="primary", on_click=click_go_button)
 
 # only start a conversation when a folder is selected and selection is confirmed with "GO" button
 if st.session_state['is_GO_clicked']:
+    # clear chat history any time GO is clicked
+    st.session_state['messages'] = []
+    querier.clear_history()
     # create or update vector database if necessary
     check_vectordb(querier, folder_name_selected, folder_path_selected, vecdb_folder_path_selected)
     summary_type = st.sidebar.radio(
@@ -318,11 +329,6 @@ if st.session_state['is_GO_clicked']:
     # show button "Clear Conversation"
     clear_messages_button = st.button("Clear Conversation", key="clear")
 
-    # show select folder button
-    document_names = documentlist_creator(folder_path_selected)
-    logger.info(f'Selectable documents: {document_names}')
-    document_selection = document_selector(document_names)
-
     # if button "Clear Conversation" is clicked
     if clear_messages_button:
         # clear all chat messages on screen and in Querier object
@@ -336,4 +342,4 @@ if st.session_state['is_GO_clicked']:
 
     # react to user input if a question has been asked
     if prompt := st.chat_input("Your question"):
-        handle_query(folder_path_selected, querier, prompt)
+        handle_query(folder_path_selected, querier, prompt, document_selection, folder_name_selected, vecdb_folder_path_selected)

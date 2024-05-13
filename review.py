@@ -85,22 +85,21 @@ def create_answers_for_folder(review_files: list,
     df_result = pd.DataFrame(columns=["filename", "question_id", "question_type", "question", "answer", "sources"])
     cntrow = 0
     for review_file in review_files:
-        if os.path.isfile(os.path.join(content_folder_path, review_file)):
-            # create the query chain with a search filter and answer each question for each paper
-            querier.make_chain(content_folder_name, vectordb_folder_path, search_filter={"filename": review_file})
-            metadata = querier.get_meta_data_by_file_name(review_file)
-            for review_question in review_questions:
-                logger.info(f"reviewing question {review_question[0]} for file: {review_file}")
-                cntrow += 1
-                # Generate answer
-                answer, sources = generate_answer(querier, review_question)
-                answer_plus_name = f"This answer is from {metadata['filename']}:\n {answer}"
-                df_result.loc[cntrow] = [review_file,
-                                         review_question[0],
-                                         review_question[1],
-                                         review_question[2],
-                                         answer_plus_name,
-                                         sources]
+        # create the query chain with a search filter and answer each question for each paper
+        querier.make_chain(content_folder_name, vectordb_folder_path, search_filter={"filename": review_file})
+        metadata = querier.get_meta_data_by_file_name(review_file)
+        for review_question in review_questions:
+            logger.info(f"reviewing question {review_question[0]} for file: {review_file}")
+            cntrow += 1
+            # Generate answer
+            answer, sources = generate_answer(querier, review_question)
+            answer_plus_name = f"This answer is from {metadata['filename']}:\n {answer}"
+            df_result.loc[cntrow] = [review_file,
+                                        review_question[0],
+                                        review_question[1],
+                                        review_question[2],
+                                        answer_plus_name,
+                                        sources]
     # sort on question, then on document
     df_result = df_result.sort_values(by=["question_id", "filename"])
     df_result.to_csv(output_path, sep="\t", index=False)
@@ -148,7 +147,7 @@ def main() -> None:
     content_folder_name = input("Source folder of documents (without path): ")
     # get associated vectordb path
     content_folder_path, vectordb_folder_path = ut.create_vectordb_name(content_folder_name)
-    review_files = os.listdir(content_folder_path)
+    review_files = ut.get_relevant_files_in_folder(content_folder_path)
     question_list_path = os.path.join(content_folder_path, "review", "questions.txt")
 
     # if vector store folder does not exist, stop
