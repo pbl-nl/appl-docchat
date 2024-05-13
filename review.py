@@ -62,7 +62,7 @@ def generate_answer(querier: Querier,
     :return: tuple containing the answer and the associated sources used (in string form)
     """
     # Generate the answer for the question
-    if review_question[1] == "initial":
+    if review_question[1].lower() == "initial":
         querier.clear_history()
     response = querier.ask_question(review_question[2])
     source_docs = ""
