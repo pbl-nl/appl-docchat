@@ -61,6 +61,7 @@ Execution is done in the activated virtual environment with <code>python query.p
 The file review.py uses the standard question-answer technique but allows you to ask multiple questions to each document in a folder. 
 * Create a subfolder with the name <B>review</B> in folder docs/XXXX with XXXX as the name of your document folder
 * Secondly, add a file with the name <B>questions.txt</B> in the review folder with all your questions. The file expects a header with column names <B>Question Type</B> and <B>Question</B> for example. Then add all your question types ('Initial', or 'Follow Up' when the question refers to the previous question) and questions tab-separated in the following lines. You can find an example in the docs/CAP_nis folder.<br>
+
 Execution is done in the activated virtual environment with <code>python review.py</code>
 All the results, including the answers and the sources used to create the answers, are stored in a file result.csv which is also stored in the subfolder <B>review</B>
 
