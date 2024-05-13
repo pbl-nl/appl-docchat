@@ -60,7 +60,9 @@ Execution is done in the activated virtual environment with <code>python query.p
 ### Querying multiple documents with multiple questions in batch
 The file review.py uses the standard question-answer technique but allows you to ask multiple questions to each document in a folder. 
 All the results are gathered in a .csv file.<br>
-Execution is done in the activated virtual environment with <code>python review.py</code>
+First in your docs/my_documents_folder create a review folder. Secondly, add a documents.txt file in the review folder with all your questions. Here the header should be tab-seprarated words 'Question Type' and 'Question'. Then add all your questions in separate lines with the tab-separated description 'Initial' or 'Follow Up'. You can find an example of it in the docs/CAP_nis folder.
+Execution is done in the activated virtual environment with <code>python review.py</code> 
+
 
 ### Ingesting and querying documents through a Streamlit User Interface
 The functionalities described above can also be used through a User Interface.<br>
