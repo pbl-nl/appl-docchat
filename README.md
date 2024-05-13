@@ -59,17 +59,18 @@ Execution is done in the activated virtual environment with <code>python query.p
 
 ### Querying multiple documents with multiple questions in batch
 The file review.py uses the standard question-answer technique but allows you to ask multiple questions to each document in a folder. 
-All the results are gathered in a .csv file.<br>
-First in your docs/my_documents_folder create a review folder. Secondly, add a documents.txt file in the review folder with all your questions. Here the header should be tab-seprarated words 'Question Type' and 'Question'. Then add all your questions in separate lines with the tab-separated description 'Initial' or 'Follow Up'. You can find an example of it in the docs/CAP_nis folder.
-Execution is done in the activated virtual environment with <code>python review.py</code> 
+* Create a subfolder with the name <B>review</B> in folder docs/XXXX with XXXX as the name of your document folder
+* Secondly, add a file with the name <B>questions.txt</B> in the review folder with all your questions. The file expects a header with column names <B>Question Type</B> and <B>Question</B> for example. Then add all your question types ('Initial', or 'Follow Up' when the question refers to the previous question) and questions tab-separated in the following lines. You can find an example in the docs/CAP_nis folder.<br>
 
+Execution is done in the activated virtual environment with <code>python review.py</code>
+All the results, including the answers and the sources used to create the answers, are stored in a file result.csv which is also stored in the subfolder <B>review</B>
 
 ### Ingesting and querying documents through a Streamlit User Interface
 The functionalities described above can also be used through a User Interface.<br>
 In the activated virtual environment, the UI can be started with <code>streamlit run streamlit_app.py</code><br>
 When this command is used, a browser session will open automatically
 
-### Ingesting and querying documents through a Flask User Interface __Needs maintenance__
+### Ingesting and querying documents through a Flask User Interface <I>Needs maintenance</I>
 The functionalities described above can also be used through a Flask User Interface.<br>
 The flask UI can be started in the activated virtual environment with <code>python flask_app.py</code>
 The Flask UI is tailored for future use in production and contains more insight into the chunks (used) and also contains user admin functionality among others.<br>
