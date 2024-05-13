@@ -70,7 +70,7 @@ The functionalities described above can also be used through a User Interface.<b
 In the activated virtual environment, the UI can be started with <code>streamlit run streamlit_app.py</code><br>
 When this command is used, a browser session will open automatically
 
-### Ingesting and querying documents through a Flask User Interface __Needs maintenance__
+### Ingesting and querying documents through a Flask User Interface <I>Needs maintenance</I>
 The functionalities described above can also be used through a Flask User Interface.<br>
 The flask UI can be started in the activated virtual environment with <code>python flask_app.py</code>
 The Flask UI is tailored for future use in production and contains more insight into the chunks (used) and also contains user admin functionality among others.<br>
