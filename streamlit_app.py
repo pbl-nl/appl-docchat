@@ -81,6 +81,18 @@ def folderlist_creator():
     logger.info("Executed folderlist_creator()")
     return folders
 
+def documentlist_creator(folder):
+    """
+    Creates a list of folder names (without path).
+    Folder names are found in DOC_DIR (see settings).
+    """
+    documents = ['All']
+    for item_name in os.listdir(folder):
+        if item_name[-4:] in ['.txt', '.doc', '.pdf', 'docx', 'html']:
+            documents.append(item_name)
+    logger.info("Executed folderlist_creator()")
+    return documents
+
 
 def folder_selector(folders):
     # Select source folder with docs
@@ -97,6 +109,21 @@ def folder_selector(folders):
     # files_selected = st.sidebar.multiselect('Select file(s)', files_in_folder)
 
     return my_folder_name_selected, my_folder_path_selected, my_vecdb_folder_path_selected
+
+
+def document_selector(documents):
+    # Select source folder with docs
+    st.sidebar.text('Select Any/All Documents')
+    my_document_name_selected = st.sidebar.selectbox("label=document_selector", options=documents, label_visibility="hidden")
+    logger.info(f"document_name_selected is now {my_document_name_selected}")
+    if my_document_name_selected != st.session_state['document_selected']:
+        st.session_state['is_GO_clicked'] = False
+    # set session state of selected folder to new source folder
+    st.session_state['document_selected'] = my_document_name_selected
+    # determine the relevant files that are in the folder
+    # files_selected = st.sidebar.multiselect('Select file(s)', files_in_folder)
+
+    return my_document_name_selected
 
 
 def check_vectordb(my_querier, my_folder_name_selected, my_folder_path_selected, my_vecdb_folder_path_selected):
@@ -232,6 +259,8 @@ def initialize_session_state():
         st.session_state['is_GO_clicked'] = False
     if 'folder_selected' not in st.session_state:
         st.session_state['folder_selected'] = ""
+    if 'document_selected' not in st.session_state:
+        st.session_state['document_selected'] = ""
     if 'messages' not in st.session_state:
         st.session_state['messages'] = []
 
@@ -267,6 +296,7 @@ initialize_session_state()
 querier = initialize_querier()
 # chosen folder and associated vector database
 folder_name_selected, folder_path_selected, vecdb_folder_path_selected = folder_selector(source_folders_available)
+document_names = documentlist_creator(folder_path_selected)
 
 # create button to confirm folder selection. This button sets session_state['is_GO_clicked'] to True
 st.sidebar.button("GO", type="primary", on_click=click_go_button)
@@ -287,6 +317,11 @@ if st.session_state['is_GO_clicked']:
 
     # show button "Clear Conversation"
     clear_messages_button = st.button("Clear Conversation", key="clear")
+
+    # show select folder button
+    document_names = documentlist_creator(folder_path_selected)
+    logger.info(f'Selectable documents: {document_names}')
+    document_selection = document_selector(document_names)
 
     # if button "Clear Conversation" is clicked
     if clear_messages_button:
