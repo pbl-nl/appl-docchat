@@ -17,9 +17,14 @@ def ingest_or_load_documents(content_folder_name: str,
     """
     Depending on whether the vector store already exists, files will be chunked and stored in vectorstore or not
 
-    :param content_folder_name: the name of the folder with content
-    :param content_folder_path: the full path of the folder with content
-    :param vectordb_folder_path: the full path of the folder with the vector stores
+    Parameters
+    ----------
+    content_folder_name : str
+        the name of the folder with content
+    content_folder_path : str
+        the full path of the folder with content
+    vectordb_folder_path : str
+        the full path of the folder with the vector stores
     """
     # if documents in source folder path are not ingested yet
     if not os.path.exists(vectordb_folder_path):
@@ -35,8 +40,15 @@ def get_review_questions(question_list_path: str) -> List[Tuple[int, str, str]]:
     """
     Convert the file with questions into a list of questions
 
-    :param question_list_path: the full path of the location containing the file with questions
-    :return: list of tuples containing the question id, question type and question
+    Parameters
+    ----------
+    question_list_path : str
+        the full path of the location containing the file with questions
+
+    Returns
+    -------
+    List[Tuple[int, str, str]]
+        list of tuples containing the question id, question type and question
     """
     # Get questions from question list file
     with open(file=question_list_path, mode='r', encoding="utf8") as review_file:
@@ -49,6 +61,7 @@ def get_review_questions(question_list_path: str) -> List[Tuple[int, str, str]]:
             if cntline > 0:
                 review_questions.append((cntline, elements[0], elements[1]))
             cntline += 1
+
     return review_questions
 
 
@@ -57,9 +70,17 @@ def generate_answer(querier: Querier,
     """
     Generate an answer to the given question with the provided Querier instance
 
-    :param querier: the Querier object
-    :param review_question: the question that is being asked
-    :return: tuple containing the answer and the associated sources used (in string form)
+    Parameters
+    ----------
+    querier : Querier
+        the Querier object
+    review_question : Tuple[int, str, str]
+        tuple of question id, question type and question
+
+    Returns
+    -------
+    Tuple[str, str]]
+        tuple containing the answer and the associated sources used (in string form)
     """
     # Generate the answer for the question
     if review_question[1].lower() == "initial":
@@ -68,18 +89,33 @@ def generate_answer(querier: Querier,
     source_docs = ""
     for doc in response["source_documents"]:
         source_docs += f"page {str(doc.metadata['page_number'])}\n{doc.page_content}\n\n"
+
     return response["answer"], source_docs
 
 
-def create_answers_for_folder(review_files: list,
+def create_answers_for_folder(review_files: List[str],
                               review_questions: List[Tuple[int, str, str]],
-                              content_folder_path: os.PathLike,
                               content_folder_name: str,
                               querier: Querier,
                               vectordb_folder_path: str,
                               output_path: os.PathLike) -> None:
     """
-    phase 1 of the review: loop over all the questions, gather the answers and store on disk
+    Phase 1 of the review: loop over all the questions and all the documents, gather the answers and store on disk
+
+    Parameters
+    ----------
+    review_files : List[str]
+        list of files to be reviewed
+    review_questions : List[Tuple[int, str, str]]
+        list of tuples containing question id, question type and question
+    content_folder_name : str
+        name of the document folder
+    querier : Querier
+        the Querier object
+    vectordb_folder_path : str
+        path of the vector database
+    output_path : os.PathLike
+        path of the output file
     """
     # create empty dataframe
     df_result = pd.DataFrame(columns=["filename", "question_id", "question_type", "question", "answer", "sources"])
@@ -95,11 +131,11 @@ def create_answers_for_folder(review_files: list,
             answer, sources = generate_answer(querier, review_question)
             answer_plus_name = f"This answer is from {metadata['filename']}:\n {answer}"
             df_result.loc[cntrow] = [review_file,
-                                        review_question[0],
-                                        review_question[1],
-                                        review_question[2],
-                                        answer_plus_name,
-                                        sources]
+                                     review_question[0],
+                                     review_question[1],
+                                     review_question[2],
+                                     answer_plus_name,
+                                     sources]
     # sort on question, then on document
     df_result = df_result.sort_values(by=["question_id", "filename"])
     df_result.to_csv(output_path, sep="\t", index=False)
@@ -109,7 +145,16 @@ def synthesize_results(querier: Querier,
                        results_path: str,
                        output_path: str) -> None:
     """
-    phase 2 of the review: synthesizes, per question, the results from phase 1
+    Phase 2 of the review: synthesizes, per question, the results from phase 1
+
+    Parameters
+    ----------
+    querier : Querier
+        the Querier object
+    results_path : str
+        path of the file resulting from phase 1
+    output_path : os.PathLike
+        path of the output file
     """
     # load questions and answers
     answers_df = pd.read_csv(results_path, delimiter='\t')
@@ -171,7 +216,7 @@ def main() -> None:
     if os.path.exists(output_path_review):
         logger.info("A review result (result.tsv) file already exists, skipping the answer creation")
     else:
-        create_answers_for_folder(review_files, review_questions, content_folder_path, content_folder_name,
+        create_answers_for_folder(review_files, review_questions, content_folder_name,
                                   querier, vectordb_folder_path, output_path_review)
         logger.info("Successfully reviewed the documents.")
 
