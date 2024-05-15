@@ -1,3 +1,4 @@
+from typing import List, Tuple
 import fitz
 import os
 import streamlit as st
@@ -11,7 +12,7 @@ import settings
 import utils as ut
 
 
-def click_go_button():
+def click_go_button() -> None:
     """
     Sets session state of GO button clicked to True
     """
@@ -19,10 +20,27 @@ def click_go_button():
 
 
 @st.cache_data
-def create_and_show_summary(my_summary_type,
-                            my_folder_path_selected,
-                            my_folder_name_selected,
-                            my_vecdb_folder_path_selected):
+def create_and_show_summary(my_summary_type: str,
+                            my_folder_path_selected: str,
+                            my_folder_name_selected: str,
+                            my_vecdb_folder_path_selected: str,
+                            selected_documents: List[str]) -> None:
+    """
+    Creates or loads a summary of the chosen document(s) and shows it in the UI
+
+    Parameters
+    ----------
+    my_summary_type : str
+        chosen summary type, either "Short", "Long" or "Hybrid"
+    my_folder_path_selected : str
+        path of content folder
+    my_folder_name_selected : str
+        name of content folder
+    my_vecdb_folder_path_selected : str
+        path of vector database foler
+    selected_documents : List[str]
+        list of selected documents
+    """
     if my_summary_type == "Short":
         summarization_method = "Map_Reduce"
     elif my_summary_type == "Long":
@@ -30,34 +48,39 @@ def create_and_show_summary(my_summary_type,
     elif my_summary_type == "Hybrid":
         summarization_method = "Hybrid"
 
-    # for each file in content folder
-    with st.expander(f"{my_summary_type} summary"):
+    # for each selected file in content folder
+    with st.expander(label=f"{my_summary_type} summary",
+                     expanded=True):
         first_summary = True
         files_in_folder = ut.get_relevant_files_in_folder(my_folder_path_selected)
+        if selected_documents == ["All"]:
+            selected_documents = files_in_folder
         for file in files_in_folder:
-            file_name, _ = os.path.splitext(file)
-            summary_name = os.path.join(my_folder_path_selected, "summaries",
-                                        str(file_name) + "_" + str.lower(summarization_method) + ".txt")
-            # if summary does not exist yet, create it
-            if not os.path.isfile(summary_name):
-                my_spinner_message = f'''Creating summary for {file}.
-                                    Depending on the size of the file, this may take a while. Please wait...'''
-                with st.spinner(my_spinner_message):
-                    summarizer = Summarizer(content_folder=my_folder_path_selected,
-                                            collection_name=my_folder_name_selected,
-                                            summary_method=summarization_method,
-                                            vecdb_folder=my_vecdb_folder_path_selected)
-                    summarizer.summarize()
-            # show summary
-            if not first_summary:
-                st.divider()
-            with open(file=summary_name, mode="r", encoding="utf8") as f:
-                st.write(f"**{file}:**\n")
-                st.write(f.read())
-            first_summary = False
+            if file in selected_documents:
+                file_name, _ = os.path.splitext(file)
+                summary_name = os.path.join(my_folder_path_selected, "summaries",
+                                            str(file_name) + "_" + str.lower(summarization_method) + ".txt")
+                # if summary does not exist yet, create it
+                if not os.path.isfile(summary_name):
+                    my_spinner_message = f'''Creating summary for {file}.\n
+                                        Depending on the size of the file and the type of summary, this may take a while. Please wait...'''
+                    with st.spinner(my_spinner_message):
+                        summarizer = Summarizer(content_folder=my_folder_path_selected,
+                                                collection_name=my_folder_name_selected,
+                                                summary_method=summarization_method,
+                                                vecdb_folder=my_vecdb_folder_path_selected)
+                        summarizer.summarize()
+                # show summary
+                if not first_summary:
+                    st.divider()
+                with open(file=summary_name, mode="r", encoding="utf8") as f:
+                    st.write(f"**{file}:**\n")
+                    st.write(f.read())
+                first_summary = False
+    logger.info("Executed create_and_show_summary()")
 
 
-def display_chat_history():
+def display_chat_history() -> None:
     """
     Shows the complete chat history
     """
@@ -68,10 +91,16 @@ def display_chat_history():
     logger.info("Executed display_chat_history()")
 
 
-def folderlist_creator():
+@st.cache_data
+def folderlist_creator() -> List[str]:
     """
     Creates a list of folder names (without path).
-    Folder names are found in DOC_DIR (see settings).
+    Folder names are found in DOC_DIR (see settings.py).
+
+    Returns
+    -------
+    List[str]
+        list of folder names to be shown in the UI
     """
     folders = []
     for folder_name in os.listdir(settings.DOC_DIR):
@@ -79,24 +108,49 @@ def folderlist_creator():
         if os.path.isdir(folder_path):
             folders.append(folder_name)
     logger.info("Executed folderlist_creator()")
+
     return folders
 
-def documentlist_creator(folder):
+
+@st.cache_data
+def documentlist_creator(my_folder_path_selected: str) -> List[str]:
     """
-    Creates a list of folder names (without path).
-    Folder names are found in DOC_DIR (see settings).
+    Creates a list of document names (without path), available in the selected folder path
+
+    Parameters
+    ----------
+    folder : str
+        the selected document folder
+
+    Returns
+    -------
+    List[str]
+        list of available and valid document names
     """
     documents = ['All']
-    for item_name in os.listdir(folder):
-        if item_name[-4:] in ['.txt', '.doc', '.pdf', 'docx', 'html']:
-            documents.append(item_name)
-    logger.info("Executed folderlist_creator()")
+    documents.extend(ut.get_relevant_files_in_folder(my_folder_path_selected))
+    logger.info("Executed documentlist_creator()")
+
     return documents
 
 
-def folder_selector(folders):
+def folder_selector(folders: List[str]) -> Tuple[str, str, str]:
+    """
+    selects a document folder and creates the asscciated document folder path and vector database path
+
+    Parameters
+    ----------
+    folders : List[str]
+        list of available folders
+
+    Returns
+    -------
+    Tuple[str, str, str]
+        tuple of selected folder name, its path and its vector database
+    """
     # Select source folder with docs
-    my_folder_name_selected = st.sidebar.selectbox("label=folder_selector", options=folders, label_visibility="hidden")
+    my_folder_name_selected = st.sidebar.selectbox(label="***SELECT A FOLDER***",
+                                                   options=folders)
     logger.info(f"folder_name_selected is now {my_folder_name_selected}")
     # get associated source folder path and vectordb path
     my_folder_path_selected, my_vecdb_folder_path_selected = ut.create_vectordb_name(my_folder_name_selected)
@@ -105,26 +159,59 @@ def folder_selector(folders):
         st.session_state['is_GO_clicked'] = False
     # set session state of selected folder to new source folder
     st.session_state['folder_selected'] = my_folder_name_selected
-    # determine the relevant files that are in the folder
-    # files_selected = st.sidebar.multiselect('Select file(s)', files_in_folder)
+    logger.info("Executed folder_selector()")
 
     return my_folder_name_selected, my_folder_path_selected, my_vecdb_folder_path_selected
 
 
-def document_selector(documents):
-    # Select source folder with docs
+def document_selector(documents: List[str]) -> List[str]:
+    """
+    selects one or more valid documents from document folder
+
+    Parameters
+    ----------
+    documents : List[str]
+        list of available valid documents
+
+    Returns
+    -------
+    List[str]
+        list of selected valid documents
+    """
     # Creating a multi-select dropdown
-    my_document_name_selected = st.sidebar.multiselect("Select Any/All Documents", documents, default=documents[0], key='document_selector')
+    my_document_name_selected = st.sidebar.multiselect(label="***SELECT ANY/ALL FILES***",
+                                                       options=documents,
+                                                       default=documents[0],
+                                                       key='document_selector')
     logger.info(f"document_name_selected is now {my_document_name_selected}")
     if my_document_name_selected != st.session_state['document_selected']:
         st.session_state['is_GO_clicked'] = False
     # set session state of selected folder to new source folder
     st.session_state['document_selected'] = my_document_name_selected
-    # determine the relevant files that are in the folder
+    logger.info("Executed document_selector()")
+
     return my_document_name_selected
 
 
-def check_vectordb(my_querier, my_folder_name_selected, my_folder_path_selected, my_vecdb_folder_path_selected):
+def check_vectordb(my_querier: Querier,
+                   my_folder_name_selected: str,
+                   my_folder_path_selected: str,
+                   my_vecdb_folder_path_selected: str) -> None:
+    """
+    checks if the vector database exists for the selected document folder, with the given settings
+    If not, it creates the vector database
+
+    Parameters
+    ----------
+    my_querier : Querier
+        the querier object
+    my_folder_name_selected : str
+        the name of the selected folder
+    my_folder_path_selected : str
+        the path of the selected folder
+    my_vecdb_folder_path_selected : str
+        the name of the associated vector database
+    """
     # If a folder is chosen that is not equal to the last known source folder
     if folder_name_selected != st.session_state['folder_selected']:
         # set session state of is_GO_clicked to False (will be set to True when OK button is clicked)
@@ -155,7 +242,30 @@ def check_vectordb(my_querier, my_folder_name_selected, my_folder_path_selected,
     logger.info("Executed check_vectordb")
 
 
-def handle_query(my_content_folder, my_querier, my_prompt: str, document_selection: list, my_folder_name_selected, my_vecdb_folder_path_selected):
+def handle_query(my_folder_path_selected: str,
+                 my_querier: Querier,
+                 my_prompt: str,
+                 my_document_selection: list,
+                 my_folder_name_selected: str,
+                 my_vecdb_folder_path_selected: str) -> None:
+    """
+    creates an answer to the user's prompt by invokeing the defined chain
+
+    Parameters
+    ----------
+    my_folder_path_selected : str
+        path of selected document folder
+    my_querier : Querier
+        querier object
+    my_prompt : str
+        user prompt
+    document_selection : List[str]
+        selected document(s)
+    my_folder_name_selected : str
+        selected document folder
+    my_vecdb_folder_path_selected : str
+        vector database associated with selected document folder
+    """
     # Display user message in chat message container
     with st.chat_message("user"):
         st.markdown(my_prompt)
@@ -163,12 +273,11 @@ def handle_query(my_content_folder, my_querier, my_prompt: str, document_selecti
     st.session_state['messages'].append({"role": "user", "content": my_prompt})
     with st.spinner("Thinking..."):
         # Generate a response
-        # response, scores = my_querier.ask_question(my_prompt)
-        if 'All' not in document_selection:
+        if 'All' not in my_document_selection:
             # create a filter for the selected documents
-            filter = {'filename': document_name for document_name in document_selection}
+            my_filter = {'filename': document_name for document_name in my_document_selection}
             logger.info(f'Document Selection: {filter}')
-            my_querier.make_chain(my_folder_name_selected, my_vecdb_folder_path_selected, search_filter=filter)
+            my_querier.make_chain(my_folder_name_selected, my_vecdb_folder_path_selected, search_filter=my_filter)
         else:
             my_querier.make_chain(my_folder_name_selected, my_vecdb_folder_path_selected)
         response = my_querier.ask_question(my_prompt)
@@ -181,7 +290,7 @@ def handle_query(my_content_folder, my_querier, my_prompt: str, document_selecti
         with st.expander("Paragraphs used for answer"):
             for i, document in enumerate(response["source_documents"]):
                 filename = document.metadata['filename']
-                docpath = os.path.join(my_content_folder, filename)
+                docpath = os.path.join(my_folder_path_selected, filename)
                 pagenr = document.metadata['page_number']
                 content = document.page_content
                 if filename.endswith(".pdf"):
@@ -215,7 +324,7 @@ def handle_query(my_content_folder, my_querier, my_prompt: str, document_selecti
 
 
 @st.cache_data
-def initialize_page():
+def initialize_page() -> None:
     """
     Initializes the main page with a page header and app info
     Also prepares the sidebar with folder list
@@ -238,8 +347,8 @@ def initialize_page():
     )
     logo_image = Image.open(settings.APP_LOGO)
     st.sidebar.image(logo_image, width=250)
-    # Sidebar text for folder selection
-    st.sidebar.title("Select a folder")
+    # # Sidebar text for folder selection
+    # st.sidebar.title("Select folder")
 
     _, col2, _, col4 = st.columns([0.2, 0.4, 0.1, 0.3])
     with col2:
@@ -256,7 +365,7 @@ def initialize_page():
     logger.info("Executed initialize_page()")
 
 
-def initialize_session_state():
+def initialize_session_state() -> None:
     """
     Initialize the session state variables for control
     """
@@ -274,13 +383,22 @@ def initialize_session_state():
 def initialize_querier():
     """
     Create a Querier object
+
+    Returns
+    -------
+    Querier
+        Querier object
     """
     my_querier = Querier()
     logger.info("Executed initialize_querier()")
+
     return my_querier
 
 
-def set_page_config():
+def set_page_config() -> None:
+    """
+    page configuration
+    """
     st.set_page_config(page_title="Chat with your documents",
                        page_icon=':books:',
                        layout='wide',
@@ -301,9 +419,8 @@ initialize_session_state()
 querier = initialize_querier()
 # chosen folder and associated vector database
 folder_name_selected, folder_path_selected, vecdb_folder_path_selected = folder_selector(source_folders_available)
-# show select folder button
+# available and selected documents
 document_names = documentlist_creator(folder_path_selected)
-logger.info(f'Selectable documents: {document_names}')
 document_selection = document_selector(document_names)
 
 # create button to confirm folder selection. This button sets session_state['is_GO_clicked'] to True
@@ -324,10 +441,13 @@ if st.session_state['is_GO_clicked']:
     # if one of the options is chosen
     if summary_type in ["Short", "Long", "Hybrid"]:
         # show the summary at the top of the screen
-        create_and_show_summary(summary_type, folder_path_selected, folder_name_selected, vecdb_folder_path_selected)
+        create_and_show_summary(summary_type, folder_path_selected,
+                                folder_name_selected,
+                                vecdb_folder_path_selected,
+                                document_selection)
 
     # show button "Clear Conversation"
-    clear_messages_button = st.button("Clear Conversation", key="clear")
+    clear_messages_button = st.button(label="Clear Conversation", key="clear")
 
     # if button "Clear Conversation" is clicked
     if clear_messages_button:
