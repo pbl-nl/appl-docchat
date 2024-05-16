@@ -190,18 +190,27 @@ def main() -> None:
     """
     # get source folder with papers from user
     content_folder_name = input("Source folder of documents (without path): ")
-    # get associated vectordb path
-    content_folder_path, vectordb_folder_path = ut.create_vectordb_name(content_folder_name)
-    review_files = ut.get_relevant_files_in_folder(content_folder_path)
-    question_list_path = os.path.join(content_folder_path, "review", "questions.txt")
 
-    # if vector store folder does not exist, stop
+    # get associated content folder path and vectordb path
+    content_folder_path, vectordb_folder_path = ut.create_vectordb_name(content_folder_name)
+
+    # if content folder path does not exist, stop
     if not os.path.exists(content_folder_path):
         logger.info("This content folder does not exist. Please make sure the spelling is correct")
         ut.exit_program()
-    elif not os.path.exists(question_list_path):
-        logger.info(f"This question list does not exist, please make sure this list exists at {question_list_path}.")
+
+    # get path of file with list of questions
+    question_list_path = os.path.join(content_folder_path, "review", "questions.txt")
+
+    # if question list path does not exist, stop
+    if not os.path.exists(question_list_path):
+        logger.info(f"The file with questions does not exist, please make sure it exists at {question_list_path}.")
         ut.exit_program()
+
+    synthesis = input("Summarize the answers for each question? (Y/N): ")
+
+    # get list of relevant files in document folder
+    review_files = ut.get_relevant_files_in_folder(content_folder_path)
 
     # create instance of Querier once
     querier = Querier()
@@ -220,14 +229,15 @@ def main() -> None:
                                   querier, vectordb_folder_path, output_path_review)
         logger.info("Successfully reviewed the documents.")
 
-    # check if synthsis already exists, if not create one
-    output_path_synthesis = os.path.join(content_folder_path, "review", "synthesis.tsv")
-    if os.path.exists(output_path_synthesis):
-        logger.info("A synthesis result file (synthesis.tsv) already exists, skipping the answer creation")
-    else:
-        # second phase: synthesize the results
-        synthesize_results(querier, output_path_review, output_path_synthesis)
-        logger.info("Successfully synthesized results.")
+    if synthesis.lower() == "y":
+        # check if synthesis already exists, if not create one
+        output_path_synthesis = os.path.join(content_folder_path, "review", "synthesis.tsv")
+        if os.path.exists(output_path_synthesis):
+            logger.info("A synthesis result file (synthesis.tsv) already exists, skipping the answer creation")
+        else:
+            # second phase: synthesize the results
+            synthesize_results(querier, output_path_review, output_path_synthesis)
+            logger.info("Successfully synthesized results.")
 
 
 if __name__ == "__main__":
