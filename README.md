@@ -35,7 +35,7 @@ NB: The name of the environment is appl-docchat by default. It can be changed to
 1. Open an Anaconda prompt or other command prompt
 2. Go to the root folder of the project and create a Python environment with pip with <code>python -m venv venv</code><br>
 This will create a basic virtual environment folder named venv in the root of your project folder
-NB: The chosen name of the environment is here appl-docchat. It can be changed to a name of your choice
+NB: The chosen name of the environment folder is here venv. It can be changed to a name of your choice
 3. Activate this environment with <code>venv\Scripts\activate</code>
 4. All required packages can now be installed with <code>pip install -r requirements.txt</code>
 
