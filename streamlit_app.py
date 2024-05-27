@@ -158,6 +158,9 @@ def folder_selector(folders: List[str]) -> Tuple[str, str, str]:
     my_folder_path_selected, my_vecdb_folder_path_selected = ut.create_vectordb_name(my_folder_name_selected)
     logger.info(f"vectordb_folder_path_selected is now {my_vecdb_folder_path_selected}")
     if my_folder_name_selected != st.session_state['folder_selected']:
+        # clear chat history
+        st.session_state['messages'] = []
+        querier.clear_history()
         st.session_state['is_GO_clicked'] = False
     # set session state of selected folder to new source folder
     st.session_state['folder_selected'] = my_folder_name_selected
@@ -187,8 +190,11 @@ def document_selector(documents: List[str]) -> List[str]:
                                                        key='document_selector')
     logger.info(f"document_name_selected is now {my_document_name_selected}")
     if my_document_name_selected != st.session_state['document_selected']:
+        # clear chat history
+        st.session_state['messages'] = []
+        querier.clear_history()
         st.session_state['is_GO_clicked'] = False
-    # set session state of selected folder to new source folder
+    # set session state of selected document to new source document
     st.session_state['document_selected'] = my_document_name_selected
     logger.info("Executed document_selector()")
 
@@ -214,13 +220,6 @@ def check_vectordb(my_querier: Querier,
     my_vecdb_folder_path_selected : str
         the name of the associated vector database
     """
-    # If a folder is chosen that is not equal to the last known source folder
-    if folder_name_selected != st.session_state['folder_selected']:
-        # set session state of is_GO_clicked to False (will be set to True when OK button is clicked)
-        st.session_state['is_GO_clicked'] = False
-        # clear all chat messages on screen and in Querier object
-        st.session_state['messages'] = []
-        my_querier.clear_history()
     # When the associated vector database of the chosen content folder doesn't exist with the settings as given
     # in settings.py, create it first
     if not os.path.exists(my_vecdb_folder_path_selected):
@@ -428,9 +427,6 @@ st.sidebar.button("GO", type="primary", on_click=click_go_button)
 
 # only start a conversation when a folder is selected and selection is confirmed with "GO" button
 if st.session_state['is_GO_clicked']:
-    # clear chat history any time GO is clicked
-    st.session_state['messages'] = []
-    querier.clear_history()
     # create or update vector database if necessary
     check_vectordb(querier, folder_name_selected, folder_path_selected, vecdb_folder_path_selected)
     summary_type = st.sidebar.radio(
