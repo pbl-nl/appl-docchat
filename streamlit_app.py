@@ -127,11 +127,13 @@ def documentlist_creator(my_folder_path_selected: str) -> List[str]:
     List[str]
         list of available and valid document names
     """
-    documents = ['All']
-    documents.extend(ut.get_relevant_files_in_folder(my_folder_path_selected))
+    relevant_files_in_folder = ut.get_relevant_files_in_folder(my_folder_path_selected)
+    # Show option "All" only if there are multiple relevant documents in a folder
+    if len(relevant_files_in_folder) > 1:
+        relevant_files_in_folder.insert(0, "All")
     logger.info("Executed documentlist_creator()")
 
-    return documents
+    return relevant_files_in_folder
 
 
 def folder_selector(folders: List[str]) -> Tuple[str, str, str]:
@@ -245,11 +247,11 @@ def check_vectordb(my_querier: Querier,
 def handle_query(my_folder_path_selected: str,
                  my_querier: Querier,
                  my_prompt: str,
-                 my_document_selection: list,
+                 my_document_selection: List[str],
                  my_folder_name_selected: str,
                  my_vecdb_folder_path_selected: str) -> None:
     """
-    creates an answer to the user's prompt by invokeing the defined chain
+    creates an answer to the user's prompt by invoking the defined chain
 
     Parameters
     ----------
@@ -259,7 +261,7 @@ def handle_query(my_folder_path_selected: str,
         querier object
     my_prompt : str
         user prompt
-    document_selection : List[str]
+    my_document_selection : List[str]
         selected document(s)
     my_folder_name_selected : str
         selected document folder
@@ -275,8 +277,8 @@ def handle_query(my_folder_path_selected: str,
         # Generate a response
         if 'All' not in my_document_selection:
             # create a filter for the selected documents
-            my_filter = {'filename': document_name for document_name in my_document_selection}
-            logger.info(f'Document Selection: {filter}')
+            my_filter = {'filename': {'$in': my_document_selection}}
+            logger.info(f'Document Selection filter: {my_filter}')
             my_querier.make_chain(my_folder_name_selected, my_vecdb_folder_path_selected, search_filter=my_filter)
         else:
             my_querier.make_chain(my_folder_name_selected, my_vecdb_folder_path_selected)
