@@ -33,11 +33,6 @@
         {"question_type": "initial", "question": "Bestaat er een verbod op korte vluchten tussen Nederland en België?", "ground_truth": "Nee, er bestaat geen verbod op korte vluchten tussen Nederland en België. Er is een juridische analyse uitgevoerd om de mogelijkheid tot een verbod op korte afstandsvluchten in de Benelux. Uit deze analyse blijkt dat een algeheel verbod op korte afstandsvluchten binnen de Benelux zeer moeilijk te realiseren zal zijn."},
         {"question_type": "followup", "question": "Waarom komt er geen verbod?", "ground_truth": "Voor een eventueel verbod is het EU-recht leidend. Op grond van de EU-verordening 1008/2008 mogen Europese luchtvaartmaatschappijen vrij opereren op alle routes binnen de EU. Omwege ernstige milieuproblemen kan de uitoefening van verkeersrechten tijdelijk worden beperkt of geweigerd op basis van artikel 20 van de verordening, mits een concrete nationale grondslag aanwezig is en mits de Europese Commissie hier toestemming voor geeft. Een concrete wettelijke grondslag voor het tijdelijk verbieden van dergelijke korte vluchten wegens milieuproblemen ontbreekt in de Nederlandse wetgeving. Bovendien kan dit niet eenzijdig door Nederland vastgesteld worden. "}
     ],
-    "docset_wur": [
-        {"question_type": "initial", "question": "what happens when saturated soil is exposed to free drainage?", "ground_truth": "gravitation forces will cause the widest pores to drain first, allowing air to enter"},
-        {"question_type": "followup", "question": "what happens when transpiration losses are down?", "ground_truth":"plants under these conditions experience temporary wilting." },
-        {"question_type": "followup", "question": "how residual water beyond pF 4.2 can be extracted from the soil?", "ground_truth": "by drying in an oven at 105 C, i.e. beyond the boiling point of water"}
-    ],
     "deltares_test": [
         {"question_type": "initial", "question": "What is the title of the document?", "ground_truth": "FRESHEM Zeeland Technical report"},
         {"question_type": "initial", "question": "What year was the document published?", "ground_truth": "The document was published in 2018"},
