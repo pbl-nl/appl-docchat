@@ -23,7 +23,10 @@ HUGGINGFACEHUB_API_TOKEN="hf_....."<br>
 6. This repository also allows for using one of the [Ollama](https://ollama.com/) open source models on-premise. You can do this by follwing the steps below:
 * In Windows go to "Turn Windows features on or off" and check the features "Virtual Machine Platform" and "Windows Subsystem for Linux"
 * Download and install the Ubuntu Windows Subsystem for Linux (WSL) by opening a terminal window and type <code>wsl --install</code>
-* In WSL, install Ollama with <code>curl -fsSL https://ollama.com/install.sh | sh</code>
+* Start WSL by typing opening a terminal and typing <code>wsl</code>, and install Ollama with <code>curl -fsSL https://ollama.com/install.sh | sh</code>
+* When you decide to use a local LLM and/or embedding model, make sure that the Ollama server is running by:
+  * opening a terminal and typing <code>wsl</code>
+  * starting the Ollama server with <code>ollama serve</code>. This makes any downloaded models accessible through the Ollama API
   
 ### Conda virtual environment setup
 1. Open an Anaconda prompt or other command prompt
@@ -71,11 +74,12 @@ In the activated virtual environment, the UI can be started with <code>streamlit
 When this command is used, a browser session will open automatically
 
 ### Summarizing documents
-The file summarize.py can be used to summarize every file individually in a document folder. Two options for summarization are implemented:
+The file summarize.py can be used to summarize every file individually in a document folder. Three options for summarization are implemented:
 * Map Reduce: this will create a summary in a fast way. The time (and quality) to create a summary depends on the number of centroids chosen. This is a parameter in settings.py<br>
 * Refine: this will create a more refined summary, but can take a long time to run, especially for larger documents
+* Hybrid: combines both methods above
 
-Execution is done in the activated virtual environment with <code>python summarize.py</code>. The user will be prompted for the summarization method, either "Map_Reduce" or "Refine"
+Execution is done in the activated virtual environment with <code>python summarize.py</code>. The user will be prompted for the summarization method, either "Map_Reduce", "Refine" or "Hybrid"
 
 ### Evaluation of Question Answer results
 The file evaluate.py can be used to evaluate the generated answers for a list of questions, provided that the file eval.json exists, containing 
