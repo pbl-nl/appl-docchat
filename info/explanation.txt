@@ -1,4 +1,4 @@
-# Welcome to ChatNMDC!
+# Welcome to ChatPBL!
 
 To directly start chatting with documents in natural language, first choose a document folder in the sidebar.<br><br>
 Is there no folder with documents you want to query yet? No problem, it is possible to create your own folder, the application will then create a "vector database" based on the documents in our folder so this extra step will take some time.<br>
