@@ -1,11 +1,11 @@
 # relative filepath of logo in user interface, e.g. "./images/nmdc_logo.png"
-APP_LOGO = "./images/nmdc_logo.png"
+APP_LOGO = "./images/b30.png"
 
 # relative filepath of text file with content for application explanation in Streamlit UI, e.g. "./info/explanation.txt"
 APP_INFO = "./info/explanation.txt"
 
 # header in Streamlit UI, e.g. "ChatNMDC: chat with your documents"
-APP_HEADER = "ChatNMDC: chat with your documents"
+APP_HEADER = "ChatPBL"
 
 # relative filepath of folder with input documents, e.g. "./docs"
 DOC_DIR = "./docs"
@@ -20,7 +20,7 @@ VECDB_DIR = "./vector_stores"
 EVAL_DIR = "./evaluate"
 
 # header in Streamlit evaluation UI, e.g. "ChatNMDC: evaluation"
-EVAL_APP_HEADER = "ChatNMDC: evaluation"
+EVAL_APP_HEADER = "ChatPBL: evaluation"
 
 # content for evaluation explanation in evaluation user interface, e.g. "./info/evaluation_explanation.txt"
 EVAL_APP_INFO = "./info/evaluation_explanation.txt"
@@ -43,22 +43,17 @@ LLM_TYPE = "azurechatopenai"
 # - LLM_MODEL_TYPE must be one of: "meta-llama/Llama-2-7b-chat-hf", "google/flan-t5-base" if LLM_TYPE is "huggingface"
 #   note: "meta-llama/Llama-2-7b-chat-hf" requires Huggingface Pro Account and access to the llama2 model https://huggingface.co/meta-llama/Llama-2-7b-chat-hf
 #   Context window sizes are currently: "google/flan-t5-base": ? tokens, "meta-llama/Llama-2-7b-chat-hf": ? tokens
-# - LLM_MODEL_TYPE must be one of your Ollama downloaded models, e.g. "llma3", "orca-mini" or "zephyr" if LLM_TYPE is "ollama"
+# - LLM_MODEL_TYPE must be one of your Ollama downloaded models, e.g. "llama3", "orca-mini" or "zephyr" if LLM_TYPE is "ollama"
 #   See also https://ollama.ai/library
 # - LLM_MODEL_TYPE must be one of: "gpt-35-turbo" if LLM_TYPE is "azurechatopenai"
 LLM_MODEL_TYPE = "gpt-35-turbo"
-
-# # API_URL must be the URL to your (local) API
-# # If LLM_TYPE is "ollama" and model is run on your local machine, API_URL should be "localhost:11434" by default
-# # If run on Azure virtual machine, use "http://127.0.0.1:11434"
-# API_URL = "http://127.0.0.1:11434"
 
 # EMBEDDINGS_PROVIDER must be one of: "openai", "huggingface", "local_embeddings", "azureopenai"
 EMBEDDINGS_PROVIDER = "azureopenai"
 
 # - EMBEDDINGS_MODEL must be one of: "text-embedding-ada-002" if EMBEDDINGS_PROVIDER is "openai"
 # - EMBEDDINGS_MODEL must be one of: "all-mpnet-base-v2" if EMBEDDINGS_PROVIDER is "huggingface"
-# - EMBEDDINGS_MODEL must be one of the locally downloaded models, e.g. "zephyr" if EMBEDDINGS_PROVIDER is "local_embeddings"
+# - EMBEDDINGS_MODEL must be one of the locally downloaded models, e.g. "llama3" if EMBEDDINGS_PROVIDER is "local_embeddings"
 # - EMBEDDINGS_MODEL must be the embeddings deployment name if EMBEDDINGS_PROVIDER is "azureopenai"
 EMBEDDINGS_MODEL = "text-embedding-ada-002"
 
