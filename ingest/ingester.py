@@ -9,7 +9,6 @@ from dotenv import load_dotenv
 from loguru import logger
 # local imports
 import settings
-# from ingest.content_iterator import ContentIterator
 import utils as ut
 from ingest.ingest_utils import IngestUtils
 from ingest.file_parser import FileParser
@@ -24,8 +23,7 @@ class Ingester:
     """
     def __init__(self, collection_name: str, content_folder: str, vecdb_folder: str,
                  embeddings_provider=None, embeddings_model=None, text_splitter_method=None,
-                 vecdb_type=None, chunk_size=None, chunk_overlap=None, local_api_url=None,
-                 file_no=None, azureopenai_api_version=None):
+                 vecdb_type=None, chunk_size=None, chunk_overlap=None) -> None:
         load_dotenv()
         self.collection_name = collection_name
         self.content_folder = content_folder
@@ -37,12 +35,6 @@ class Ingester:
         self.vecdb_type = settings.VECDB_TYPE if vecdb_type is None else vecdb_type
         self.chunk_size = settings.CHUNK_SIZE if chunk_size is None else chunk_size
         self.chunk_overlap = settings.CHUNK_OVERLAP if chunk_overlap is None else chunk_overlap
-        self.local_api_url = settings.API_URL \
-            if local_api_url is None and settings.API_URL is not None else local_api_url
-        self.file_no = file_no
-        self.azureopenai_api_version = settings.AZUREOPENAI_API_VERSION \
-            if azureopenai_api_version is None and settings.AZUREOPENAI_API_VERSION is not None \
-            else azureopenai_api_version
 
     def ingest(self) -> None:
         """
@@ -50,13 +42,11 @@ class Ingester:
         Checks are done whether vector store needs to be synchronized with folder contents
         """
         file_parser = FileParser()
-        ingestutils = IngestUtils(self.chunk_size, self.chunk_overlap, self.file_no, self.text_splitter_method)
+        ingestutils = IngestUtils(self.chunk_size, self.chunk_overlap, self.text_splitter_method)
 
         # get embeddings
         embeddings = EmbeddingsCreator(self.embeddings_provider,
-                                       self.embeddings_model,
-                                       self.local_api_url,
-                                       self.azureopenai_api_version).get_embeddings()
+                                       self.embeddings_model).get_embeddings()
 
         # create empty list representing added files
         new_files = []

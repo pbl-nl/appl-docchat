@@ -1,4 +1,4 @@
-# imports
+import os
 from loguru import logger
 # LLM modules
 from langchain_community.llms.huggingface_hub import HuggingFaceHub
@@ -14,13 +14,9 @@ class LLMCreator():
     """
     LLM class to import into other modules
     """
-    def __init__(self, llm_type=None, llm_model_type=None, local_api_url=None, azureopenai_api_version=None) -> None:
+    def __init__(self, llm_type=None, llm_model_type=None) -> None:
         self.llm_type = settings.LLM_TYPE if llm_type is None else llm_type
         self.llm_model_type = settings.LLM_MODEL_TYPE if llm_model_type is None else llm_model_type
-        self.local_api_url = settings.API_URL if local_api_url is None else local_api_url
-        self.azureopenai_api_version = settings.AZUREOPENAI_API_VERSION \
-            if azureopenai_api_version is None and settings.AZUREOPENAI_API_VERSION is not None \
-            else azureopenai_api_version
 
     def get_llm(self):
         """
@@ -41,43 +37,29 @@ class LLMCreator():
             )
         # else, if llm_type is "huggingface"
         elif self.llm_type == "huggingface":
-            # default value is llama-2, with maximum output length 512
-            self.llm_model_type = "meta-llama/Llama-2-7b-chat-hf"
-            max_length = 512
-            if self.llm_model_type == 'GoogleFlan':
-                self.llm_model_type = 'google/flan-t5-base'
+            if self.llm_model_type == "google/flan-t5-base":
                 max_length = 512
             llm = HuggingFaceHub(repo_id=self.llm_model_type,
-                                 model_kwargs={"temperature": 0.1,
+                                 model_kwargs={"temperature": 0,
                                                "max_length": max_length}
                                  )
-        # else, if llm_type is "local_llm"
-        elif self.llm_type == "local_llm":
+        # else, if llm_type is "ollama"
+        elif self.llm_type == "ollama":
             logger.info("Use Local LLM")
             logger.info("Retrieving " + self.llm_model_type)
-            # If API URL is defined, use it
-            if self.local_api_url is not None:
-                logger.info("Using local api url " + self.local_api_url)
-                llm = Ollama(
-                    model=self.llm_model_type,
-                    base_url=self.local_api_url,
-                    callback_manager=CallbackManager([StreamingStdOutCallbackHandler()])
-                )
-            else:
-                llm = Ollama(
-                    model=self.llm_model_type,
-                    callback_manager=CallbackManager([StreamingStdOutCallbackHandler()])
-                )
+            llm = Ollama(
+                model=self.llm_model_type,
+                callback_manager=CallbackManager([StreamingStdOutCallbackHandler()])
+            )
             logger.info("Retrieved " + self.llm_model_type)
-        # else, if llm_type is "azureopenai"
-        elif self.llm_type == "azureopenai":
+        # else, if llm_type is "azurechatopenai"
+        elif self.llm_type == "azurechatopenai":
             logger.info("Use Azure OpenAI LLM")
             logger.info("Retrieving " + self.llm_model_type)
-            llm = AzureChatOpenAI(
-                azure_deployment=self.llm_model_type,
-                azure_endpoint=self.local_api_url,
-                api_version=self.azureopenai_api_version,
-            )
+            llm = AzureChatOpenAI(model=self.llm_model_type,
+                                  azure_deployment=os.environ["AZURE_OPENAI_LLM_DEPLOYMENT_NAME"],
+                                  api_version=os.environ["AZURE_OPENAI_API_VERSION"],
+                                  temperature=0)
             logger.info("Retrieved " + self.llm_model_type)
 
         return llm

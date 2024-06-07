@@ -15,10 +15,9 @@ class IngestUtils:
     This includes cutting text into chunks and cleaning text.
     """
 
-    def __init__(self, chunk_size: int, chunk_overlap: int, file_no: int, text_splitter_method: str):
+    def __init__(self, chunk_size: int, chunk_overlap: int, text_splitter_method: str):
         self.chunk_size = chunk_size
         self.chunk_overlap = chunk_overlap
-        self.file_no = file_no
         self.text_splitter_method = text_splitter_method
 
     def merge_hyphenated_words(self, text: str) -> str:
@@ -76,19 +75,12 @@ class IngestUtils:
     #     docs: List[docstore.Document] = []
     #     # loop over chunks
     #     for i, chunk in enumerate(chunks):
-    #         if self.file_no:
-    #             metadata_combined = {
-    #                 "file_no": self.file_no,
-    #                 "chunk_no": chunk_no,
-    #                 "source": f"F{self.file_no}-{chunk_no}"
-    #             }
-    #         else:
-    #             metadata_combined = {
-    #                 "page_number": page_num,
-    #                 "chunk": i,
-    #                 "source": f"p{page_num}-{i}",
-    #                 **metadata,
-    #             }
+    #         metadata_combined = {
+    #             "page_number": page_num,
+    #             "chunk": i,
+    #             "source": f"p{page_num}-{i}",
+    #             **metadata,
+    #         }
     #         doc = docstore.Document(
     #             page_content=chunk,
     #             metadata=metadata_combined
@@ -111,19 +103,12 @@ class IngestUtils:
             logger.info(f"Splitting page {page_num}")
             chunks = text_splitter.split_text(page)
             for i, chunk in enumerate(chunks):
-                if self.file_no:
-                    metadata_combined = {
-                        "file_no": self.file_no,
-                        "chunk_no": chunk_no,
-                        "source": f"F{self.file_no}-{chunk_no}"
-                    }
-                else:
-                    metadata_combined = {
-                        "page_number": page_num,
-                        "chunk": i,
-                        "source": f"p{page_num}-{i}",
-                        **metadata,
-                    }
+                metadata_combined = {
+                    "page_number": page_num,
+                    "chunk": i,
+                    "source": f"p{page_num}-{i}",
+                    **metadata,
+                }
                 doc = docstore.Document(
                     page_content=chunk,
                     metadata=metadata_combined

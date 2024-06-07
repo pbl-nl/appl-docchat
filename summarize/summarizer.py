@@ -2,10 +2,8 @@ import os
 from typing import List, Tuple
 from dotenv import load_dotenv
 import numpy as np
-from loguru import logger
 from sklearn.cluster import KMeans
 from langchain_core.prompts import PromptTemplate
-# from scipy import spatial
 # local imports
 import settings
 from ingest.ingester import Ingester
@@ -23,8 +21,7 @@ class Summarizer:
     """
     def __init__(self, collection_name: str, content_folder: str, vecdb_folder: str, summary_method: str,
                  embeddings_provider=None, embeddings_model=None, text_splitter_method=None,
-                 vecdb_type=None, chunk_size=None, chunk_overlap=None, local_api_url=None,
-                 file_no=None, llm_type=None, llm_model_type=None, azureopenai_api_version=None) -> None:
+                 vecdb_type=None, chunk_size=None, chunk_overlap=None, llm_type=None, llm_model_type=None) -> None:
         """
         When parameters are read from settings.py, object is initiated without parameter settings
         When parameters are read from GUI, object is initiated with parameter settings listed
@@ -41,20 +38,12 @@ class Summarizer:
         self.vecdb_type = settings.VECDB_TYPE if vecdb_type is None else vecdb_type
         self.chunk_size = settings.CHUNK_SIZE if chunk_size is None else chunk_size
         self.chunk_overlap = settings.CHUNK_OVERLAP if chunk_overlap is None else chunk_overlap
-        self.local_api_url = settings.API_URL \
-            if local_api_url is None and settings.API_URL is not None else local_api_url
-        self.file_no = file_no
         self.llm_type = settings.LLM_TYPE if llm_type is None else llm_type
         self.llm_model_type = settings.LLM_MODEL_TYPE if llm_model_type is None else llm_model_type
-        self.azureopenai_api_version = settings.AZUREOPENAI_API_VERSION \
-            if azureopenai_api_version is None and settings.AZUREOPENAI_API_VERSION is not None \
-            else azureopenai_api_version
 
         # get llm object
         self.llm = LLMCreator(self.llm_type,
-                              self.llm_model_type,
-                              self.local_api_url,
-                              self.azureopenai_api_version).get_llm()
+                              self.llm_model_type).get_llm()
 
     def get_centroids(self, embeddings: np.array) -> np.ndarray:
         """
@@ -76,7 +65,6 @@ class Summarizer:
 
         return centroids
 
-    # def nearest_neighbors(self, centroid: np.ndarray, embeddings: np.ndarray) -> Tuple[int, np.ndarray]:
     def nearest_neighbors(self, centroid: np.ndarray, collection: List) -> List[Tuple[int, np.ndarray]]:
         """
         Find the nearest neighbors to the centroids of the clusters of the embeddings
@@ -100,7 +88,6 @@ class Summarizer:
             chunk_ids = collection['ids'][i]
             chunk_text = collection['documents'][i]
             embedding = collection['embeddings'][i]
-            # distance = ut.euclidean_distance(data[i], point)
             distance = ut.cosine_similarity(embedding, centroid)
             distances.append((chunk_ids, chunk_text, distance))
         # sort result on distance
@@ -132,22 +119,16 @@ class Summarizer:
         chunk_tuples = []
         chunk_ids_processed = []
         for centroid in centroids:
-            # print(f"centroid = {centroid[:10]}")
             nearest_chunks = self.nearest_neighbors(centroid, collection)
             for nearest_chunk in nearest_chunks:
                 chunk_ids, chunk_text = nearest_chunk
-                # print(f"gc: ids of closest neighbour chunk = {chunk_ids}")
-                # print(f"gc: text of closest neighbour chunk = {chunk_text}")
                 # make sure that the indices are unique
                 if chunk_ids not in chunk_ids_processed:
                     chunk_ids_processed.append(chunk_ids)
                     chunk_tuples.append((int(chunk_ids), chunk_text))
 
         chunk_tuples.sort(key=lambda x: x[0])
-        # chunk_ids_sorted = [chunk_tuple[0] for chunk_tuple in chunk_tuples]
         chunk_texts_sorted = [chunk_tuple[1] for chunk_tuple in chunk_tuples]
-        # print(f"gc: chunk_ids_sorted = {chunk_ids_sorted}")
-        # print(f"gc: chunk_texts_sorted = {chunk_texts_sorted}")
 
         return chunk_texts_sorted
 
@@ -196,9 +177,7 @@ class Summarizer:
 
         # get embeddings object
         embeddings = EmbeddingsCreator(self.embeddings_provider,
-                                       self.embeddings_model,
-                                       self.local_api_url,
-                                       self.azureopenai_api_version).get_embeddings()
+                                       self.embeddings_model).get_embeddings()
 
         # get vector store object
         vector_store = VectorStoreCreator(self.vecdb_type).get_vectorstore(embeddings,
@@ -215,15 +194,10 @@ class Summarizer:
                                           include=["metadatas", "embeddings", "documents"])
 
             # get ids and texts for all chunks from the vector database, sorted by the numeric id
-            # chunks = []
             chunk_texts = []
             for idx in range(len(collection['ids'])):
-                # idx_id = collection['ids'][idx]
                 idx_text = collection['documents'][idx]
-                # chunks.append((int(idx_id), idx_text))
                 chunk_texts.append(idx_text)
-            # chunk_ids = [chunk[0] for chunk in chunks]
-            # chunk_texts = [chunk[1] for chunk in chunks]
 
             # if refine method is chosen
             if self.summary_method == "Refine":

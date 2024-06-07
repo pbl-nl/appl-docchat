@@ -20,7 +20,7 @@ class Querier:
     """
     def __init__(self, llm_type=None, llm_model_type=None, embeddings_provider=None, embeddings_model=None,
                  vecdb_type=None, chain_name=None, chain_type=None, chain_verbosity=None, search_type=None,
-                 score_threshold=None, chunk_k=None, local_api_url=None, azureopenai_api_version=None):
+                 score_threshold=None, chunk_k=None):
         load_dotenv()
         self.llm_type = settings.LLM_TYPE if llm_type is None else llm_type
         self.llm_model_type = settings.LLM_MODEL_TYPE if llm_model_type is None else llm_model_type
@@ -33,26 +33,17 @@ class Querier:
         self.search_type = settings.SEARCH_TYPE if search_type is None else search_type
         self.score_threshold = settings.SCORE_THRESHOLD if score_threshold is None else score_threshold
         self.chunk_k = settings.CHUNK_K if chunk_k is None else chunk_k
-        self.local_api_url = settings.API_URL \
-            if local_api_url is None and settings.API_URL is not None else local_api_url
         self.chat_history = []
         self.vector_store = None
-        self.azureopenai_api_version = settings.AZUREOPENAI_API_VERSION \
-            if azureopenai_api_version is None and settings.AZUREOPENAI_API_VERSION is not None \
-            else azureopenai_api_version
         self.chain = None
 
         # define llm
         self.llm = LLMCreator(self.llm_type,
-                              self.llm_model_type,
-                              self.local_api_url,
-                              self.azureopenai_api_version).get_llm()
+                              self.llm_model_type).get_llm()
 
         # define embeddings
         self.embeddings = EmbeddingsCreator(self.embeddings_provider,
-                                            self.embeddings_model,
-                                            self.local_api_url,
-                                            self.azureopenai_api_version).get_embeddings()
+                                            self.embeddings_model).get_embeddings()
 
     def make_chain(self, content_folder: str, vecdb_folder: str, search_filter=None) -> None:
         """
@@ -73,17 +64,7 @@ class Querier:
                                                                                 vecdb_folder)
         logger.info(f"Loaded vector store from folder {vecdb_folder}")
 
-        # get retriever with some search arguments
-        # # maximum number of chunks to retrieve
-        # search_kwargs = {"k": self.chunk_k}
-        # # filter, if set
-        # if search_filter is not None:
-        #     logger.info(f"querying vector store with filter {search_filter}")
-        #     search_kwargs["filter"] = search_filter
-        # if self.search_type == "similarity_score_threshold":
-        #     search_kwargs["score_threshold"] = self.score_threshold
-
-        # retriever = RetrieverCreator(vectorstore=self.vector_store, search_kwargs=search_kwargs).get_retriever()
+        # get retriever with search_filter
         retriever = RetrieverCreator(vectorstore=self.vector_store).get_retriever(search_filter)
 
         # get appropriate RAG prompt for querying
