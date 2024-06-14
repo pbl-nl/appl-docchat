@@ -128,6 +128,3 @@ class Ingester:
                     collection_ids = [int(id) for id in collection['ids']]
                     start_id = max(collection_ids) + 1
                 logger.info("Added files to vectorstore")
-
-            # save updated vector store to disk
-            vector_store.persist()

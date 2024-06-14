@@ -49,9 +49,9 @@ def get_relevant_files_in_folder(content_folder_path: str) -> List[str]:
     List[str]
         tuple of content folder path and vector database folder path
     """
-    files_in_folder = [f for f in os.listdir(content_folder_path) 
-                       if (os.path.isfile(os.path.join(content_folder_path, f)) and 
-                           os.path.splitext(f)[1] in [".docx", ".html", ".md", ".pdf", ".txt"])]
+    files_in_folder = [f for f in os.listdir(content_folder_path)
+                       if ((os.path.isfile(os.path.join(content_folder_path, f))) and
+                       (os.path.splitext(f)[1] in [".docx", ".html", ".md", ".pdf", ".txt"]))]
 
     return files_in_folder
 
