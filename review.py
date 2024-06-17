@@ -148,6 +148,7 @@ def synthesize_results(querier: Querier,
     Phase 2 of the review: synthesizes, per question, the results from phase 1
 
     Parameters
+
     ----------
     querier : Querier
         the Querier object
