@@ -87,6 +87,7 @@ class FileParser:
         metadata['Language'] = metadata['Language'] if 'Language' in metadata.keys() else self._detect_language(pages[0][1])
         return pages, metadata
 
+
     def parse_pymupdf(self, file_path: str) -> Tuple[str, List[Tuple[int, str]], Dict[str, str]]:
         """
         Extracts and return the page blocks and metadata from the PDF file
