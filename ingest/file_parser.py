@@ -87,7 +87,6 @@ class FileParser:
         metadata['Language'] = metadata['Language'] if 'Language' in metadata.keys() else self._detect_language(pages[0][1])
         return pages, metadata
 
-
     def parse_pymupdf(self, file_path: str) -> Tuple[str, List[Tuple[int, str]], Dict[str, str]]:
         """
         Extracts and return the page blocks and metadata from the PDF file
@@ -108,108 +107,102 @@ class FileParser:
         # doc_tags = pdf_analyzer.get_doc_tags(doc)
 
         # for each page in pdf file
-        blocks_and_pages = []
-        for i, page_num in enumerate(doc.pages()):
-
+        for i, page in enumerate(doc.pages()):
             first_block_of_page = True
             prv_block_text = ""
             prv_block_is_valid = True
             prv_block_is_paragraph = False
             # obtain the blocks
-            blocks   = page.get_text("blocks")
+            blocks = page.get_text("blocks")
+
+            # for each block
             for block in blocks:
-                blocks_and_pages.append((block, page_num)) 
-        
-        # for each block
-        for block, page in blocks_and_pages:
-            # only consider text blocks
-            # if block["type"] == 0:
-            if prv_block_text == "":
-                start_page = page_num
-            if block[6] == 0:
-                block_is_valid = True
-                block_is_pagenr = False
-                block_is_paragraph = False
-                # block_tag = pdf_analyzer.get_block_tag(doc_tags, i, block_id)
-                # block_text = pdf_analyzer.get_block_text(doc_tags, i, block_id)
-                block_text = block[4]
+                # only consider text blocks
+                # if block["type"] == 0:
+                if block[6] == 0:
+                    block_is_valid = True
+                    block_is_pagenr = False
+                    block_is_paragraph = False
+                    # block_tag = pdf_analyzer.get_block_tag(doc_tags, i, block_id)
+                    # block_text = pdf_analyzer.get_block_text(doc_tags, i, block_id)
+                    block_text = block[4]
 
-                # block text should not represent a page header or footer
-                pattern_pagenr = r'^\s*(\d+)([.\s]*)$|^\s*(\d+)([.\s]*)$'
-                if bool(re.match(pattern_pagenr, block_text)):
-                    block_is_pagenr = True
-                    block_is_valid = False
-                    # print(f"block {block[5]}: {block_text} is a page number")
+                    # block text should not represent a page header or footer
+                    pattern_pagenr = r'^\s*(\d+)([.\s]*)$|^\s*(\d+)([.\s]*)$'
+                    if bool(re.match(pattern_pagenr, block_text)):
+                        block_is_pagenr = True
+                        block_is_valid = False
+                        # print(f"block {block[5]}: {block_text} is a page number")
 
-                # block text should not represent a page header or footer containing a pipe character
-                # and some text
-                pattern_pagenr = r'^\s*(\d+)\s*\|\s*([\w\s]+)$|^\s*([\w\s]+)\s*\|\s*(\d+)$'
-                if bool(re.match(pattern_pagenr, block_text)):
-                    block_is_pagenr = True
-                    block_is_valid = False
-                    # print(f"block {block[5]}: {block_text} is a page number")
+                    # block text should not represent a page header or footer containing a pipe character
+                    # and some text
+                    pattern_pagenr = r'^\s*(\d+)\s*\|\s*([\w\s]+)$|^\s*([\w\s]+)\s*\|\s*(\d+)$'
+                    if bool(re.match(pattern_pagenr, block_text)):
+                        block_is_pagenr = True
+                        block_is_valid = False
+                        # print(f"block {block[5]}: {block_text} is a page number")
 
-                # # text must have "paragraph" tag
-                # if block_tag != "<p>":
-                #     block_is_valid = False
+                    # # text must have "paragraph" tag
+                    # if block_tag != "<p>":
+                    #     block_is_valid = False
 
-                # block text should not represent any form of paragraph title
-                pattern_paragraph = r'^\d+(\.\d+)*\s*.+$'
-                if bool(re.match(pattern_paragraph, block_text)):
-                    if not block_is_pagenr:
-                        block_is_paragraph = True
-                        # print(f"block {block[5]}: {block_text} is a paragraph")
+                    # block text should not represent any form of paragraph title
+                    pattern_paragraph = r'^\d+(\.\d+)*\s*.+$'
+                    if bool(re.match(pattern_paragraph, block_text)):
+                        if not block_is_pagenr:
+                            block_is_paragraph = True
+                            # print(f"block {block[5]}: {block_text} is a paragraph")
 
-                # if current block is content
-                if block_is_valid and (not block_is_paragraph):
-                    # print(f"block {block[5]} is valid and not a paragraph: {block_text} ")
-                    # and the previous block was a paragraph
-                    if prv_block_is_paragraph:
-                        # extend the paragraph block text with a newline character and the current block text
-                        block_text = prv_block_text + "\n" + block_text
-                    # but if the previous block was a content block
-                    else:
-                        if prv_block_is_valid and block_is_valid:
-                            # extend the content block text with a whitespace character and the current block text
-                            block_text = prv_block_text + " " + block_text
-                    # in both cases, set the previous block text to the current block text
-                    prv_block_text = block_text
-                # else if current block text is not content
-                else:
-                    # and the current block is not the very first block of the page
-                    if not first_block_of_page:
-                        # if previous block was content
-                        if prv_block_is_valid and (not prv_block_is_paragraph):
-                            # add text of previous block to pages together with page number
-                            pages.append((i, prv_block_text))
-                            print(f"added to page {i}: {prv_block_text}")
-                            # and empty the previous block text
-                            prv_block_text = ""
-                        # if previous block was not relevant
+                    # if current block is content
+                    if block_is_valid and (not block_is_paragraph):
+                        # print(f"block {block[5]} is valid and not a paragraph: {block_text} ")
+                        # and the previous block was a paragraph
+                        if prv_block_is_paragraph:
+                            # extend the paragraph block text with a newline character and the current block text
+                            block_text = prv_block_text + "\n" + block_text
+                        # but if the previous block was a content block
                         else:
-                            # just set the set the previous block text to the current block text
-                            prv_block_text = block_text
+                            if prv_block_is_valid and block_is_valid:
+                                # extend the content block text with a whitespace character and the current block text
+                                block_text = prv_block_text + " " + block_text
+                        # in both cases, set the previous block text to the current block text
+                        prv_block_text = block_text
+                    # else if current block text is not content
+                    else:
+                        # and the current block is not the very first block of the page
+                        if not first_block_of_page:
+                            # if previous block was content
+                            if prv_block_is_valid and (not prv_block_is_paragraph):
+                                # add text of previous block to pages together with page number
+                                pages.append((i, prv_block_text))
+                                print(f"added to page {i}: {prv_block_text}")
+                                # and empty the previous block text
+                                prv_block_text = ""
+                            # if previous block was not relevant
+                            else:
+                                # just set the set the previous block text to the current block text
+                                prv_block_text = block_text
 
-                # set previous block validity indicators to current block validity indicators
-                prv_block_is_valid = block_is_valid
-                # prv_block_is_pagenr = block_is_pagenr
-                prv_block_is_paragraph = block_is_paragraph
-                prv_block_text = block_text
+                    # set previous block validity indicators to current block validity indicators
+                    prv_block_is_valid = block_is_valid
+                    # prv_block_is_pagenr = block_is_pagenr
+                    prv_block_is_paragraph = block_is_paragraph
+                    prv_block_text = block_text
 
-                # set first_block_of_page to False
-                first_block_of_page = False
+                    # set first_block_of_page to False
+                    first_block_of_page = False
 
-        # end of page:
-        # if previous block was content
-        if prv_block_is_valid and (not prv_block_is_paragraph):
-            # add text of previous block to pages together with page number
-            pages.append((i, prv_block_text))
-            print(f"added to page {i}: {prv_block_text}")
+            # end of page:
+            # if previous block was content
+            if prv_block_is_valid and (not prv_block_is_paragraph):
+                # add text of previous block to pages together with page number
+                pages.append((i, prv_block_text))
+                print(f"added to page {i}: {prv_block_text}")
 
-        # tabs = page.find_tables() # locate and extract any tables on page
-        # print(f"{len(tabs.tables)} table found on {page}") # display number of found tables
-        # if tabs.tables:  # at least one table found?
-        #     pprint.pprint(tabs[0].extract())  # print content of first table
+            # tabs = page.find_tables() # locate and extract any tables on page
+            # print(f"{len(tabs.tables)} table found on {page}") # display number of found tables
+            # if tabs.tables:  # at least one table found?
+            #     pprint.pprint(tabs[0].extract())  # print content of first table
         metadata['Language'] = metadata['Language'] if 'Language' in metadata.keys() else self._detect_language(pages[0][1])
         logger.info(f"The language detected for this document is {metadata['Language']}")
         return pages, metadata
