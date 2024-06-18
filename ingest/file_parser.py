@@ -6,8 +6,8 @@ from langchain_community.document_loaders import TextLoader
 from langchain_community.document_loaders import UnstructuredWordDocumentLoader
 from pypdf import PdfReader
 import fitz
-from unidecode import unidecode
-import pprint
+# from unidecode import unidecode
+# import pprint
 from langdetect import detect
 # local imports
 import utils as ut
