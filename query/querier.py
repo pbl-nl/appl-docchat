@@ -1,6 +1,6 @@
-from typing import Dict, Tuple, List, Any
+from typing import Dict, Any
 from dotenv import load_dotenv
-from langchain.chains import ConversationalRetrievalChain
+from langchain.chains.conversational_retrieval.base import ConversationalRetrievalChain
 from langchain.schema import AIMessage, HumanMessage
 from langchain_core.prompts import PromptTemplate
 from loguru import logger
@@ -45,7 +45,7 @@ class Querier:
         self.embeddings = EmbeddingsCreator(self.embeddings_provider,
                                             self.embeddings_model).get_embeddings()
 
-    def make_chain(self, content_folder: str, vecdb_folder: str, search_filter=None) -> None:
+    def make_chain(self, content_folder: str, vecdb_folder: str, search_filter: Dict = None) -> None:
         """
         Creates the chain that is used for question answering
 
@@ -55,7 +55,7 @@ class Querier:
             the content folder
         vecdb_folder : str
             the folder of the vector databse that is associated with the content folder
-        search_filter : _type_, optional
+        search_filter : Dict, optional
             _description_, by default None
         """
         # get vector store
@@ -88,10 +88,20 @@ class Querier:
             )
         logger.info("Executed Querier.make_chain")
 
-    def ask_question(self, question: str) -> Tuple[Dict[str, Any], List[float]]:
+    def ask_question(self, question: str) -> Dict[str, Any]:
         """
         Finds most similar docs to prompt in the vectorstore and determines the response
         If the closest doc found is not similar enough to the prompt, any answer from the LLM is overruled by a message
+
+        Parameters
+        ----------
+        question : str
+            the question that was asked by the user
+
+        Returns
+        -------
+        Dict[str, Any]
+            the response from the chain, containing the answer to the question and the sources used
         """
         logger.info(f"current question: {question}")
         logger.info(f"current chat history: {self.chat_history}")
@@ -112,10 +122,20 @@ class Querier:
         """
         self.chat_history = []
 
-    def get_meta_data_by_file_name(self, filename: str) -> dict[str: str]:
+    def get_meta_data_by_file_name(self, filename: str) -> Dict[str: str]:
         """
         Returns the meta data of a specific file
         Need to run make_chain first
+
+        Parameters
+        ----------
+        filename : str
+            the filename used to refer to get all chunk metadata
+
+        Returns
+        -------
+        Dict[str: str]
+            chunks metadata like filename, pagenumber, etc
         """
         # sources keys: ['ids', 'embeddings', 'metadatas', 'documents', 'uris', 'data']
         sources = self.vector_store.get()
