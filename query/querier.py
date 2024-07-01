@@ -122,7 +122,7 @@ class Querier:
         """
         self.chat_history = []
 
-    def get_meta_data_by_file_name(self, filename: str) -> Dict[str: str]:
+    def get_meta_data_by_file_name(self, filename: str) -> Dict[str, str]:
         """
         Returns the meta data of a specific file
         Need to run make_chain first
