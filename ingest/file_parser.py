@@ -8,7 +8,7 @@ from pypdf import PdfReader
 import fitz
 # from unidecode import unidecode
 # import pprint
-from langdetect import detect
+from langdetect import detect, LangDetectException
 # local imports
 import utils as ut
 import settings_template as settings
@@ -248,5 +248,13 @@ class FileParser:
         Detects language based on the first X number of characters
         '''
         text_snippet = text[:number_of_characters] if len(text) > number_of_characters else text
-        return detect(text_snippet)
+        if not text_snippet.strip():
+            # Handle the case where the text snippet is empty or only contains whitespace
+            return 'unknown'
+        try:
+            return detect(text_snippet)
+        except LangDetectException as e:
+            if 'No features in text' in str(e):
+                # Handle the specific error where no features are found in the text
+                return 'unknown'
 
