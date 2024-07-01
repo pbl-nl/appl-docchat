@@ -38,7 +38,7 @@ CHAIN_VERBOSITY = False
 # LLM_TYPE must be "azurechatopenai" in case of using the Azure OpenAI Services API
 LLM_TYPE = "azurechatopenai"
 
-# - LLM_MODEL_TYPE must be one of: "gpt35", "gpt35_16", "gpt4" if LLM_TYPE is "chatopenai". Default is "gpt35"
+# - LLM_MODEL_TYPE must be one of: "gpt35", "gpt35_16", "gpt4", "gpt_4o" if LLM_TYPE is "chatopenai". Default is "gpt35"
 #   Context window sizes are currently: "gpt35": 4097 tokens (equivalent to ~3000 words), "gpt35_16": 16385 tokens, "gpt4": 8192 tokens
 # - LLM_MODEL_TYPE must be one of: "meta-llama/Llama-2-7b-chat-hf", "google/flan-t5-base" if LLM_TYPE is "huggingface"
 #   note: "meta-llama/Llama-2-7b-chat-hf" requires Huggingface Pro Account and access to the llama2 model https://huggingface.co/meta-llama/Llama-2-7b-chat-hf

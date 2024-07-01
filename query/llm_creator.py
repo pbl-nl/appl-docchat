@@ -30,6 +30,9 @@ class LLMCreator():
                 self.llm_model_type = "gpt-3.5-turbo-16k"
             elif self.llm_model_type == "gpt4":
                 self.llm_model_type = "gpt-4"
+            elif self.llm_model_type == 'gpt_4o':
+                self.llm_model_type == 'gpt-4o'
+
             llm = ChatOpenAI(
                 client=None,
                 model=self.llm_model_type,
