@@ -43,4 +43,4 @@ jobs:
         run: pip install autopep8
 
       - name: Run formatter
-        run: autopep8 --max-line-length 100 -a -a --exit-code --diff --recursive .
+        run: autopep8 --max-line-length 120 -a -a --exit-code --diff --recursive .
