@@ -43,7 +43,7 @@ class TestIngester(unittest.TestCase):
 
 
 
-class TestQuery(unittest.TestCase):
+class TestQuerier(unittest.TestCase):
     '''test the query of different providers'''
 
     def test_openai(self):
