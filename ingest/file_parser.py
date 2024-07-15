@@ -68,24 +68,24 @@ class FileParser:
         metadata['Language'] = metadata['Language'] if 'Language' in metadata.keys() else self._detect_language(raw_text)
         return pages, metadata
 
-    def parse_pdf(self, file_path: str) -> Tuple[List[Tuple[int, str]], Dict[str, str]]:
-        """
-        Extract and return the pages and metadata from the PDF file
-        """
-        with open(file_path, "rb") as pdf_file:
-            logger.info("Extracting metadata")
-            reader = PdfReader(pdf_file)
-            metadata_text = reader.metadata
-            logger.info(f"{getattr(metadata_text, 'title', 'no title')}")
-            metadata = self.get_metadata(file_path, metadata_text)
-            print('METADATA: ', metadata)
-            logger.info("Extracting pages")
-            for _, page in enumerate(reader.pages):
-                page_text = unidecode(page.extract_text()).strip()
-                print(f"{page_text}\n")
-            pages = [(i + 1, p.extract_text()) for i, p in enumerate(reader.pages) if p.extract_text().strip()]
-        metadata['Language'] = metadata['Language'] if 'Language' in metadata.keys() else self._detect_language(pages[0][1])
-        return pages, metadata
+    # def parse_pdf(self, file_path: str) -> Tuple[List[Tuple[int, str]], Dict[str, str]]:
+    #     """
+    #     Extract and return the pages and metadata from the PDF file
+    #     """
+    #     with open(file_path, "rb") as pdf_file:
+    #         logger.info("Extracting metadata")
+    #         reader = PdfReader(pdf_file)
+    #         metadata_text = reader.metadata
+    #         logger.info(f"{getattr(metadata_text, 'title', 'no title')}")
+    #         metadata = self.get_metadata(file_path, metadata_text)
+    #         print('METADATA: ', metadata)
+    #         logger.info("Extracting pages")
+    #         for _, page in enumerate(reader.pages):
+    #             page_text = unidecode(page.extract_text()).strip()
+    #             print(f"{page_text}\n")
+    #         pages = [(i + 1, p.extract_text()) for i, p in enumerate(reader.pages) if p.extract_text().strip()]
+    #     metadata['Language'] = metadata['Language'] if 'Language' in metadata.keys() else self._detect_language(pages[0][1])
+    #     return pages, metadata
 
     def parse_pymupdf(self, file_path: str) -> Tuple[str, List[Tuple[int, str]], Dict[str, str]]:
         """
