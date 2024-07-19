@@ -38,3 +38,6 @@ SYNTHESIZE_PROMPT_TEMPLATE = dedent("""For the question: \n {question} \n
     Please synthesize/summarize the text below. Hereby cluster which papers have things in common and in which way 
     the clusters differ. Finally, summarize the clusters. \n\n
     Answer: {answer_string}""")
+
+REVIEW_PROMPT_TEMPLATE = dedent(""" {your_question} Follow the following instructions! Answer this question only with "yes" or "no", DO NOT RETURN ANY OTHER TEXT OTHER THEN YES OR NO! Check your answer three times to make sure that you follow the insturtions!""")
+                                
