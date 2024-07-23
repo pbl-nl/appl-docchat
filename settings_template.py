@@ -38,20 +38,20 @@ CHAIN_VERBOSITY = False
 # LLM_TYPE must be "azurechatopenai" in case of using the Azure OpenAI Services API
 LLM_TYPE = "azurechatopenai"
 
-# - LLM_MODEL_TYPE must be one of: "gpt35", "gpt35_16", "gpt4", "gpt_4o" if LLM_TYPE is "chatopenai". Default is "gpt35"
-#   Context window sizes are currently: "gpt35": 4097 tokens (equivalent to ~3000 words), "gpt35_16": 16385 tokens, "gpt4": 8192 tokens
+# - LLM_MODEL_TYPE must be one of: "gpt35", "gpt35_16", "gpt4" or "gpt_4o" if LLM_TYPE is "chatopenai". Default is "gpt35"
+#   Context window sizes are currently: "gpt35": 4097 tokens (equivalent to ~3000 words), "gpt35_16": 16385 tokens, "gpt4": 8192 tokens, "gpt_4o": 128000 tokens
 # - LLM_MODEL_TYPE must be one of: "meta-llama/Llama-2-7b-chat-hf", "google/flan-t5-base" if LLM_TYPE is "huggingface"
 #   note: "meta-llama/Llama-2-7b-chat-hf" requires Huggingface Pro Account and access to the llama2 model https://huggingface.co/meta-llama/Llama-2-7b-chat-hf
 #   Context window sizes are currently: "google/flan-t5-base": ? tokens, "meta-llama/Llama-2-7b-chat-hf": ? tokens
 # - LLM_MODEL_TYPE must be one of your Ollama downloaded models, e.g. "llama3", "orca-mini" or "zephyr" if LLM_TYPE is "ollama"
 #   See also https://ollama.ai/library
 # - LLM_MODEL_TYPE must be one of: "gpt-35-turbo" if LLM_TYPE is "azurechatopenai"
-LLM_MODEL_TYPE = "gpt-35-turbo"
+LLM_MODEL_TYPE = "gpt35"
 
 # EMBEDDINGS_PROVIDER must be one of: "openai", "huggingface", "local_embeddings", "azureopenai"
-EMBEDDINGS_PROVIDER = "azureopenai"
+EMBEDDINGS_PROVIDER = "openai"
 
-# - EMBEDDINGS_MODEL must be one of: "text-embedding-ada-002" if EMBEDDINGS_PROVIDER is "openai"
+# - EMBEDDINGS_MODEL must be one of: "text-embedding-ada-002", "text-embedding-3-small" or "text-embedding-3-large" if EMBEDDINGS_PROVIDER is "openai"
 # - EMBEDDINGS_MODEL must be one of: "all-mpnet-base-v2" if EMBEDDINGS_PROVIDER is "huggingface"
 # - EMBEDDINGS_MODEL must be one of the locally downloaded models, e.g. "llama3" if EMBEDDINGS_PROVIDER is "local_embeddings"
 # - EMBEDDINGS_MODEL must be the embeddings deployment name if EMBEDDINGS_PROVIDER is "azureopenai"
@@ -74,6 +74,8 @@ SEARCH_TYPE = "similarity_score_threshold"
 # SCORE_THRESHOLD represents the similarity value that chunks must exceed to qualify for the context.
 # Value must be between 0.0 and 1.0, e.g. 0.8
 # This value is only relevant when SEARCH_TYPE has been set to "similarity_score_threshold"
+# When embedding model text-embedding-ada-002 is used, a value of 0.8 is reasonable
+# When embedding model text-embedding-3-large is used, a value of 0.5 is reasonable
 SCORE_THRESHOLD = 0.8
 
 # VECDB_TYPE must be one of: "chromadb",
@@ -91,7 +93,10 @@ CHUNK_K = 4
 CHUNK_OVERLAP = 200
 
 # RETRIEVER_TYPE represents the type of retriever that is used to extract chunks from the vectorstore
-# Value must be one of "vectorstore"
+# Value must be one of:
+# "vectorstore": in case a purely semantic search is done in the vectorstore (dense vectors)
+# "hybrid": in case a hybrid search is done, the result will be a combination of vectorstore semantic search (dense
+# vectors) and BM25 keyword search (sparse vectors)
 RETRIEVER_TYPE = "vectorstore"
 
 # MULTIQUERY indicator for whether or not defining multiple queries from users' query
@@ -99,7 +104,8 @@ RETRIEVER_TYPE = "vectorstore"
 MULTIQUERY = False
 
 # RETRIEVER_PROMPT represents the type of retriever that is used to extract chunks from the vectorstore
-# value must be one of "openai_rag", "openai_rag_concise", "openai_rag_language",
+# value must be one of "openai_rag", "openai_rag_concise", "openai_rag_language", "yesno""
+# see file prompt_templates.py for explanation
 RETRIEVER_PROMPT_TEMPLATE = "openai_rag"
 
 # SUMMARIZER_CENTROIDS represents the number of centroids that is chosen for the "Map Reduce" summarization method.
