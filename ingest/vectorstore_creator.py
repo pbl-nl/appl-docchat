@@ -28,11 +28,18 @@ class VectorStoreCreator():
             Chroma vector database object
         """
         if self.vecdb_type == "chromadb":
-            vectorstore = Chroma(
-                collection_name=content_folder,
-                embedding_function=embeddings,
-                persist_directory=vecdb_folder,
-                collection_metadata={"hnsw:space": "cosine"}
-                )
+            if vecdb_folder is not None:
+                vectorstore = Chroma(
+                    collection_name=content_folder,
+                    embedding_function=embeddings,
+                    persist_directory=vecdb_folder,
+                    collection_metadata={"hnsw:space": "cosine"}
+                    )
+            else:
+                vectorstore = Chroma(
+                    collection_name=content_folder,
+                    embedding_function=embeddings,
+                    collection_metadata={"hnsw:space": "cosine"}
+                    )
 
         return vectorstore
