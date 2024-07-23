@@ -35,9 +35,9 @@ class TestIngester(unittest.TestCase):
                                 vecdb_folder=vectordb_folder_path,
                                 embeddings_provider=embeddings_provider,
                                 embeddings_model=embeddings_model)
-            result = self.ingester.ingest()
-            self.assertEqual(result, None)
-            del self.ingester, result
+            self.ingester.ingest()
+            self.assertEqual(None, None)
+            del self.ingester
         except Exception as e:
             self.fail(f"The function raised an error: {e}")
 

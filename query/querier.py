@@ -74,6 +74,8 @@ class Querier:
             current_template = pr.OPENAI_RAG_CONCISE_TEMPLATE
         elif settings.RETRIEVER_PROMPT_TEMPLATE == "openai_rag_language":
             current_template = pr.OPENAI_RAG_LANGUAGE_TEMPLATE
+        elif settings.RETRIEVER_PROMPT_TEMPLATE == "yesno":
+            current_template = pr.YES_NO_TEMPLATE
         prompt = PromptTemplate.from_template(template=current_template)
 
         # get chain
