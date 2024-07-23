@@ -100,6 +100,7 @@ def generate_answer(
 
 
 def create_answers_for_folder(
+    synthesis: str,
     review_files: List[str],
     review_questions: List[Tuple[int, str, str]],
     content_folder_name: str,
@@ -152,13 +153,14 @@ def create_answers_for_folder(
             cntrow += 1
             # Generate answer
             answer, sources = generate_answer(querier, review_question)
-            answer_plus_name = f"This answer is from {metadata['filename']}:\n {answer}"
+            answer_plus_document_reference = f"This answer is from {metadata['filename']}:\n {answer}"
+            final_answer = answer_plus_document_reference if synthesis.lower() == "y" else answer
             df_result.loc[cntrow] = [
                 review_file,
                 review_question[0],
                 review_question[1],
                 review_question[2],
-                answer_plus_name,
+                final_answer,
                 sources,
             ]
     # sort on question, then on document
@@ -266,6 +268,7 @@ def main() -> None:
         )
     else:
         create_answers_for_folder(
+            synthesis,
             review_files,
             review_questions,
             content_folder_name,
