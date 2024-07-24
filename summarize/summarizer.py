@@ -21,7 +21,7 @@ class Summarizer:
     """
     def __init__(self, collection_name: str, content_folder: str, vecdb_folder: str, summary_method: str,
                  embeddings_provider=None, embeddings_model=None, text_splitter_method=None,
-                 vecdb_type=None, chunk_size=None, chunk_overlap=None, llm_type=None, llm_model_type=None) -> None:
+                 vecdb_type=None, chunk_size=None, chunk_overlap=None, llm_provider=None, llm_model=None) -> None:
         """
         When parameters are read from settings.py, object is initiated without parameter settings
         When parameters are read from GUI, object is initiated with parameter settings listed
@@ -38,12 +38,12 @@ class Summarizer:
         self.vecdb_type = settings.VECDB_TYPE if vecdb_type is None else vecdb_type
         self.chunk_size = settings.CHUNK_SIZE if chunk_size is None else chunk_size
         self.chunk_overlap = settings.CHUNK_OVERLAP if chunk_overlap is None else chunk_overlap
-        self.llm_type = settings.LLM_TYPE if llm_type is None else llm_type
-        self.llm_model_type = settings.LLM_MODEL_TYPE if llm_model_type is None else llm_model_type
+        self.llm_provider = settings.LLM_PROVIDER if llm_provider is None else llm_provider
+        self.llm_model = settings.LLM_MODEL if llm_model is None else llm_model
 
         # get llm object
-        self.llm = LLMCreator(self.llm_type,
-                              self.llm_model_type).get_llm()
+        self.llm = LLMCreator(self.llm_provider,
+                              self.llm_model).get_llm()
 
     def get_centroids(self, embeddings: np.array) -> np.ndarray:
         """
