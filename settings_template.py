@@ -1,28 +1,28 @@
-# relative filepath of logo in user interface, e.g. "./images/nmdc_logo.png"
+# filepath of logo in Streamlit UI
 APP_LOGO = "./images/b30.png"
 
-# relative filepath of text file with content for application explanation in Streamlit UI, e.g. "./info/explanation.txt"
+# filepath of text file with content for application explanation in Streamlit UI
 APP_INFO = "./info/explanation.txt"
 
-# header in Streamlit UI, e.g. "ChatNMDC: chat with your documents"
+# header in Streamlit UI
 APP_HEADER = "ChatPBL"
 
-# relative filepath of folder with input documents, e.g. "./docs"
+# filepath of folder with input documents, e.g. "./docs"
 DOC_DIR = "./docs"
 
-# relative filepath of folder with chunks, e.g. "./chunks"
+# filepath of folder with chunks, e.g. "./chunks"
 CHUNK_DIR = "./chunks"
 
-# relative filepath of persistent vector databases, e.g. "./vector_stores"
+# filepath of persistent vector databases, e.g. "./vector_stores"
 VECDB_DIR = "./vector_stores"
 
-# relative filepath of evaluation results folder, e.g. "./evaluate"
+# filepath of evaluation results folder, e.g. "./evaluate"
 EVAL_DIR = "./evaluate"
 
-# header in Streamlit evaluation UI, e.g. "ChatNMDC: evaluation"
+# header in Streamlit evaluation UI
 EVAL_APP_HEADER = "ChatPBL: evaluation"
 
-# content for evaluation explanation in evaluation user interface, e.g. "./info/evaluation_explanation.txt"
+# filepath of text file with content for evaluation explanation in evaluation UI
 EVAL_APP_INFO = "./info/evaluation_explanation.txt"
 
 # filename of json file with question and answer lists, e.g. "eval.json"
@@ -32,29 +32,42 @@ EVAL_FILE_NAME = "eval.json"
 CHAIN_VERBOSITY = False
 
 # ######### THE SETTINGS BELOW CAN BE USED FOR TESTING AND CUSTOMIZED TO YOUR PREFERENCE ##########
-# LLM_TYPE must be "chatopenai" in case of using the OpenAI API
+# LLM_TYPE must be "openai" in case of using the OpenAI API
 # LLM_TYPE must be "huggingface" in case of using the Huggingface API
 # LLM_TYPE must be "ollama" in case of using a downloaded Ollama LLM
-# LLM_TYPE must be "azurechatopenai" in case of using the Azure OpenAI Services API
-LLM_TYPE = "azurechatopenai"
+# LLM_TYPE must be "azureopenai" in case of using the Azure OpenAI Services API
+LLM_PROVIDER = "openai"
 
-# - LLM_MODEL_TYPE must be one of: "gpt35", "gpt35_16", "gpt4" or "gpt_4o" if LLM_TYPE is "chatopenai". Default is "gpt35"
-#   Context window sizes are currently: "gpt35": 4097 tokens (equivalent to ~3000 words), "gpt35_16": 16385 tokens, "gpt4": 8192 tokens, "gpt_4o": 128000 tokens
-# - LLM_MODEL_TYPE must be one of: "meta-llama/Llama-2-7b-chat-hf", "google/flan-t5-base" if LLM_TYPE is "huggingface"
-#   note: "meta-llama/Llama-2-7b-chat-hf" requires Huggingface Pro Account and access to the llama2 model https://huggingface.co/meta-llama/Llama-2-7b-chat-hf
-#   Context window sizes are currently: "google/flan-t5-base": ? tokens, "meta-llama/Llama-2-7b-chat-hf": ? tokens
-# - LLM_MODEL_TYPE must be one of your Ollama downloaded models, e.g. "llama3", "orca-mini" or "zephyr" if LLM_TYPE is "ollama"
+# - If LLM_TYPE is "openai", LLM_MODEL_TYPE must be one of:
+#   "gpt-3.5-turbo", context window size = 4097 tokens (equivalent to ~3000 words)
+#   "gpt-3.5-turbo-16k", context window size = 16385 tokens
+#   "gpt-4", context window size = 8192 tokens
+#   "gpt-4o", context window size = 128000 tokens
+# The default llm is "gpt-3.5-turbo"
+# - if LLM_TYPE is "huggingface", LLM_MODEL_TYPE should be one of the models as defined on Huggingface,
+#   e.g. one of: "meta-llama/Llama-2-7b-chat-hf", "google/flan-t5-base"
+#   See Huggingface documentation for context window sizes
+#   note: "meta-llama/Llama-2-7b-chat-hf" requires Huggingface Pro Account and access to the llama2 model,
+#   see https://huggingface.co/meta-llama/Llama-2-7b-chat-hf
+# - If LLM_TYPE is "ollama", LLM_MODEL_TYPE must be one of your Ollama downloaded models, e.g.
+#   "llama3"
+#   "orca-mini"
+#   "zephyr"
 #   See also https://ollama.ai/library
-# - LLM_MODEL_TYPE must be one of: "gpt-35-turbo" if LLM_TYPE is "azurechatopenai"
-LLM_MODEL_TYPE = "gpt35"
+# - If LLM_TYPE is "azureopenai", LLM_MODEL_TYPE must be one of the LLM models deployed, e.g.: "gpt-35-turbo"
+LLM_MODEL = "gpt-3.5-turbo"
 
 # EMBEDDINGS_PROVIDER must be one of: "openai", "huggingface", "local_embeddings", "azureopenai"
 EMBEDDINGS_PROVIDER = "openai"
 
-# - EMBEDDINGS_MODEL must be one of: "text-embedding-ada-002", "text-embedding-3-small" or "text-embedding-3-large" if EMBEDDINGS_PROVIDER is "openai"
-# - EMBEDDINGS_MODEL must be one of: "all-mpnet-base-v2" if EMBEDDINGS_PROVIDER is "huggingface"
-# - EMBEDDINGS_MODEL must be one of the locally downloaded models, e.g. "llama3" if EMBEDDINGS_PROVIDER is "local_embeddings"
-# - EMBEDDINGS_MODEL must be the embeddings deployment name if EMBEDDINGS_PROVIDER is "azureopenai"
+# - If EMBEDDINGS_PROVIDER is "openai", EMBEDDINGS_MODEL must be one of:
+#   "text-embedding-ada-002"
+#   "text-embedding-3-small"
+#   "text-embedding-3-large"
+# - If EMBEDDINGS_PROVIDER is "huggingface", EMBEDDINGS_MODEL must be one of: "all-mpnet-base-v2"
+# - If EMBEDDINGS_PROVIDER is "local_embeddings", EMBEDDINGS_MODEL must be one of the locally downloaded models, e.g.
+#   "llama3"
+# - If EMBEDDINGS_PROVIDER is "azureopenai", EMBEDDINGS_MODEL must be the embeddings deployment name
 EMBEDDINGS_MODEL = "text-embedding-ada-002"
 
 # TEXT_SPLITTER_METHOD represents the way in which raw text chunks are created, must be one of:
@@ -104,7 +117,7 @@ RETRIEVER_TYPE = "vectorstore"
 MULTIQUERY = False
 
 # RETRIEVER_PROMPT represents the type of retriever that is used to extract chunks from the vectorstore
-# value must be one of "openai_rag", "openai_rag_concise", "openai_rag_language", "yesno""
+# value must be one of "openai_rag", "openai_rag_concise", "openai_rag_language", "yesno"
 # see file prompt_templates.py for explanation
 RETRIEVER_PROMPT_TEMPLATE = "openai_rag"
 
