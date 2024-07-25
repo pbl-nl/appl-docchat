@@ -37,7 +37,9 @@ def store_evaluation_result(df: pd.DataFrame, content_folder_name: str, evaluati
     df.to_csv(path, sep="\t", index=False)
 
 
-def ingest_or_load_documents(content_folder_name: str, content_folder_path: str, vectordb_folder_path: str) -> None:
+def ingest_or_load_documents(content_folder_name: str,
+                             content_folder_path: str,
+                             vectordb_folder_path: str) -> None:
     """
     ingests documents and creates vector store or just loads documents if vector store already exists
 
@@ -53,7 +55,9 @@ def ingest_or_load_documents(content_folder_name: str, content_folder_path: str,
     # if documents in source folder path are not ingested yet
     if not os.path.exists(vectordb_folder_path):
         # ingest documents
-        ingester = Ingester(content_folder_name, content_folder_path, vectordb_folder_path)
+        ingester = Ingester(collection_name=content_folder_name,
+                            content_folder=content_folder_path,
+                            vecdb_folder=vectordb_folder_path)
         ingester.ingest()
         logger.info(f"Created vector store in folder {vectordb_folder_path}")
     else:

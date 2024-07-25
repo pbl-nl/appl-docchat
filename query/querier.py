@@ -45,7 +45,10 @@ class Querier:
         self.embeddings = EmbeddingsCreator(self.embeddings_provider,
                                             self.embeddings_model).get_embeddings()
 
-    def make_chain(self, content_folder: str, vecdb_folder: str, search_filter: Dict = None) -> None:
+    def make_chain(self,
+                   content_folder: str,
+                   vecdb_folder: str,
+                   search_filter: Dict = None) -> None:
         """
         Creates the chain that is used for question answering
 
