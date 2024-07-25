@@ -231,9 +231,9 @@ def check_vectordb(my_querier: Querier,
         my_spinner_message = f'''Checking if vector database needs an update for folder {my_folder_name_selected}.
                                  This may take a while, please wait...'''
     with st.spinner(my_spinner_message):
-        ingester = Ingester(my_folder_name_selected,
-                            my_folder_path_selected,
-                            my_vecdb_folder_path_selected)
+        ingester = Ingester(collection_name=my_folder_name_selected,
+                            content_folder=my_folder_path_selected,
+                            vecdb_folder=my_vecdb_folder_path_selected)
         ingester.ingest()
 
     # create a new chain based on the new source folder
