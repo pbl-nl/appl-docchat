@@ -3,9 +3,12 @@
 # global imports
 import unittest
 import os
-import sys
-import shutil
+import sys 
+import shutil  
+from pathlib import Path
+
 # local imports
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from ingest.ingester import Ingester
 from query.querier import Querier
 import utils as ut
