@@ -18,12 +18,12 @@ class Querier:
     When parameters are read from settings.py, object is initiated without parameter settings
     When parameters are read from GUI, object is initiated with parameter settings listed
     """
-    def __init__(self, llm_type=None, llm_model_type=None, embeddings_provider=None, embeddings_model=None,
+    def __init__(self, llm_provider=None, llm_model=None, embeddings_provider=None, embeddings_model=None,
                  vecdb_type=None, chain_name=None, chain_type=None, chain_verbosity=None, search_type=None,
                  score_threshold=None, chunk_k=None):
         load_dotenv()
-        self.llm_type = settings.LLM_TYPE if llm_type is None else llm_type
-        self.llm_model_type = settings.LLM_MODEL_TYPE if llm_model_type is None else llm_model_type
+        self.llm_provider = settings.LLM_PROVIDER if llm_provider is None else llm_provider
+        self.llm_model = settings.LLM_MODEL if llm_model is None else llm_model
         self.embeddings_provider = settings.EMBEDDINGS_PROVIDER if embeddings_provider is None else embeddings_provider
         self.embeddings_model = settings.EMBEDDINGS_MODEL if embeddings_model is None else embeddings_model
         self.vecdb_type = settings.VECDB_TYPE if vecdb_type is None else vecdb_type
@@ -38,14 +38,17 @@ class Querier:
         self.chain = None
 
         # define llm
-        self.llm = LLMCreator(self.llm_type,
-                              self.llm_model_type).get_llm()
+        self.llm = LLMCreator(self.llm_provider,
+                              self.llm_model).get_llm()
 
         # define embeddings
         self.embeddings = EmbeddingsCreator(self.embeddings_provider,
                                             self.embeddings_model).get_embeddings()
 
-    def make_chain(self, content_folder: str, vecdb_folder: str, search_filter: Dict = None) -> None:
+    def make_chain(self,
+                   content_folder: str,
+                   vecdb_folder: str,
+                   search_filter: Dict = None) -> None:
         """
         Creates the chain that is used for question answering
 

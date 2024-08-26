@@ -13,7 +13,7 @@ import prompts.prompt_templates as pr
 
 
 def ingest_or_load_documents(
-    content_folder_name: str, content_folder_path: str, vectordb_folder_path: str
+    content_folder_name: str, content_folder_path: str, vecdb_folder_path: str
 ) -> None:
     """
     Depending on whether the vector store already exists, files will be chunked and stored in vectorstore or not
@@ -24,17 +24,17 @@ def ingest_or_load_documents(
         the name of the folder with content
     content_folder_path : str
         the full path of the folder with content
-    vectordb_folder_path : str
+    vecdb_folder_path : str
         the full path of the folder with the vector stores
     """
     # if documents in source folder path are not ingested yet
-    if not os.path.exists(vectordb_folder_path):
+    if not os.path.exists(vecdb_folder_path):
         # ingest documents
-        ingester = Ingester(
-            content_folder_name, content_folder_path, vectordb_folder_path
-        )
+        ingester = Ingester(collection_name=content_folder_name,
+                            content_folder=content_folder_path,
+                            vecdb_folder=vecdb_folder_path)
         ingester.ingest()
-        logger.info(f"Created vector store in folder {vectordb_folder_path}")
+        logger.info(f"Created vector store in folder {vecdb_folder_path}")
     else:
         logger.info(f"Vector store already exists for folder {content_folder_name}")
 
@@ -105,7 +105,7 @@ def create_answers_for_folder(
     review_questions: List[Tuple[int, str, str]],
     content_folder_name: str,
     querier: Querier,
-    vectordb_folder_path: str,
+    vecdb_folder_path: str,
     output_path: os.PathLike,
 ) -> None:
     """
@@ -121,7 +121,7 @@ def create_answers_for_folder(
         name of the document folder
     querier : Querier
         the Querier object
-    vectordb_folder_path : str
+    vecdb_folder_path : str
         path of the vector database
     output_path : os.PathLike
         path of the output file
@@ -142,7 +142,7 @@ def create_answers_for_folder(
         # create the query chain with a search filter and answer each question for each paper
         querier.make_chain(
             content_folder_name,
-            vectordb_folder_path,
+            vecdb_folder_path,
             search_filter={"filename": review_file},
         )
         metadata = querier.get_meta_data_by_file_name(review_file)
@@ -223,8 +223,8 @@ def main() -> None:
     # get source folder with papers from user
     content_folder_name = input("Source folder of documents (without path): ")
 
-    # get associated content folder path and vectordb path
-    content_folder_path, vectordb_folder_path = ut.create_vectordb_name(
+    # get associated content folder path and vecdb path
+    content_folder_path, vecdb_folder_path = ut.create_vectordb_name(
         content_folder_name
     )
 
@@ -255,7 +255,7 @@ def main() -> None:
 
     # ingest documents if documents in source folder path are not ingested yet
     ingest_or_load_documents(
-        content_folder_name, content_folder_path, vectordb_folder_path
+        content_folder_name, content_folder_path, vecdb_folder_path
     )
 
     # get review questions from file
@@ -273,7 +273,7 @@ def main() -> None:
             review_questions,
             content_folder_name,
             querier,
-            vectordb_folder_path,
+            vecdb_folder_path,
             output_path_review,
         )
         logger.info("Successfully reviewed the documents.")

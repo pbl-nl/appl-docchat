@@ -5,8 +5,9 @@ This includes cutting text into chunks and cleaning text.
 import re
 from typing import Callable, Dict, List, Tuple
 import langchain.docstore.document as docstore
-import langchain.text_splitter as splitter
 from loguru import logger
+# local imports
+from ingest.splitter_creator import SplitterCreator
 
 
 class IngestUtils:
@@ -51,6 +52,7 @@ class IngestUtils:
             for cleaning_function in cleaning_functions:
                 text = cleaning_function(text)
             cleaned_texts.append((page_num, text))
+
         return cleaned_texts
 
     # def split_text_into_chunks(self,
@@ -95,7 +97,10 @@ class IngestUtils:
         """
         Split the text into chunks and return them as Documents.
         """
-        text_splitter = self.get_splitter()
+        text_splitter = SplitterCreator(self.text_splitter_method,
+                                        self.chunk_size,
+                                        self.chunk_overlap).get_splitter()
+
         docs: List[docstore.Document] = []
 
         chunk_no = 0
@@ -115,6 +120,7 @@ class IngestUtils:
                 )
                 docs.append(doc)
                 chunk_no += 1
+
         return docs
 
     def clean_texts_to_docs(self, raw_pages, metadata) -> List[docstore.Document]:
@@ -130,23 +136,5 @@ class IngestUtils:
         # for cleaned_text in cleaned_texts:
         #     cleaned_chunks = self.split_text_into_chunks(cleaned_text, metadata)
         docs = self.texts_to_docs(cleaned_texts, metadata)
-        return docs
 
-    def get_splitter(self):
-        """
-        Get the text splitter object
-        """
-        if self.text_splitter_method == "NLTKTextSplitter":
-            text_splitter = splitter.NLTKTextSplitter(
-                separator="\n\n",
-                language="english",
-                chunk_size=self.chunk_size,
-                chunk_overlap=self.chunk_overlap
-            )
-        elif self.text_splitter_method == "RecursiveCharacterTextSplitter":
-            text_splitter = splitter.RecursiveCharacterTextSplitter(
-                chunk_size=self.chunk_size,
-                separators=["\n\n", "\n", ".", "!", "?", ",", " ", ""],
-                chunk_overlap=self.chunk_overlap
-            )
-        return text_splitter
+        return docs
