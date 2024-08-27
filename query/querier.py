@@ -62,13 +62,13 @@ class Querier:
             _description_, by default None
         """
         # get vector store
-        self.vector_store = VectorStoreCreator(self.vecdb_type).get_vectorstore(self.embeddings,
-                                                                                content_folder,
-                                                                                vecdb_folder)
+        self.vector_store = VectorStoreCreator(self.vecdb_type).get_vectorstore(embeddings=self.embeddings,
+                                                                                content_folder=content_folder,
+                                                                                vecdb_folder=vecdb_folder)
         logger.info(f"Loaded vector store from folder {vecdb_folder}")
 
         # get retriever with search_filter
-        retriever = RetrieverCreator(vectorstore=self.vector_store).get_retriever(search_filter)
+        retriever = RetrieverCreator(vectorstore=self.vector_store).get_retriever(search_filter=search_filter)
 
         # get appropriate RAG prompt for querying
         if settings.RETRIEVER_PROMPT_TEMPLATE == "openai_rag":
