@@ -49,6 +49,7 @@ This will create a basic virtual environment folder named venv in the root of yo
 NB: The chosen name of the environment folder is here venv. It can be changed to a name of your choice
 3. Activate this environment with <code>venv\Scripts\activate</code>
 4. All required packages can now be installed with <code>pip install -r requirements.txt</code>
+5. If you would like to run unit tests, you need to <code>pip install -e appl-docchat</code> as well.
 
 ### Setting parameters
 The file settings_template.py contains all parameters that can be used and needs to be copied to settings.py. In settings.py, fill in the parameter values you want to use for your use case. 
