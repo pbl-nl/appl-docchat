@@ -23,6 +23,12 @@ jobs:
 
       - name: Checkout repo
         uses: actions/checkout@v3
+        with:
+          path: appl-docchat
+        
+      
+      - name: Install appl-docchat
+        run: pip install -e ./appl-docchat
 
       - name: Install dependencies
         run: |
@@ -33,6 +39,7 @@ jobs:
         run: |
           python -m unittest discover tests
 
+          
   format:
     runs-on: ubuntu-latest
     steps:
