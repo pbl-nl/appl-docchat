@@ -4,16 +4,13 @@ from loguru import logger
 from langchain_community.document_loaders import BSHTMLLoader
 from langchain_community.document_loaders import TextLoader
 from langchain_community.document_loaders import UnstructuredWordDocumentLoader
-from pypdf import PdfReader
+# from pypdf import PdfReader
 import fitz
-# from unidecode import unidecode
-# import pprint
 from langdetect import detect, LangDetectException
 # local imports
-import utils as ut
 import settings_template as settings
 from ingest.splitter_creator import SplitterCreator
-# import ingest.pdf_analyzer as pdf_analyzer
+
 
 class FileParser:
     """
@@ -24,7 +21,6 @@ class FileParser:
             if text_splitter_method is None else text_splitter_method
         self.chunk_size = settings.CHUNK_SIZE if chunk_size is None else chunk_size
         self.chunk_overlap = settings.CHUNK_OVERLAP if chunk_overlap is None else chunk_overlap
-        # define splitter
         self.splitter = SplitterCreator(self.text_splitter_method, self.chunk_size, self.chunk_overlap).get_splitter()
 
     def parse_file(self, file_path: str):
@@ -37,6 +33,7 @@ class FileParser:
             raw_pages, metadata = self.parse_html(file_path)
         elif file_path.endswith(".docx"):
             raw_pages, metadata = self.parse_word(file_path)
+
         # return raw_pages, page_info, metadata
         return raw_pages, metadata
 
@@ -44,9 +41,12 @@ class FileParser:
         """
         Extracts the following metadata from the pdf document:
         title, author(s) and full filename
+        For CLO, indicator_url and indicator_closed are added, they will have no effect for other documents
         """
-        return {"title": ut.getattr_or_default(obj=metadata_text, attr='title', default='').strip(),
-                "author": ut.getattr_or_default(obj=metadata_text, attr='author', default='').strip(),
+        return {"title": metadata_text.get('title', '').strip(),
+                "author": metadata_text.get('author', '').strip(),
+                "indicator_url": metadata_text.get('keywords', '').strip(),
+                "indicator_closed": metadata_text.get('trapped', '').strip(),
                 "filename": file_path.split('\\')[-1]
                 }
 
@@ -54,8 +54,8 @@ class FileParser:
         """
         Extract and return the pages and metadata from the html file
         """
-        # load text and extract raw page 
-        logger.info("Extracting pages")
+        # load text and extract raw page
+        logger.info("Extracting text from html file")
         loader = BSHTMLLoader(file_path, open_encoding='utf-8')
         data = loader.load()
         raw_text = data[0].page_content.replace('\n', '')
@@ -65,7 +65,9 @@ class FileParser:
         metadata_text = data[0].metadata
         logger.info(f"{getattr(metadata_text, 'title', 'no title')}")
         metadata = self.get_metadata(file_path, metadata_text)
-        metadata['Language'] = metadata['Language'] if 'Language' in metadata.keys() else self._detect_language(raw_text)
+        metadata['Language'] = metadata['Language'] if 'Language' in metadata.keys() else \
+            self._detect_language(raw_text)
+
         return pages, metadata
 
     # def parse_pdf(self, file_path: str) -> Tuple[List[Tuple[int, str]], Dict[str, str]]:
@@ -79,27 +81,31 @@ class FileParser:
     #         logger.info(f"{getattr(metadata_text, 'title', 'no title')}")
     #         metadata = self.get_metadata(file_path, metadata_text)
     #         print('METADATA: ', metadata)
-    #         logger.info("Extracting pages")
+    #         logger.info("Extracting text from pdf file")
     #         for _, page in enumerate(reader.pages):
     #             page_text = unidecode(page.extract_text()).strip()
     #             print(f"{page_text}\n")
     #         pages = [(i + 1, p.extract_text()) for i, p in enumerate(reader.pages) if p.extract_text().strip()]
-    #     metadata['Language'] = metadata['Language'] if 'Language' in metadata.keys() else self._detect_language(pages[0][1])
+    #     metadata['Language'] = metadata['Language'] if 'Language' in metadata.keys() else \
+    #         self._detect_language(pages[0][1])
+
     #     return pages, metadata
 
     def parse_pymupdf(self, file_path: str) -> Tuple[str, List[Tuple[int, str]], Dict[str, str]]:
         """
         Extracts and return the page blocks and metadata from the PDF file
-        Then determines which blocks of text should be merged, depending on whether the previous block was a 
+        Then determines which blocks of text should be merged, depending on whether the previous block was a
         paragraph header
         """
         logger.info("Extracting pdf metadata")
         doc = fitz.open(file_path)
         metadata_text = doc.metadata
+        # print(metadata_text)
         metadata = self.get_metadata(file_path, metadata_text)
+        # print(metadata)
         pages = []
-        toc = doc.get_toc()
-        toc_paragraph_titles = [item[1] for item in toc]
+        # toc = doc.get_toc()
+        # toc_paragraph_titles = [item[1] for item in toc]
         # print(f"paragraph titles: {toc_paragraph_titles}")
 
         # Determine which blocks on a page represent content. We only want to feed content (including the paragraph
@@ -107,6 +113,7 @@ class FileParser:
         # doc_tags = pdf_analyzer.get_doc_tags(doc)
 
         # for each page in pdf file
+        logger.info("Extracting text from pdf file")
         for i, page in enumerate(doc.pages()):
             first_block_of_page = True
             prv_block_text = ""
@@ -175,7 +182,7 @@ class FileParser:
                             if prv_block_is_valid and (not prv_block_is_paragraph):
                                 # add text of previous block to pages together with page number
                                 pages.append((i, prv_block_text))
-                                print(f"added to page {i}: {prv_block_text}")
+                                # print(f"added to page {i}: {prv_block_text}")
                                 # and empty the previous block text
                                 prv_block_text = ""
                             # if previous block was not relevant
@@ -197,14 +204,16 @@ class FileParser:
             if prv_block_is_valid and (not prv_block_is_paragraph):
                 # add text of previous block to pages together with page number
                 pages.append((i, prv_block_text))
-                print(f"added to page {i}: {prv_block_text}")
+                # print(f"added to page {i}: {prv_block_text}")
 
             # tabs = page.find_tables() # locate and extract any tables on page
             # print(f"{len(tabs.tables)} table found on {page}") # display number of found tables
             # if tabs.tables:  # at least one table found?
             #     pprint.pprint(tabs[0].extract())  # print content of first table
-        metadata['Language'] = metadata['Language'] if 'Language' in metadata.keys() else self._detect_language(pages[0][1])
+        metadata['Language'] = metadata['Language'] if 'Language' in metadata.keys() else \
+            self._detect_language(pages[0][1])
         logger.info(f"The language detected for this document is {metadata['Language']}")
+
         return pages, metadata
 
     def parse_txt(self, file_path: str) -> Tuple[List[Tuple[int, str]], Dict[str, str]]:
@@ -212,17 +221,20 @@ class FileParser:
         Extract and return the pages and metadata from the text file
         """
         # load text and extract raw page
-        logger.info("Extracting pages")
+        logger.info("Extracting text from txt file")
         loader = TextLoader(file_path=file_path, autodetect_encoding=True)
         text = loader.load()
         raw_text = text[0].page_content
-        pages = [(1, raw_text)] # txt files do not have multiple pages
+        # txt files do not have multiple pages
+        pages = [(1, raw_text)]
         # extract metadata
         logger.info("Extracting metadata")
         metadata_text = text[0].metadata
         logger.info(f"{getattr(metadata_text, 'title', 'no title')}")
         metadata = self.get_metadata(file_path, metadata_text)
-        metadata['Language'] = metadata['Language'] if 'Language' in metadata.keys() else self._detect_language(raw_text)
+        metadata['Language'] = metadata['Language'] if 'Language' in metadata.keys() else \
+            self._detect_language(raw_text)
+
         return pages, metadata
 
     def parse_word(self, file_path: str) -> Tuple[List[Tuple[int, str]], Dict[str, str]]:
@@ -230,24 +242,28 @@ class FileParser:
         Extract and return the pages and metadata from the word document
         """
         # load text and extract raw page
-        logger.info("Extracting pages")
+        logger.info("Extracting text from word file")
         loader = UnstructuredWordDocumentLoader(file_path)
         text = loader.load()
         raw_text = text[0].page_content
-        pages = [(1, raw_text)] # currently not able to extract pages yet!
+        # currently not able to extract pages yet!
+        pages = [(1, raw_text)]
         # extract metadata
         logger.info("Extracting metadata")
         metadata_text = text[0].metadata
         logger.info(f"{getattr(metadata_text, 'title', 'no title')}")
         metadata = self.get_metadata(file_path, metadata_text)
-        metadata['Language'] = metadata['Language'] if 'Language' in metadata.keys() else self._detect_language(raw_text)
+        metadata['Language'] = metadata['Language'] if 'Language' in metadata.keys() else \
+            self._detect_language(raw_text)
+
         return pages, metadata
-    
+
     def _detect_language(self, text: str, number_of_characters: int = 1000) -> str:
-        '''
+        """
         Detects language based on the first X number of characters
-        '''
+        """
         text_snippet = text[:number_of_characters] if len(text) > number_of_characters else text
+
         if not text_snippet.strip():
             # Handle the case where the text snippet is empty or only contains whitespace
             return 'unknown'
@@ -257,4 +273,3 @@ class FileParser:
             if 'No features in text' in str(e):
                 # Handle the specific error where no features are found in the text
                 return 'unknown'
-
