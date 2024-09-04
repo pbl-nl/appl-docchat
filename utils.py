@@ -8,9 +8,16 @@ import settings
 
 
 def create_vectordb_name(content_folder_name: str,
+                         retriever_type: str = None,
+                         embeddings_model: str = None,
+                         text_splitter_method: str = None,
                          chunk_size: int = None,
-                         chunk_overlap: int = None) -> Tuple[str, str]:
-    """ Creates the content folder path and vector database folder path
+                         chunk_overlap: int = None,
+                         chunk_size_child: int = None,
+                         chunk_overlap_child: int = None) -> Tuple[str, str]:
+    """ Creates the content folder path and vector database folder path,
+    list of parameters is used to be able to run a grid search over parameters for
+    comparison of evaluation results
 
     Parameters
     ----------
@@ -27,10 +34,17 @@ def create_vectordb_name(content_folder_name: str,
         tuple of content folder path and vector database folder path
     """
     content_folder_path = os.path.join(settings.DOC_DIR, content_folder_name)
-    # vectordb_name is created from vecdb_type, chunk_size, chunk_overlap, embeddings_type
+    # vectordb_name is created from retriever_type, chunk_size, chunk_overlap, embeddings_type
+    retriever_type = settings.RETRIEVER_TYPE if retriever_type is None else retriever_type
+    embeddings_model = settings.EMBEDDINGS_MODEL if embeddings_model is None else embeddings_model
+    text_splitter_method = settings.TEXT_SPLITTER_METHOD if text_splitter_method is None else text_splitter_method
     chunk_size = str(settings.CHUNK_SIZE) if chunk_size is None else str(chunk_size)
     chunk_overlap = str(settings.CHUNK_OVERLAP) if chunk_overlap is None else str(chunk_overlap)
-    vectordb_name = settings.VECDB_TYPE + "_" + chunk_size + "_" + chunk_overlap + "_" + settings.EMBEDDINGS_PROVIDER
+    chunk_size_child = str(settings.CHUNK_SIZE_CHILD) if chunk_size_child is None else str(chunk_size_child)
+    chunk_overlap_child = str(settings.CHUNK_OVERLAP_CHILD) if chunk_overlap_child is None else str(chunk_overlap_child)
+    # vectordb_name = settings.VECDB_TYPE + "_" + chunk_size + "_" + chunk_overlap + "_" + settings.EMBEDDINGS_PROVIDER
+    vectordb_name = retriever_type + "_" + embeddings_model + "_" + text_splitter_method + "_" + \
+        chunk_size + "_" + chunk_overlap + "_" + chunk_size_child + "_" + chunk_overlap_child
     vectordb_folder_path = os.path.join(settings.VECDB_DIR, content_folder_name + "_" + vectordb_name)
 
     return content_folder_path, vectordb_folder_path
