@@ -32,7 +32,9 @@ def main():
                     # log the answer to the question and the sources used for creating the answer
                     logger.info("\nSources:\n")
                     for document in response["source_documents"]:
-                        logger.info(f"Page {document.metadata['page_number']}, chunk text: {document.page_content}\n")
+                        logger.info(f"File {document.metadata['filename']}, \
+                                    Page {document.metadata['page_number'] + 1}, \
+                                    chunk text: {document.page_content}\n")
             else:
                 ut.exit_program()
 

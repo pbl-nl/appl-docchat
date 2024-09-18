@@ -1,6 +1,6 @@
 from typing import List, Tuple
-import fitz
 import os
+import fitz
 import streamlit as st
 from PIL import Image
 from loguru import logger
@@ -270,8 +270,10 @@ def handle_query(my_folder_path_selected: str,
     # Display user message in chat message container
     with st.chat_message("user"):
         st.markdown(my_prompt)
+
     # Add user message to chat history
     st.session_state['messages'].append({"role": "user", "content": my_prompt})
+
     with st.spinner("Thinking..."):
         # Generate a response
         if 'All' not in my_document_selection:
@@ -287,7 +289,10 @@ def handle_query(my_folder_path_selected: str,
         st.markdown(response["answer"])
     # Add the response to chat history
     st.session_state['messages'].append({"role": "assistant", "content": response["answer"]})
+
+    # show sources or the answer
     if len(response["source_documents"]) > 0:
+        print(response)
         with st.expander("Paragraphs used for answer"):
             for i, document in enumerate(response["source_documents"]):
                 filename = document.metadata['filename']
