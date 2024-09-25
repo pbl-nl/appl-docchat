@@ -4,7 +4,6 @@ from loguru import logger
 from langchain_community.document_loaders import BSHTMLLoader
 from langchain_community.document_loaders import TextLoader
 from langchain_community.document_loaders import UnstructuredWordDocumentLoader
-# from pypdf import PdfReader
 import fitz
 from langdetect import detect, LangDetectException
 # local imports
@@ -34,19 +33,21 @@ class FileParser:
         elif file_path.endswith(".docx"):
             raw_pages, metadata = self.parse_word(file_path)
 
-        # return raw_pages, page_info, metadata
+        # return raw text from pages and metadata
         return raw_pages, metadata
 
-    def get_metadata(self, file_path: str, metadata_text: str):
+    def get_metadata(self, file_path: str, doc_metadata: str):
         """
         Extracts the following metadata from the pdf document:
         title, author(s) and full filename
         For CLO, indicator_url and indicator_closed are added, they will have no effect for other documents
         """
-        return {"title": metadata_text.get('title', '').strip(),
-                "author": metadata_text.get('author', '').strip(),
-                "indicator_url": metadata_text.get('keywords', '').strip(),
-                "indicator_closed": metadata_text.get('trapped', '').strip(),
+        return {"title": doc_metadata.get('title', '').strip(),
+                "author": doc_metadata.get('author', '').strip(),
+                # created specifically for CLO
+                "indicator_url": doc_metadata.get('keywords', '').strip(),
+                "indicator_closed": doc_metadata.get('trapped', '').strip(),
+                # add filename to metadata
                 "filename": file_path.split('\\')[-1]
                 }
 
@@ -70,27 +71,6 @@ class FileParser:
 
         return pages, metadata
 
-    # def parse_pdf(self, file_path: str) -> Tuple[List[Tuple[int, str]], Dict[str, str]]:
-    #     """
-    #     Extract and return the pages and metadata from the PDF file
-    #     """
-    #     with open(file_path, "rb") as pdf_file:
-    #         logger.info("Extracting metadata")
-    #         reader = PdfReader(pdf_file)
-    #         metadata_text = reader.metadata
-    #         logger.info(f"{getattr(metadata_text, 'title', 'no title')}")
-    #         metadata = self.get_metadata(file_path, metadata_text)
-    #         print('METADATA: ', metadata)
-    #         logger.info("Extracting text from pdf file")
-    #         for _, page in enumerate(reader.pages):
-    #             page_text = unidecode(page.extract_text()).strip()
-    #             print(f"{page_text}\n")
-    #         pages = [(i + 1, p.extract_text()) for i, p in enumerate(reader.pages) if p.extract_text().strip()]
-    #     metadata['Language'] = metadata['Language'] if 'Language' in metadata.keys() else \
-    #         self._detect_language(pages[0][1])
-
-    #     return pages, metadata
-
     def parse_pymupdf(self, file_path: str) -> Tuple[str, List[Tuple[int, str]], Dict[str, str]]:
         """
         Extracts and return the page blocks and metadata from the PDF file
@@ -99,18 +79,10 @@ class FileParser:
         """
         logger.info("Extracting pdf metadata")
         doc = fitz.open(file_path)
-        metadata_text = doc.metadata
-        # print(metadata_text)
-        metadata = self.get_metadata(file_path, metadata_text)
-        # print(metadata)
+        # print(f"parse_pymupdf: doc.metadata = {doc.metadata}")
+        metadata = self.get_metadata(file_path, doc.metadata)
+        # print(f"parse_pymupdf: metadata = {metadata}")
         pages = []
-        # toc = doc.get_toc()
-        # toc_paragraph_titles = [item[1] for item in toc]
-        # print(f"paragraph titles: {toc_paragraph_titles}")
-
-        # Determine which blocks on a page represent content. We only want to feed content (including the paragraph
-        # header) into the vector database
-        # doc_tags = pdf_analyzer.get_doc_tags(doc)
 
         # for each page in pdf file
         logger.info("Extracting text from pdf file")

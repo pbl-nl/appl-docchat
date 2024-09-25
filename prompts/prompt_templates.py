@@ -25,9 +25,9 @@ SUMMARY_MAPREDUCE_TEMPLATE = dedent("""Join the following pieces of text first a
     Be elaborate and write a comprehensible summary. Return only the summary, no other text. 
     Helpful answer:""")
 
-SUMMARY_TEMPLATE = dedent("""Summarize the following text: {text}.\n
+SUMMARY_TEMPLATE = dedent("""Summarize the following text in a concise way: {text}.\n
     Only return the summary, no explanation.
-    Helpful answer:""")
+    Answer:""")
 
 REFINE_TEMPLATE = dedent("""Given the following summary: {summary}\n
     Refine the summary, with the following added information: {text}\n

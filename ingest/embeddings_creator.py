@@ -9,7 +9,7 @@ import settings
 
 class EmbeddingsCreator():
     """
-    LLM class to import into other modules
+    EmbeddingsCreator class to import into other modules
     """
     def __init__(self, embeddings_provider=None, embeddings_model=None) -> None:
         self.embeddings_provider = settings.EMBEDDINGS_PROVIDER if embeddings_provider is None else embeddings_provider
