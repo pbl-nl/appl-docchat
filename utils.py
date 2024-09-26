@@ -34,7 +34,6 @@ def create_vectordb_name(content_folder_name: str,
         tuple of content folder path and vector database folder path
     """
     content_folder_path = os.path.join(settings.DOC_DIR, content_folder_name)
-    # vectordb_name is created from retriever_type, chunk_size, chunk_overlap, embeddings_type
     retriever_type = settings.RETRIEVER_TYPE if retriever_type is None else retriever_type
     embeddings_model = settings.EMBEDDINGS_MODEL if embeddings_model is None else embeddings_model
     text_splitter_method = settings.TEXT_SPLITTER_METHOD if text_splitter_method is None else text_splitter_method
@@ -42,7 +41,8 @@ def create_vectordb_name(content_folder_name: str,
     chunk_overlap = str(settings.CHUNK_OVERLAP) if chunk_overlap is None else str(chunk_overlap)
     chunk_size_child = str(settings.CHUNK_SIZE_CHILD) if chunk_size_child is None else str(chunk_size_child)
     chunk_overlap_child = str(settings.CHUNK_OVERLAP_CHILD) if chunk_overlap_child is None else str(chunk_overlap_child)
-    # vectordb_name = settings.VECDB_TYPE + "_" + chunk_size + "_" + chunk_overlap + "_" + settings.EMBEDDINGS_PROVIDER
+    # vectordb_name is created from retriever_type, embeddings_model, text_splitter_method and
+    # parent and child chunk_size and chunk_overlap
     vectordb_name = retriever_type + "_" + embeddings_model + "_" + text_splitter_method + "_" + \
         chunk_size + "_" + chunk_overlap + "_" + chunk_size_child + "_" + chunk_overlap_child
     vectordb_folder_path = os.path.join(settings.VECDB_DIR, content_folder_name + "_" + vectordb_name)
@@ -50,12 +50,32 @@ def create_vectordb_name(content_folder_name: str,
     return content_folder_path, vectordb_folder_path
 
 
-def get_relevant_files_in_folder(content_folder_path: str) -> List[str]:
-    """ Creates the content folder path and vector database folder path
+def is_relevant_file(content_folder_path: str, my_file: str) -> bool:
+    """
+    decides whether or not a file is a relevant file
 
     Parameters
     ----------
-    content_folder : str
+    content_folder_path : str
+        name of the content folder (including the path)
+    my_file: str
+        name of the file
+
+    Returns
+    -------
+    bool
+        True if file is relevant, otherwise False
+    """
+    return ((os.path.isfile(os.path.join(content_folder_path, my_file))) and
+            (os.path.splitext(my_file)[1] in [".docx", ".html", ".md", ".pdf", ".txt"]))
+
+
+def get_relevant_files_in_folder(content_folder_path: str) -> List[str]:
+    """ Gets a list of relevant files from a given content folder path
+
+    Parameters
+    ----------
+    content_folder_path : str
         name of the content folder (including the path)
 
     Returns
@@ -63,9 +83,7 @@ def get_relevant_files_in_folder(content_folder_path: str) -> List[str]:
     List[str]
         tuple of content folder path and vector database folder path
     """
-    files_in_folder = [f for f in os.listdir(content_folder_path)
-                       if ((os.path.isfile(os.path.join(content_folder_path, f))) and
-                       (os.path.splitext(f)[1] in [".docx", ".html", ".md", ".pdf", ".txt"]))]
+    files_in_folder = [f for f in os.listdir(content_folder_path) if is_relevant_file(content_folder_path, f)]
 
     return files_in_folder
 
@@ -150,7 +168,6 @@ def get_timestamp() -> str:
     str
         string timestamp of current time
     """
-
     return str(dt.datetime.now())
 
 

@@ -22,41 +22,41 @@ def click_go_button() -> None:
 @st.cache_data
 def create_and_show_summary(my_summary_type: str,
                             my_folder_path_selected: str,
-                            my_folder_name_selected: str,
-                            my_vecdb_folder_path_selected: str,
-                            selected_documents: List[str]) -> None:
+                            my_selected_documents: List[str]) -> None:
     """
     Creates or loads a summary of the chosen document(s) and shows it in the UI
 
     Parameters
     ----------
     my_summary_type : str
-        chosen summary type, either "Short", "Long" or "Hybrid"
+        chosen summary type, either "Short" or "Long"
     my_folder_path_selected : str
         path of content folder
-    my_folder_name_selected : str
-        name of content folder
-    my_vecdb_folder_path_selected : str
-        path of vector database foler
     selected_documents : List[str]
         list of selected documents
     """
     if my_summary_type == "Short":
-        summarization_method = "Map_Reduce"
+        summarization_method = "map_reduce"
     elif my_summary_type == "Long":
-        summarization_method = "Refine"
-    elif my_summary_type == "Hybrid":
-        summarization_method = "Hybrid"
+        summarization_method = "refine"
+
+    logger.info(f"Starting create_and_show_summary() with summarization method {summarization_method}")
+    summarizer = Summarizer(content_folder_path=my_folder_path_selected,
+                            summarization_method=summarization_method,
+                            text_splitter_method=settings.SUMMARY_TEXT_SPLITTER_METHOD,
+                            chunk_size=settings.SUMMARY_CHUNK_SIZE,
+                            chunk_overlap=settings.SUMMARY_CHUNK_OVERLAP,
+                            llm_provider=settings.SUMMARY_LLM_PROVIDER,
+                            llm_model=settings.SUMMARY_LLM_MODEL)
 
     # for each selected file in content folder
-    with st.expander(label=f"{my_summary_type} summary",
-                     expanded=True):
+    with st.expander(label=f"{my_summary_type} summary", expanded=True):
         first_summary = True
         files_in_folder = ut.get_relevant_files_in_folder(my_folder_path_selected)
-        if selected_documents == ["All"]:
-            selected_documents = files_in_folder
+        if my_selected_documents == ["All"]:
+            my_selected_documents = files_in_folder
         for file in files_in_folder:
-            if file in selected_documents:
+            if file in my_selected_documents:
                 file_name, _ = os.path.splitext(file)
                 summary_name = os.path.join(my_folder_path_selected, "summaries",
                                             str(file_name) + "_" + str.lower(summarization_method) + ".txt")
@@ -65,11 +65,7 @@ def create_and_show_summary(my_summary_type: str,
                     my_spinner_message = f'''Creating summary for {file}.\n
                     Depending on the size of the file and the type of summary, this may take a while. Please wait...'''
                     with st.spinner(my_spinner_message):
-                        summarizer = Summarizer(content_folder=my_folder_path_selected,
-                                                collection_name=my_folder_name_selected,
-                                                summary_method=summarization_method,
-                                                vecdb_folder=my_vecdb_folder_path_selected)
-                        summarizer.summarize()
+                        summarizer.summarize_file(file)
                 # show summary
                 if not first_summary:
                     st.divider()
@@ -77,7 +73,7 @@ def create_and_show_summary(my_summary_type: str,
                     st.write(f"**{file}:**\n")
                     st.write(f.read())
                 first_summary = False
-    logger.info("Executed create_and_show_summary()")
+    logger.info(f"Finished create_and_show_summary() with summarization method {summarization_method}")
 
 
 def display_chat_history() -> None:
@@ -274,7 +270,7 @@ def handle_query(my_folder_path_selected: str,
     # Add user message to chat history
     st.session_state['messages'].append({"role": "user", "content": my_prompt})
 
-    with st.spinner("Thinking..."):
+    with st.spinner("Processing..."):
         # Generate a response
         if 'All' not in my_document_selection:
             # create a filter for the selected documents
@@ -292,7 +288,7 @@ def handle_query(my_folder_path_selected: str,
 
     # show sources or the answer
     if len(response["source_documents"]) > 0:
-        print(response)
+        # print(response)
         with st.expander("Paragraphs used for answer"):
             for i, document in enumerate(response["source_documents"]):
                 filename = document.metadata['filename']
@@ -433,19 +429,21 @@ st.sidebar.button("GO", type="primary", on_click=click_go_button)
 # only start a conversation when a folder is selected and selection is confirmed with "GO" button
 if st.session_state['is_GO_clicked']:
     # create or update vector database if necessary
-    check_vectordb(querier, folder_name_selected, folder_path_selected, vecdb_folder_path_selected)
+    check_vectordb(my_querier=querier,
+                   my_folder_name_selected=folder_name_selected,
+                   my_folder_path_selected=folder_path_selected,
+                   my_vecdb_folder_path_selected=vecdb_folder_path_selected)
     summary_type = st.sidebar.radio(
         "Start with summary?",
-        ["No", "Short", "Long", "Hybrid"],
-        captions=["", "Quick but lower quality", "Slow but higher quality", "Hybrid of quick and slow"],
+        ["No", "Short", "Long"],
+        captions=["", "Quicker and shorter", "Slower but more extensive"],
         index=0)
     # if one of the options is chosen
-    if summary_type in ["Short", "Long", "Hybrid"]:
+    if summary_type in ["Short", "Long"]:
         # show the summary at the top of the screen
-        create_and_show_summary(summary_type, folder_path_selected,
-                                folder_name_selected,
-                                vecdb_folder_path_selected,
-                                document_selection)
+        create_and_show_summary(my_summary_type=summary_type,
+                                my_folder_path_selected=folder_path_selected,
+                                my_selected_documents=document_selection)
 
     # show button "Clear Conversation"
     clear_messages_button = st.button(label="Clear Conversation", key="clear")
@@ -463,9 +461,9 @@ if st.session_state['is_GO_clicked']:
 
     # react to user input if a question has been asked
     if prompt := st.chat_input("Your question"):
-        handle_query(folder_path_selected,
-                     querier,
-                     prompt,
-                     document_selection,
-                     folder_name_selected,
-                     vecdb_folder_path_selected)
+        handle_query(my_folder_path_selected=folder_path_selected,
+                     my_querier=querier,
+                     my_prompt=prompt,
+                     my_document_selection=document_selection,
+                     my_folder_name_selected=folder_name_selected,
+                     my_vecdb_folder_path_selected=vecdb_folder_path_selected)

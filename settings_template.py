@@ -112,11 +112,18 @@ CHUNK_OVERLAP = 200
 # value must be integer (>=0 and < CHUNK_SIZE_CHILD)
 CHUNK_OVERLAP_CHILD = 0
 
+# Similar settings as above, but specifically for creation of document summaries
+SUMMARY_TEXT_SPLITTER_METHOD = "RecursiveCharacterTextSplitter"
+SUMMARY_CHUNK_SIZE = 6000
+SUMMARY_CHUNK_OVERLAP = 0
+SUMMARY_LLM_PROVIDER = "azureopenai"
+SUMMARY_LLM_MODEL = "gpt-35-turbo"
+
 # SEARCH_TYPE must be one of: "similarity", "similarity_score_threshold"
 SEARCH_TYPE = "similarity_score_threshold"
 
 # SCORE_THRESHOLD represents the similarity value that chunks must exceed to qualify for the context.
-# Value must be between 0.0 and 1.0, e.g. 0.8
+# Value must be between 0.0 and 1.0
 # This value is only relevant when SEARCH_TYPE has been set to "similarity_score_threshold"
 # When embedding model text-embedding-ada-002 is used, a value of 0.8 is reasonable
 # When embedding model text-embedding-3-large is used, a value of 0.5 is reasonable
