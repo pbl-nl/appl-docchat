@@ -7,7 +7,7 @@ from langchain_community.document_loaders import UnstructuredWordDocumentLoader
 import fitz
 from langdetect import detect, LangDetectException
 # local imports
-import settings_template as settings
+import settings
 from ingest.splitter_creator import SplitterCreator
 
 
