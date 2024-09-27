@@ -8,27 +8,26 @@ A RAG (Retrieval Augmented Generation) setup for further exploration of chatting
 
 ### Preparation
 1. Clone this repo to a folder of your choice
-2. Create a subfolder vector_stores in the root folder of the cloned repo
-3. In the root folder, create a file named ".env"
+2. In the root folder, create a file named ".env"
 3. When using the OpenAI API, enter your OpenAI API key in the first line of this file:<br>
 OPENAI_API_KEY="sk-....."<br>
-4. Save and close the .env file<br>
 * If you don't have an OpenAI API key yet, you can obtain one here: https://platform.openai.com/account/api-keys
 * Click on + Create new secret key
 * Enter an identifier name (optional) and click on Create secret key
-5. When using Azure OpenAI Services, enter the following variables in the .env file:
+4. When using Azure OpenAI Services, enter the following variables in the .env file:
   * AZURE_OPENAI_API_KEY
   * AZURE_OPENAI_ENDPOINT
   * AZURE_OPENAI_API_VERSION (e.g. "2024-02-01")
   * AZURE_OPENAI_LLM_DEPLOYMENT_NAME
   * AZURE_OPENAI_EMB_DEPLOYMENT_NAME
+
 The abovementioned variables can be found in your Azure OpenAI Services subscription
-6. In case you want to use one of the open source models API's that are available on Huggingface:<br>
+5. In case you want to use one of the open source models API's that are available on Huggingface:<br>
 Enter your Huggingface API key in the ".env" file :<br>
 HUGGINGFACEHUB_API_TOKEN="hf_....."<br>
 * If you don't have an Huggingface API key yet, you can register at https://huggingface.co/join
 * When registered and logged in, you can get your API key in your Huggingface profile settings
-7. This repository also allows for using one of the [Ollama](https://ollama.com/) open source models on-premise. You can do this by follwing the steps below:
+6. This repository also allows for using one of the [Ollama](https://ollama.com/) open source models on-premise. You can do this by follwing the steps below:
 * In Windows go to "Turn Windows features on or off" and check the features "Virtual Machine Platform" and "Windows Subsystem for Linux"
 * Download and install the Ubuntu Windows Subsystem for Linux (WSL) by opening a terminal window and type <code>wsl --install</code>
 * Start WSL by typing opening a terminal and typing <code>wsl</code>, and install Ollama with <code>curl -fsSL https://ollama.com/install.sh | sh</code>

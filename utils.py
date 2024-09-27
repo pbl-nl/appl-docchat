@@ -1,10 +1,21 @@
+"""
+The utils module contains general functionality that can be used at various places in the application
+"""
 from typing import Any, Dict, List, Tuple
-import numpy as np
 import os
 import sys
 import datetime as dt
+import pathlib
+import numpy as np
 # local imports
 import settings
+
+
+def create_vectordb_folder() -> None:
+    """ Creates subfolder for storage of vector databases if not existing
+    """
+    if settings.VECDB_DIR not in os.listdir(pathlib.Path().resolve()):
+        os.mkdir(os.path.join(pathlib.Path().resolve(), settings.VECDB_DIR))
 
 
 def create_vectordb_name(content_folder_name: str,
@@ -45,7 +56,9 @@ def create_vectordb_name(content_folder_name: str,
     # parent and child chunk_size and chunk_overlap
     vectordb_name = retriever_type + "_" + embeddings_model + "_" + text_splitter_method + "_" + \
         chunk_size + "_" + chunk_overlap + "_" + chunk_size_child + "_" + chunk_overlap_child
-    vectordb_folder_path = os.path.join(settings.VECDB_DIR, content_folder_name + "_" + vectordb_name)
+
+    vectordb_folder_path = os.path.join(pathlib.Path().resolve(), settings.VECDB_DIR,
+                                        content_folder_name + "_" + vectordb_name)
 
     return content_folder_path, vectordb_folder_path
 

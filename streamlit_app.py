@@ -88,6 +88,14 @@ def display_chat_history() -> None:
 
 
 @st.cache_data
+def vectordb_folder_creator() -> None:
+    """
+    Creates subfolder for storage of vector databases if not existing
+    """
+    return ut.create_vectordb_folder()
+
+
+@st.cache_data
 def folderlist_creator() -> List[str]:
     """
     Creates a list of folder names (without path).
@@ -380,7 +388,7 @@ def initialize_session_state() -> None:
 
 
 @st.cache_resource
-def initialize_querier():
+def initialize_querier() -> Querier:
     """
     Create a Querier object
 
@@ -411,6 +419,8 @@ def set_page_config() -> None:
 set_page_config()
 # initialize page, executed only once per session
 initialize_page()
+# create subfolder for vector databases if necessary
+vectordb_folder_creator()
 # create list of content folders
 source_folders_available = folderlist_creator()
 # initialize session state variables
