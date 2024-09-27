@@ -12,7 +12,7 @@ DOC_DIR = "./docs"
 # filepath of folder with chunks, e.g. "./chunks"
 CHUNK_DIR = "./chunks"
 # filepath of persistent vector databases, e.g. "./vector_stores"
-VECDB_DIR = "./vector_stores"
+VECDB_DIR = "vector_stores"
 # filepath of evaluation results folder, e.g. "./evaluate"
 EVAL_DIR = "./evaluate"
 # header in Streamlit evaluation UI
@@ -143,14 +143,3 @@ CHAIN_TYPE = "stuff"
 # value must be one of "openai_rag", "openai_rag_concise", "openai_rag_language", "yesno"
 # see file prompt_templates.py for explanation
 RETRIEVER_PROMPT_TEMPLATE = "openai_rag"
-
-# SUMMARIZER_CENTROIDS represents the number of centroids that is chosen for the "Map Reduce" summarization method.
-# A higher value will create a more diverse summary, however will take longer to create
-# Value should be a positive integer
-SUMMARIZER_CENTROIDS = 4
-
-# SUMMARIZER_CENTROID_NEIGHBORS represents the number of closest neighbors to each centroid that is taken into account
-# with the "Map Reduce" and "Hybrid" summarization method.
-# A higher value will create a more elaborate summary, however will take longer to create
-# Value should be a positive integer
-SUMMARIZER_CENTROID_NEIGHBORS = 3
