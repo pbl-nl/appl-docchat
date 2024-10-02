@@ -19,15 +19,14 @@ OPENAI_API_KEY="sk-....."<br>
   * AZURE_OPENAI_ENDPOINT
   * AZURE_OPENAI_API_VERSION (e.g. "2024-02-01")
   * AZURE_OPENAI_LLM_DEPLOYMENT_NAME
-  * AZURE_OPENAI_EMB_DEPLOYMENT_NAME
-
+  * AZURE_OPENAI_EMB_DEPLOYMENT_NAME<br>
 The abovementioned variables can be found in your Azure OpenAI Services subscription
 5. In case you want to use one of the open source models API's that are available on Huggingface:<br>
 Enter your Huggingface API key in the ".env" file :<br>
 HUGGINGFACEHUB_API_TOKEN="hf_....."<br>
 * If you don't have an Huggingface API key yet, you can register at https://huggingface.co/join
 * When registered and logged in, you can get your API key in your Huggingface profile settings
-6. This repository also allows for using one of the [Ollama](https://ollama.com/) open source models on-premise. You can do this by follwing the steps below:
+6. This repository also allows for using one of the [Ollama](https://ollama.com/) open source models on-premise. You can do this by following the steps below:
 * In Windows go to "Turn Windows features on or off" and check the features "Virtual Machine Platform" and "Windows Subsystem for Linux"
 * Download and install the Ubuntu Windows Subsystem for Linux (WSL) by opening a terminal window and type <code>wsl --install</code>
 * Start WSL by typing opening a terminal and typing <code>wsl</code>, and install Ollama with <code>curl -fsSL https://ollama.com/install.sh | sh</code>
