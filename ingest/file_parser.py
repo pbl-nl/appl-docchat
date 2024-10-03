@@ -5,9 +5,9 @@ from langchain_community.document_loaders import BSHTMLLoader
 from langchain_community.document_loaders import TextLoader
 from langchain_community.document_loaders import UnstructuredWordDocumentLoader
 import fitz
-from langdetect import detect, LangDetectException
 # local imports
 import settings
+import utils as ut
 from ingest.splitter_creator import SplitterCreator
 
 
@@ -67,7 +67,7 @@ class FileParser:
         logger.info(f"{getattr(metadata_text, 'title', 'no title')}")
         metadata = self.get_metadata(file_path, metadata_text)
         metadata['Language'] = metadata['Language'] if 'Language' in metadata.keys() else \
-            self._detect_language(raw_text)
+            ut.detect_language(raw_text)
 
         return pages, metadata
 
@@ -183,7 +183,7 @@ class FileParser:
             # if tabs.tables:  # at least one table found?
             #     pprint.pprint(tabs[0].extract())  # print content of first table
         metadata['Language'] = metadata['Language'] if 'Language' in metadata.keys() else \
-            self._detect_language(pages[0][1])
+            ut.detect_language(pages[0][1])
         logger.info(f"The language detected for this document is {metadata['Language']}")
 
         return pages, metadata
@@ -205,7 +205,7 @@ class FileParser:
         logger.info(f"{getattr(metadata_text, 'title', 'no title')}")
         metadata = self.get_metadata(file_path, metadata_text)
         metadata['Language'] = metadata['Language'] if 'Language' in metadata.keys() else \
-            self._detect_language(raw_text)
+            ut.detect_language(raw_text)
 
         return pages, metadata
 
@@ -226,22 +226,6 @@ class FileParser:
         logger.info(f"{getattr(metadata_text, 'title', 'no title')}")
         metadata = self.get_metadata(file_path, metadata_text)
         metadata['Language'] = metadata['Language'] if 'Language' in metadata.keys() else \
-            self._detect_language(raw_text)
+            ut.detect_language(raw_text)
 
         return pages, metadata
-
-    def _detect_language(self, text: str, number_of_characters: int = 1000) -> str:
-        """
-        Detects language based on the first X number of characters
-        """
-        text_snippet = text[:number_of_characters] if len(text) > number_of_characters else text
-
-        if not text_snippet.strip():
-            # Handle the case where the text snippet is empty or only contains whitespace
-            return 'unknown'
-        try:
-            return detect(text_snippet)
-        except LangDetectException as e:
-            if 'No features in text' in str(e):
-                # Handle the specific error where no features are found in the text
-                return 'unknown'

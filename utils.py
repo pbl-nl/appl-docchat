@@ -7,6 +7,7 @@ import sys
 import datetime as dt
 import pathlib
 import numpy as np
+from langdetect import detect, LangDetectException
 # local imports
 import settings
 
@@ -26,18 +27,26 @@ def create_vectordb_name(content_folder_name: str,
                          chunk_overlap: int = None,
                          chunk_size_child: int = None,
                          chunk_overlap_child: int = None) -> Tuple[str, str]:
-    """ Creates the content folder path and vector database folder path,
-    list of parameters is used to be able to run a grid search over parameters for
-    comparison of evaluation results
+    """ Creates the content folder path and vector database folder path
 
     Parameters
     ----------
     content_folder_name : str
         name of the content folder (without the path)
+    retriever_type : str, optional
+        name of the retriever type, by default None
+    embeddings_model : str, optional
+        name of the embeddings_model, by default None
+    text_splitter_method : str, optional
+        name of the text splitter method, by default None
     chunk_size : int, optional
-        the maximum chunk size in the settings, by default None
+        the maximum chunk size, by default None
     chunk_overlap : int, optional
-        the chunk overlap in the settings, by default None
+        the chunk overlap, by default None
+    chunk_size_child : int, optional
+        the maximum chunk size of child chunks, by default None
+    chunk_overlap_child : int, optional
+        the chunk overlap of child chunks, by default None
 
     Returns
     -------
@@ -51,7 +60,8 @@ def create_vectordb_name(content_folder_name: str,
     chunk_size = str(settings.CHUNK_SIZE) if chunk_size is None else str(chunk_size)
     chunk_overlap = str(settings.CHUNK_OVERLAP) if chunk_overlap is None else str(chunk_overlap)
     chunk_size_child = str(settings.CHUNK_SIZE_CHILD) if chunk_size_child is None else str(chunk_size_child)
-    chunk_overlap_child = str(settings.CHUNK_OVERLAP_CHILD) if chunk_overlap_child is None else str(chunk_overlap_child)
+    chunk_overlap_child = str(settings.CHUNK_OVERLAP_CHILD) \
+        if chunk_overlap_child is None else str(chunk_overlap_child)
     # vectordb_name is created from retriever_type, embeddings_model, text_splitter_method and
     # parent and child chunk_size and chunk_overlap
     vectordb_name = retriever_type + "_" + embeddings_model + "_" + text_splitter_method + "_" + \
@@ -224,3 +234,20 @@ def euclidean_distance(a: np.ndarray, b: np.ndarray) -> np.float64:
     eucl_dist = np.sqrt(np.sum((a - b) ** 2))
 
     return eucl_dist
+
+
+def detect_language(text: str, number_of_characters: int = 1000) -> str:
+    """
+    Detects language based on the first X number of characters
+    """
+    text_snippet = text[:number_of_characters] if len(text) > number_of_characters else text
+
+    if not text_snippet.strip():
+        # Handle the case where the text snippet is empty or only contains whitespace
+        return 'unknown'
+    try:
+        return detect(text_snippet)
+    except LangDetectException as e:
+        if 'No features in text' in str(e):
+            # Handle the specific error where no features are found in the text
+            return 'unknown'
