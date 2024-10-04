@@ -72,19 +72,20 @@ class ParentDocumentRetriever(BaseRetriever):
                 "search_type to be 'similarity', 'similarity_score_threshold' or 'mmr'"
             )
 
-        # get parent docs from child docs metadata
+        # get unique parent docs from child docs metadata
         parent_docs = []
-        parent_chunk_nums = []
+        parent_chunk_ids = []
         for child_doc in child_docs:
             parent_chunk = child_doc.metadata['parent_chunk']
-            parent_chunk_num = child_doc.metadata['parent_chunk_num']
+            parent_chunk_id = child_doc.metadata['parent_chunk_id']
             parent_doc = docstore.Document(
                  page_content=parent_chunk,
                  metadata=child_doc.metadata,
                  )
-            if parent_chunk_num not in parent_chunk_nums:
-                parent_chunk_nums.append(parent_chunk_num)
+            if parent_chunk_id not in parent_chunk_ids:
+                parent_chunk_ids.append(parent_chunk_id)
                 parent_docs.append(parent_doc)
 
         # return parent docs
+        # SPT restrict to maximally chunk_k!
         return [parent_doc for parent_doc in parent_docs if parent_doc is not None]
