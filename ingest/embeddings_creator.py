@@ -11,7 +11,7 @@ class EmbeddingsCreator():
     """
     EmbeddingsCreator class to import into other modules
     """
-    def __init__(self, embeddings_provider=None, embeddings_model=None) -> None:
+    def __init__(self, embeddings_provider: str = None, embeddings_model: str = None) -> None:
         self.embeddings_provider = settings.EMBEDDINGS_PROVIDER if embeddings_provider is None else embeddings_provider
         self.embeddings_model = settings.EMBEDDINGS_MODEL if embeddings_model is None else embeddings_model
 

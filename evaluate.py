@@ -262,7 +262,7 @@ def main() -> None:
     # Get source folder with evaluation documents from user
     content_folder_name = input("Source folder of evaluation documents (without path): ")
     # get associated source folder path and vectordb path
-    content_folder_path, vectordb_folder_path = ut.create_vectordb_name(content_folder_name)
+    content_folder_path, vectordb_folder_path = ut.create_vectordb_name(content_folder_name=content_folder_name)
 
     # ingest documents if documents in source folder path are not ingested yet
     ingest_or_load_documents(content_folder_name, content_folder_path, vectordb_folder_path)

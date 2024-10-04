@@ -29,16 +29,16 @@ def folderlist_creator():
 
 def folder_selector(folders):
     # Select source folder with docs
-    folder_name_selected = st.sidebar.selectbox("label=folder_selector", options=folders, label_visibility="hidden")
-    logger.info(f"folder_name_selected is now {folder_name_selected}")
+    folder_name = st.sidebar.selectbox("label=folder_selector", options=folders, label_visibility="hidden")
+    logger.info(f"folder_name is now {folder_name}")
     # get associated source folder path and vectordb path
-    folder_path_selected, vectordb_folder_path_selected = ut.create_vectordb_name(folder_name_selected)
-    logger.info(f"vectordb_folder_path_selected is now {vectordb_folder_path_selected}")
-    if folder_name_selected != st.session_state['folder_selected']:
+    folder_path, vectordb_folder_path = ut.create_vectordb_name(content_folder_name=folder_name)
+    logger.info(f"vectordb_folder_path is now {vectordb_folder_path}")
+    if folder_name != st.session_state['folder_selected']:
         st.session_state['is_GO_clicked'] = False
-    # set session state of selected folder to new source folder 
-    st.session_state['folder_selected'] = folder_name_selected
-    return folder_name_selected, folder_path_selected
+    # set session state of selected folder to new source folder
+    st.session_state['folder_selected'] = folder_name
+    return folder_name, folder_path
 
 
 def get_chunks(my_folder):
