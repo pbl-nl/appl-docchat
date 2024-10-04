@@ -18,7 +18,9 @@ def main(chunk_size=None, chunk_overlap=None, chunk_k=None):
     for folder in folder_list:
         content_folder_name = folder
         # get associated source folder path and vectordb path
-        content_folder_path, vectordb_folder_path = ut.create_vectordb_name(content_folder_name, chunk_size, chunk_overlap)
+        content_folder_path, vectordb_folder_path = ut.create_vectordb_name(content_folder_name=content_folder_name,
+                                                                            chunk_size=chunk_size,
+                                                                            chunk_overlap=chunk_overlap)
 
         # ingest documents if documents in source folder path are not ingested yet
         ev.ingest_or_load_documents(content_folder_name,
