@@ -93,10 +93,14 @@ class Ingester:
         """
         docs: List[docstore.Document] = []
 
-        for page_num, page in texts:
-            logger.info(f"Splitting page {page_num}")
-            chunk_texts = self.splitter.split_text(page)
-            for chunk_num, chunk_text in enumerate(chunk_texts):
+        prv_page_num = -1
+        for page_num, text in texts:
+            logger.info(f"Splitting text from page {page_num}")
+            # reset chunk number to 0 only when text is from new page
+            if page_num != prv_page_num:
+                chunk_num = 0
+            chunk_texts = self.splitter.split_text(text)
+            for chunk_text in chunk_texts:
                 # in case of parent retriever, split the parent chunk texts again, into smaller child chunk texts
                 # and add parent chunk text as metadata to child chunk text
                 if self.retriever_type == "parent":
@@ -112,6 +116,7 @@ class Ingester:
                             "page_number": page_num,
                             "parent_chunk_num": chunk_num,
                             "parent_chunk": chunk_text,
+                            "parent_chunk_id": f"{metadata['filename']}_p{page_num}_c{chunk_num}",
                             "parent_chunk_embedding": parent_chunk_embedding,
                             "source": f"p{page_num}-{chunk_num}",
                             **metadata,
@@ -120,11 +125,11 @@ class Ingester:
                             page_content=child_chunk_text,
                             # metadata_combined = {"title": , "author": , "indicator_url": , "indicator_closed": ,
                             #                      "filename": , "Language": , "page_number": , "chunk": ,
-                            #                      "parent_chunk": , "parent_chunk_embedding: , "source": }
+                            #                      "parent_chunk": , "parent_chunk_id", "parent_chunk_embedding: ,
+                            #                      "source": }
                             metadata=metadata_combined
                         )
                         docs.append(doc)
-                        # print(f"texts_to_docs, retriever type is parent: doc = {doc}")
                 else:
                     # metadata = {"title": , "author": , "indicator_url": , "indicator_closed": , "filename": ,
                     #             "Language": }
@@ -142,10 +147,12 @@ class Ingester:
                     )
                     docs.append(doc)
                     # print(f"texts_to_docs, retriever type is not parent: doc = {doc}")
+                chunk_num += 1
+                prv_page_num = page_num
 
         return docs
 
-    def clean_texts_to_docs(self, raw_pages, embeddings, metadata) -> List[docstore.Document]:
+    def clean_texts_to_docs(self, raw_texts, embeddings, metadata) -> List[docstore.Document]:
         """"
         Combines the functions clean_text and text_to_docs
         """
@@ -154,7 +161,7 @@ class Ingester:
             self.fix_newlines,
             self.remove_multiple_newlines
         ]
-        cleaned_texts = self.clean_texts(raw_pages, cleaning_functions)
+        cleaned_texts = self.clean_texts(raw_texts, cleaning_functions)
         # for cleaned_text in cleaned_texts:
         #     cleaned_chunks = self.split_text_into_chunks(cleaned_text, metadata)
         docs = self.texts_to_docs(cleaned_texts, embeddings, metadata)
