@@ -15,10 +15,12 @@ class RetrieverCreator():
     Retriever class to import into other modules
     """
     def __init__(self, vectorstore: VectorStore, retriever_type: str = None, chunk_k: int = None,
-                 search_type: str = None, score_threshold: float = None, multiquery: bool = None) -> None:
+                 chunk_k_child: int = None, search_type: str = None, score_threshold: float = None,
+                 multiquery: bool = None) -> None:
         self.vectorstore = vectorstore
         self.retriever_type = settings.RETRIEVER_TYPE if retriever_type is None else retriever_type
         self.chunk_k = settings.CHUNK_K if chunk_k is None else chunk_k
+        self.chunk_k_child = settings.CHUNK_K_CHILD if chunk_k_child is None else chunk_k_child
         self.search_type = settings.SEARCH_TYPE if search_type is None else search_type
         self.score_threshold = settings.SCORE_THRESHOLD if score_threshold is None else score_threshold
         self.multiquery = settings.MULTIQUERY if multiquery is None else multiquery
@@ -32,7 +34,7 @@ class RetrieverCreator():
             search_kwargs = {"k": self.chunk_k}
             # filter, if set
             if search_filter is not None:
-                logger.info(f"querying vector store with filter {search_filter}")
+                # logger.info(f"querying vector store with filter {search_filter}")
                 search_kwargs["filter"] = search_filter
             if self.search_type == "similarity_score_threshold":
                 search_kwargs["score_threshold"] = self.score_threshold
@@ -42,7 +44,7 @@ class RetrieverCreator():
             # For BM25 retriever, a search filter on filename cannot directly be used
             # So first create a temporary collection with chunks of just the one file in the searchfilter
             if search_filter is not None:
-                logger.info(f"querying vector store with filter {search_filter}")
+                # logger.info(f"querying vector store with filter {search_filter}")
                 # dict_keys(['ids', 'embeddings', 'documents', 'metadatas'])
                 collection = self.vectorstore.get()
                 filtered_collection = {}
@@ -61,7 +63,7 @@ class RetrieverCreator():
             # maximum number of chunks to retrieve
             search_kwargs = {"k": self.chunk_k}
             if search_filter is not None:
-                logger.info(f"querying vector store with filter {search_filter}")
+                # logger.info(f"querying vector store with filter {search_filter}")
                 search_kwargs["filter"] = search_filter
             if self.search_type == "similarity_score_threshold":
                 search_kwargs["score_threshold"] = self.score_threshold
@@ -72,10 +74,10 @@ class RetrieverCreator():
         elif self.retriever_type == "parent":
             # Use the custom ParentDocumentRetriever that returns the parent docs associated with the child docs
             # maximum number of chunks to retrieve
-            search_kwargs = {"k": self.chunk_k}
+            search_kwargs = {"k": self.chunk_k_child}
             # filter, if set
             if search_filter is not None:
-                logger.info(f"querying vector store with filter {search_filter}")
+                # logger.info(f"querying vector store with filter {search_filter}")
                 search_kwargs["filter"] = search_filter
             if self.search_type == "similarity_score_threshold":
                 search_kwargs["score_threshold"] = self.score_threshold
