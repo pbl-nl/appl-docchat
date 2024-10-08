@@ -91,8 +91,7 @@ Execution is done in the activated virtual environment with <code>python summari
 ### Evaluation of Question Answer results
 The file evaluate.py can be used to evaluate the generated answers for a list of questions, provided that the file eval.json exists, containing 
 not only the list of questions but also the related list of desired answers (ground truth).<br>
-Evaluation is done at folder level in the activated virtual environment with <code>python evaluate.py</code><br>
-It is also possible to run an evaluation over all folders with <code>python evaluate_all.py</code>
+Evaluation is done at folder level (one or multiple folders) in the activated virtual environment with <code>python evaluate.py</code><br>
 
 ### Monitoring the evaluation results through a Streamlit User Interface
 All evaluation results can be viewed by using a dedicated User Interface.<br>
