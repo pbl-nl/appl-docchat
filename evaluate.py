@@ -14,27 +14,31 @@ import settings
 import utils as ut
 
 
-def store_evaluation_result(df: pd.DataFrame, content_folder_name: str, evaluation_type: str) -> None:
+def get_eval_questions(content_folder_name: str, eval_file: str) -> Tuple[List[str], List[str], List[str]]:
     """
-    stores the evaluation results in a csv file, either aggregated or detailed depending on evaluation_type argument
+    reads the json file with evaluation questions
 
     Parameters
     ----------
-    df : pd.DataFrame
-        dataframe to be stored, either aggregated or detailed
     content_folder_name : str
         name of content folder (without path)
-    evaluation_type : str
-        indicator whether or not dataframe to store is aggregated or not
+    eval_file : str
+        name of the evaluation file
+
+    Returns
+    -------
+    Tuple[List[str], List[str], List[str]]
+        tuple of evaluation questions list, evaluation questions types (initial or followup) list and
+        ground truths list
     """
-    if evaluation_type == "aggregated":
-        path = os.path.join(settings.EVAL_DIR, content_folder_name + "_agg.tsv")
-    else:
-        path = os.path.join(settings.EVAL_DIR, content_folder_name + ".tsv")
-    if os.path.isfile(path):
-        df_old = pd.read_csv(path, sep="\t")
-        df = pd.concat([df, df_old], axis=0)
-    df.to_csv(path, sep="\t", index=False)
+    # Get question types, questions and ground_truth from json file
+    with open(os.path.join(settings.EVAL_DIR, eval_file), 'r', encoding="utf8") as eval_file:
+        evaluation_data = json.load(eval_file)
+    eval_question_types = [el["question_type"] for el in evaluation_data[content_folder_name]]
+    eval_questions = [el["question"] for el in evaluation_data[content_folder_name]]
+    eval_groundtruths = [el["ground_truth"] for el in evaluation_data[content_folder_name]]
+
+    return eval_questions, eval_question_types, eval_groundtruths
 
 
 def ingest_or_load_documents(content_folder_name: str,
@@ -62,31 +66,6 @@ def ingest_or_load_documents(content_folder_name: str,
         logger.info(f"Created vector store in folder {vectordb_folder_path}")
     else:
         logger.info(f"Vector store already exists for folder {content_folder_name}")
-
-
-def get_eval_questions(content_folder_name: str) -> Tuple[List[str], List[str], List[str]]:
-    """
-    reads the json file with evaluation questions
-
-    Parameters
-    ----------
-    content_folder_name : str
-        name of content folder (without path)
-
-    Returns
-    -------
-    Tuple[List[str], List[str], List[str]]
-        tuple of evaluation questions list, evaluation questions types (initial or followup) list and
-        ground truths list
-    """
-    # Get question types, questions and ground_truth from json file
-    with open(os.path.join(settings.EVAL_DIR, settings.EVAL_FILE_NAME), 'r', encoding="utf8") as eval_file:
-        evaluation_data = json.load(eval_file)
-    eval_question_types = [el["question_type"] for el in evaluation_data[content_folder_name]]
-    eval_questions = [el["question"] for el in evaluation_data[content_folder_name]]
-    eval_groundtruths = [el["ground_truth"] for el in evaluation_data[content_folder_name]]
-
-    return eval_questions, eval_question_types, eval_groundtruths
 
 
 def generate_answers(querier: Querier,
@@ -170,6 +149,7 @@ def get_ragas_results(answers: List[str],
 def store_aggregated_results(timestamp: str,
                              admin_columns: List[str],
                              content_folder_name: str,
+                             eval_file: str,
                              result: evaluation.Result) -> None:
     """
     writes aggregated ragas results to file, including some admin columns and all the settings
@@ -183,11 +163,13 @@ def store_aggregated_results(timestamp: str,
         some identifiers like content folder name, evaluation file name and timestamp
     content_folder_name : str
         name of content folder (without path)
+    eval_file : str
+        name of the evaluation file
     result : evaluation.Result
         the resulting ragas performance metrics
     """
     # administrative data
-    admin_data = zip([content_folder_name], [timestamp], [settings.EVAL_FILE_NAME])
+    admin_data = zip([content_folder_name], [timestamp], [eval_file])
     df_admin = pd.DataFrame(data=list(admin_data), columns=admin_columns)
 
     # evaluation results
@@ -214,6 +196,7 @@ def store_aggregated_results(timestamp: str,
 def store_detailed_results(timestamp: str,
                            admin_columns: List[str],
                            content_folder_name: str,
+                           eval_file: str,
                            eval_questions: List[str],
                            result: evaluation.Result) -> None:
     """
@@ -229,6 +212,8 @@ def store_detailed_results(timestamp: str,
         some identifiers like content folder name, evaluation file name and timestamp
     content_folder_name : str
         name of content folder (without path)
+    eval_file : str
+        name of the evaluation file
     eval_questions : List[str]
         list of questions from the json file that was read
     result : evaluation.Result
@@ -236,7 +221,7 @@ def store_detailed_results(timestamp: str,
     """
     # administrative data
     folder_data = [content_folder_name for _ in range(len(eval_questions))]
-    eval_file_data = [settings.EVAL_FILE_NAME for _ in range(len(eval_questions))]
+    eval_file_data = [eval_file for _ in range(len(eval_questions))]
     timestamp_data = [timestamp for _ in range(len(eval_questions))]
     admin_data = zip(folder_data, timestamp_data, eval_file_data)
     df_admin = pd.DataFrame(data=list(admin_data), columns=admin_columns)
@@ -252,40 +237,92 @@ def store_detailed_results(timestamp: str,
     store_evaluation_result(df, content_folder_name, "detail")
 
 
-def main() -> None:
+def store_evaluation_result(df: pd.DataFrame, content_folder_name: str, evaluation_type: str) -> None:
     """
-    main function of the module, running everything else
+    stores the evaluation results in a csv file, either aggregated or detailed depending on evaluation_type argument
+
+    Parameters
+    ----------
+    df : pd.DataFrame
+        dataframe to be stored, either aggregated or detailed
+    content_folder_name : str
+        name of content folder (without path)
+    evaluation_type : str
+        indicator whether or not dataframe to store is aggregated or not
     """
+    if evaluation_type == "aggregated":
+        path = os.path.join(settings.EVAL_DIR, content_folder_name + "_agg.tsv")
+    else:
+        path = os.path.join(settings.EVAL_DIR, content_folder_name + ".tsv")
+    if os.path.isfile(path):
+        df_old = pd.read_csv(path, sep="\t")
+        df = pd.concat([df, df_old], axis=0)
+    df.to_csv(path, sep="\t", index=False)
+
+
+def main(chunk_size=None, chunk_overlap=None, chunk_k=None):
     # Create instance of Querier
-    querier = Querier()
+    querier = Querier(chunk_k=chunk_k)
+
+    # Get evaluation file name
+    eval_file = input("Name of evaluation file (without path): ")
 
     # Get source folder with evaluation documents from user
-    content_folder_name = input("Source folder of evaluation documents (without path): ")
-    # get associated source folder path and vectordb path
-    content_folder_path, vectordb_folder_path = ut.create_vectordb_name(content_folder_name=content_folder_name)
+    with open(os.path.join(settings.EVAL_DIR, eval_file), mode='r', encoding='utf8') as eval:
+        eval_file_json = json.load(eval)
+    folder_list = eval_file_json.keys()
+    for folder in folder_list:
+        content_folder_name = folder
+        # get associated source folder path and vectordb path
+        content_folder_path, vectordb_folder_path = ut.create_vectordb_name(content_folder_name=content_folder_name,
+                                                                            chunk_size=chunk_size,
+                                                                            chunk_overlap=chunk_overlap)
 
-    # ingest documents if documents in source folder path are not ingested yet
-    ingest_or_load_documents(content_folder_name, content_folder_path, vectordb_folder_path)
+        # ingest documents if documents in source folder path are not ingested yet
+        ingest_or_load_documents(content_folder_name=content_folder_name,
+                                 content_folder_path=content_folder_path,
+                                 vectordb_folder_path=vectordb_folder_path)
 
-    # create the query chain
-    querier.make_chain(content_folder_name, vectordb_folder_path)
+        # create the query chain
+        querier.make_chain(content_folder=content_folder_name,
+                           vecdb_folder=vectordb_folder_path)
 
-    # Get question types, questions and ground_truth from json file
-    eval_questions, eval_question_types, eval_groundtruths = get_eval_questions(content_folder_name)
+        # Get question types, questions and ground_truth from json file
+        eval_questions, eval_question_types, eval_groundtruths = \
+            get_eval_questions(content_folder_name=content_folder_name,
+                               eval_file=eval_file)
 
-    # Iterate over the questions and generate the answers
-    answers, sources = generate_answers(querier, eval_questions, eval_question_types)
+        # Iterate over the questions and generate the answers
+        answers, sources = generate_answers(querier=querier,
+                                            eval_questions=eval_questions,
+                                            eval_question_types=eval_question_types)
 
-    # get for ragas evaluation values
-    result = get_ragas_results(answers, sources, eval_questions, eval_groundtruths)
+        # get for ragas evaluation values
+        result = get_ragas_results(answers=answers,
+                                   sources=sources,
+                                   eval_questions=eval_questions,
+                                   eval_groundtruths=eval_groundtruths)
 
-    # store aggregate results including the ragas score:
-    timestamp = ut.get_timestamp()
-    admin_columns = ["folder", "timestamp", "eval_file"]
-    store_aggregated_results(timestamp, admin_columns, content_folder_name, result)
+        # update location for results
+        if chunk_size:
+            content_folder_name = f"{folder}_size_{chunk_size}_overlap_{chunk_overlap}_k_{chunk_k}"
 
-    # store detailed results:
-    store_detailed_results(timestamp, admin_columns, content_folder_name, eval_questions, result)
+        # store aggregate results including the ragas score:
+        timestamp = ut.get_timestamp()
+        admin_columns = ["folder", "timestamp", "eval_file"]
+        store_aggregated_results(timestamp=timestamp,
+                                 admin_columns=admin_columns,
+                                 content_folder_name=content_folder_name,
+                                 eval_file=eval_file,
+                                 result=result)
+
+        # store detailed results:
+        store_detailed_results(timestamp=timestamp,
+                               admin_columns=admin_columns,
+                               content_folder_name=content_folder_name,
+                               eval_file=eval_file,
+                               eval_questions=eval_questions,
+                               result=result)
 
 
 if __name__ == "__main__":
