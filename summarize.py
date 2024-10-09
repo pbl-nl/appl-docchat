@@ -17,6 +17,14 @@ def main():
     """
     # Get source folder with docs from user
     content_folder_name = input("Source folder of documents (without path): ")
+    # Get private docs indicator from user
+    confidential_yn = input("Are there any confidential documents in the folder? (y/n) ")
+    confidential = confidential_yn in ["y", "Y"]
+    # get relevant models
+    llm_provider, llm_model, _, embeddings_model = ut.get_relevant_models(confidential)
+    # get associated content folder path and vecdb path
+    content_folder_path, _ = ut.create_vectordb_name(content_folder_name=content_folder_name,
+                                                     embeddings_model=embeddings_model)
     # choose way of summarizing
     summarization_method = input("Summarization Method [map_reduce, refine]: ")
     if summarization_method not in ["map_reduce", "refine"]:
@@ -29,8 +37,8 @@ def main():
                                 text_splitter_method=settings.SUMMARY_TEXT_SPLITTER_METHOD,
                                 chunk_size=settings.SUMMARY_CHUNK_SIZE,
                                 chunk_overlap=settings.SUMMARY_CHUNK_OVERLAP,
-                                llm_provider=settings.SUMMARY_LLM_PROVIDER,
-                                llm_model=settings.SUMMARY_LLM_MODEL)
+                                llm_provider=llm_provider,
+                                llm_model=llm_model)
         logger.info(f"Starting summarizer with method {summarization_method}")
         summarizer.summarize_folder()
         logger.info(f"{content_folder_name} successfully summarized.")
