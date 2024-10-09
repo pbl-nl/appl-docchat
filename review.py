@@ -4,12 +4,12 @@ import csv
 import pandas as pd
 from loguru import logger
 from langchain_core.prompts import PromptTemplate
-
 # local imports
 from ingest.ingester import Ingester
 from query.querier import Querier
 import utils as ut
 import prompts.prompt_templates as pr
+import settings
 
 
 def ingest_or_load_documents(
@@ -222,12 +222,14 @@ def main() -> None:
     """
     # get source folder with papers from user
     content_folder_name = input("Source folder of documents (without path): ")
-
+    # Get private docs indicator from user
+    confidential_yn = input("Are there any confidential documents in the folder? (y/n)")
+    confidential = confidential_yn in ["y", "Y"]
+    # get relevant models
+    llm_provider, llm_model, embeddings_provider, embeddings_model = ut.get_relevant_models(confidential)
     # get associated content folder path and vecdb path
-    content_folder_path, vecdb_folder_path = ut.create_vectordb_name(
-        content_folder_name
-    )
-
+    content_folder_path, vecdb_folder_path = ut.create_vectordb_name(content_folder_name=content_folder_name,
+                                                                     embeddings_model=embeddings_model)
     # if content folder path does not exist, stop
     if not os.path.exists(content_folder_path):
         logger.info(
@@ -251,7 +253,10 @@ def main() -> None:
     review_files = ut.get_relevant_files_in_folder(content_folder_path)
 
     # create instance of Querier once
-    querier = Querier()
+    querier = Querier(llm_provider=llm_provider,
+                      llm_model=llm_model,
+                      embeddings_provider=embeddings_provider,
+                      embeddings_model=embeddings_model)
 
     # ingest documents if documents in source folder path are not ingested yet
     ingest_or_load_documents(

@@ -159,18 +159,10 @@ def folder_selector(folders: List[str]) -> Tuple[str, str, str]:
                                                    options=folders)
     logger.info(f"folder_name_selected is now {my_folder_name_selected}")
     # get associated source folder path and vectordb path
-    my_folder_path_selected, my_vecdb_folder_path_selected = ut.create_vectordb_name(my_folder_name_selected)
-    logger.info(f"vectordb_folder_path_selected is now {my_vecdb_folder_path_selected}")
-    if my_folder_name_selected != st.session_state['folder_selected']:
-        # clear chat history
-        st.session_state['messages'] = []
-        querier.clear_history()
-        st.session_state['is_GO_clicked'] = False
-    # set session state of selected folder to new source folder
-    st.session_state['folder_selected'] = my_folder_name_selected
+    my_folder_path_selected = os.path.join(settings.DOC_DIR, my_folder_name_selected)
     logger.info("Executed folder_selector()")
 
-    return my_folder_name_selected, my_folder_path_selected, my_vecdb_folder_path_selected
+    return my_folder_name_selected, my_folder_path_selected
 
 
 def document_selector(documents: List[str]) -> List[str]:
@@ -193,13 +185,6 @@ def document_selector(documents: List[str]) -> List[str]:
                                                        default=documents[0],
                                                        key='document_selector')
     logger.info(f"document_name_selected is now {my_document_name_selected}")
-    if my_document_name_selected != st.session_state['document_selected']:
-        # clear chat history
-        st.session_state['messages'] = []
-        querier.clear_history()
-        st.session_state['is_GO_clicked'] = False
-    # set session state of selected document to new source document
-    st.session_state['document_selected'] = my_document_name_selected
     logger.info("Executed document_selector()")
 
     return my_document_name_selected
@@ -208,7 +193,9 @@ def document_selector(documents: List[str]) -> List[str]:
 def check_vectordb(my_querier: Querier,
                    my_folder_name_selected: str,
                    my_folder_path_selected: str,
-                   my_vecdb_folder_path_selected: str) -> None:
+                   my_vecdb_folder_path_selected: str,
+                   my_embeddings_provider: str,
+                   my_embeddings_model: str) -> None:
     """
     checks if the vector database exists for the selected document folder, with the given settings
     If not, it creates the vector database
@@ -237,7 +224,9 @@ def check_vectordb(my_querier: Querier,
     with st.spinner(my_spinner_message):
         ingester = Ingester(collection_name=my_folder_name_selected,
                             content_folder=my_folder_path_selected,
-                            vecdb_folder=my_vecdb_folder_path_selected)
+                            vecdb_folder=my_vecdb_folder_path_selected,
+                            embeddings_provider=my_embeddings_provider,
+                            embeddings_model=my_embeddings_model)
         ingester.ingest()
 
     # create a new chain based on the new source folder
@@ -358,18 +347,16 @@ def initialize_page() -> None:
     logo_image = Image.open(settings.APP_LOGO)
     st.sidebar.image(logo_image, width=250)
 
-    _, col2, _, col4 = st.columns([0.2, 0.4, 0.1, 0.3])
+    with st.expander("User manual"):
+        # read app explanation from file explanation.txt
+        with open(file=settings.APP_INFO, mode="r", encoding="utf8") as f:
+            explanation = f.read()
+        st.markdown(body=explanation, unsafe_allow_html=True)
+        st.image("./images/multilingual.png")
+    _, col2, _ = st.columns([0.4, 0.2, 0.4])
     with col2:
         st.header(settings.APP_HEADER)
-    with col4:
-        with st.expander("User manual"):
-            # read app explanation from file explanation.txt
-            with open(file=settings.APP_INFO, mode="r", encoding="utf8") as f:
-                explanation = f.read()
-            st.markdown(body=explanation, unsafe_allow_html=True)
-            st.image("./images/multilingual.png")
-    # set session state default for messages to fight hallucinations
-    # st.session_state.setdefault('messages', [{"role": "system", "content": "You are a helpful assistant.
+
     logger.info("Executed initialize_page()")
 
 
@@ -383,12 +370,17 @@ def initialize_session_state() -> None:
         st.session_state['folder_selected'] = ""
     if 'document_selected' not in st.session_state:
         st.session_state['document_selected'] = ""
+    if 'confidential' not in st.session_state:
+        st.session_state['confidential'] = False
     if 'messages' not in st.session_state:
         st.session_state['messages'] = []
 
 
-@st.cache_resource
-def initialize_querier() -> Querier:
+# @st.cache_resource
+def initialize_querier(my_llm_provider: str,
+                       my_llm_model: str,
+                       my_embeddings_provider: str,
+                       my_embeddings_model: str) -> Querier:
     """
     Create a Querier object
 
@@ -397,7 +389,10 @@ def initialize_querier() -> Querier:
     Querier
         Querier object
     """
-    my_querier = Querier()
+    my_querier = Querier(llm_provider=my_llm_provider,
+                         llm_model=my_llm_model,
+                         embeddings_provider=my_embeddings_provider,
+                         embeddings_model=my_embeddings_model)
     logger.info("Executed initialize_querier()")
 
     return my_querier
@@ -414,6 +409,15 @@ def set_page_config() -> None:
     logger.info("\nExecuted set_page_config()")
 
 
+def clear_history() -> None:
+    """
+    clear the querier history and UI histiry and reset session state
+    """
+    st.session_state['messages'] = []
+    querier.clear_history()
+    st.session_state['is_GO_clicked'] = False
+
+
 # ### MAIN PROGRAM ####
 # set page configuration, this is the first thing that needs to be done
 set_page_config()
@@ -425,39 +429,57 @@ vectordb_folder_creator()
 source_folders_available = folderlist_creator()
 # initialize session state variables
 initialize_session_state()
-# creation of Querier object, executed only once per session
-querier = initialize_querier()
 # chosen folder and associated vector database
-folder_name_selected, folder_path_selected, vecdb_folder_path_selected = folder_selector(source_folders_available)
+folder_name_selected, folder_path_selected = folder_selector(source_folders_available)
 # available and selected documents
 document_names = documentlist_creator(folder_path_selected)
 document_selection = document_selector(document_names)
-
+# create checkbox to indicate whether chosen documents are private or not. Default is not checked
+confidential = st.sidebar.checkbox(label="confidential", help="check in case of private documents")
+# get relevant models
+llm_provider, llm_model, embeddings_provider, embeddings_model = ut.get_relevant_models(confidential)
+# determine name of associated vector database
+_, vecdb_folder_path = ut.create_vectordb_name(content_folder_name=folder_name_selected,
+                                               embeddings_model=embeddings_model)
+# creation of Querier object, executed only once per session
+querier = initialize_querier(my_llm_provider=llm_provider,
+                             my_llm_model=llm_model,
+                             my_embeddings_provider=embeddings_provider,
+                             my_embeddings_model=embeddings_model)
+# clear querier history if a switch in confidentiality is made
+if confidential != st.session_state['confidential']:
+    clear_history()
+st.session_state['confidential'] = confidential
+# clear querier history if a different folder or (set of) document(s) is chosen
+if (folder_name_selected != st.session_state['folder_selected']) or \
+   (document_selection != st.session_state['document_selected']):
+    clear_history()
+st.session_state['folder_selected'] = folder_name_selected
+st.session_state['document_selected'] = document_selection
 # create button to confirm folder selection. This button sets session_state['is_GO_clicked'] to True
 st.sidebar.button("GO", type="primary", on_click=click_go_button)
-
 # only start a conversation when a folder is selected and selection is confirmed with "GO" button
 if st.session_state['is_GO_clicked']:
+    logger.info("GO button is clicked")
     # create or update vector database if necessary
     check_vectordb(my_querier=querier,
                    my_folder_name_selected=folder_name_selected,
                    my_folder_path_selected=folder_path_selected,
-                   my_vecdb_folder_path_selected=vecdb_folder_path_selected)
-    summary_type = st.sidebar.radio(
-        "Start with summary?",
-        ["No", "Short", "Long"],
-        captions=["", "Quicker and shorter", "Slower but more extensive"],
-        index=0)
+                   my_vecdb_folder_path_selected=vecdb_folder_path,
+                   my_embeddings_provider=embeddings_provider,
+                   my_embeddings_model=embeddings_model)
+    summary_type = st.sidebar.radio(label="Start with summary?",
+                                    options=["No", "Short", "Long"],
+                                    captions=["", "Quicker and shorter", "Slower but more extensive"],
+                                    index=0)
     # if one of the options is chosen
     if summary_type in ["Short", "Long"]:
         # show the summary at the top of the screen
         create_and_show_summary(my_summary_type=summary_type,
                                 my_folder_path_selected=folder_path_selected,
                                 my_selected_documents=document_selection)
-
     # show button "Clear Conversation"
     clear_messages_button = st.button(label="Clear Conversation", key="clear")
-
     # if button "Clear Conversation" is clicked
     if clear_messages_button:
         # clear all chat messages on screen and in Querier object
@@ -465,10 +487,8 @@ if st.session_state['is_GO_clicked']:
         st.session_state['messages'] = []
         querier.clear_history()
         logger.info("Clear Conversation button clicked")
-
     # display chat messages from history
     display_chat_history()
-
     # react to user input if a question has been asked
     if prompt := st.chat_input("Your question"):
         handle_query(my_folder_path_selected=folder_path_selected,
@@ -476,4 +496,4 @@ if st.session_state['is_GO_clicked']:
                      my_prompt=prompt,
                      my_document_selection=document_selection,
                      my_folder_name_selected=folder_name_selected,
-                     my_vecdb_folder_path_selected=vecdb_folder_path_selected)
+                     my_vecdb_folder_path_selected=vecdb_folder_path)

@@ -146,7 +146,6 @@ class Ingester:
                         metadata=metadata_combined
                     )
                     docs.append(doc)
-                    # print(f"texts_to_docs, retriever type is not parent: doc = {doc}")
                 chunk_num += 1
                 prv_page_num = page_num
 

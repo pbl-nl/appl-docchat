@@ -11,7 +11,7 @@ APP_HEADER = "ChatPBL"
 DOC_DIR = "./docs"
 # filepath of folder with chunks, e.g. "./chunks"
 CHUNK_DIR = "./chunks"
-# filepath of persistent vector databases, e.g. "./vector_stores"
+# folder for persistent vector databases, e.g. "vector_stores"
 VECDB_DIR = "vector_stores"
 # filepath of evaluation results folder, e.g. "./evaluate"
 EVAL_DIR = "./evaluate"
@@ -19,8 +19,6 @@ EVAL_DIR = "./evaluate"
 EVAL_APP_HEADER = "ChatPBL: evaluation"
 # filepath of text file with content for evaluation explanation in evaluation UI
 EVAL_APP_INFO = "./info/evaluation_explanation.txt"
-# filename of json file with question and answer lists, e.g. "eval.json"
-EVAL_FILE_NAME = "eval.json"
 # CHAIN_VERBOSITY must be boolean. When set to True, the standalone question that is conveyed to LLM is shown
 CHAIN_VERBOSITY = False
 
@@ -31,7 +29,7 @@ CHAIN_VERBOSITY = False
 # LLM_PROVIDER must be "huggingface" in case of using the Huggingface API
 # LLM_PROVIDER must be "ollama" in case of using a downloaded Ollama LLM
 # LLM_PROVIDER must be "azureopenai" in case of using the Azure OpenAI Services API
-LLM_PROVIDER = "openai"
+LLM_PROVIDER = "azureopenai"
 
 # - If LLM_PROVIDER is "openai", LLM_MODEL must be one of:
 #   "gpt-3.5-turbo", context window size = 4097 tokens (equivalent to ~3000 words)
@@ -49,20 +47,25 @@ LLM_PROVIDER = "openai"
 #   "orca-mini"
 #   "zephyr"
 #   See also https://ollama.ai/library
-# - If LLM_PROVIDER is "azureopenai", LLM_MODEL must be one of the LLM models deployed, e.g.: "gpt-35-turbo"
-LLM_MODEL = "gpt-3.5-turbo"
+# - If LLM_PROVIDER is "azureopenai", LLM_MODEL must be one of the LLM models deployed, e.g.:
+#   "gpt-35-turbo", context window size = 4097 tokens
+#   "gpt-4", context window size = 8192 tokens
+#   "gpt-4o", context window size = 128000 tokens
+LLM_MODEL = "gpt-35-turbo"
 
-# EMBEDDINGS_PROVIDER must be one of: "openai", "huggingface", "local_embeddings", "azureopenai"
-EMBEDDINGS_PROVIDER = "openai"
+# EMBEDDINGS_PROVIDER must be one of: "openai", "huggingface", "ollama", "azureopenai"
+EMBEDDINGS_PROVIDER = "azureopenai"
 
 # - If EMBEDDINGS_PROVIDER is "openai", EMBEDDINGS_MODEL must be one of:
 #   "text-embedding-ada-002" (1536 dimensional, max 8191 tokens),
 #   "text-embedding-3-small" (1536 dimensional, max 8191 tokens),
 #   "text-embedding-3-large" (3072 dimensional, max 8191 tokens)
 # - If EMBEDDINGS_PROVIDER is "huggingface", EMBEDDINGS_MODEL must be one of: "all-mpnet-base-v2"
-# - If EMBEDDINGS_PROVIDER is "local_embeddings", EMBEDDINGS_MODEL must be one of the locally downloaded models, e.g.
-#   "llama3"
-# - If EMBEDDINGS_PROVIDER is "azureopenai", EMBEDDINGS_MODEL must be the embeddings deployment name
+# - If EMBEDDINGS_PROVIDER is "ollama", EMBEDDINGS_MODEL must be one of the locally downloaded models, e.g.
+#   "llama3", "nomic-embed-text"
+# - If EMBEDDINGS_PROVIDER is "azureopenai", EMBEDDINGS_MODEL must be the embedding models deployed, e.g.
+#   "text-embedding-ada-002" (1536 dimensional, max 8191 tokens),
+#   "text-embedding-3-large" (3072 dimensional, max 8191 tokens)
 EMBEDDINGS_MODEL = "text-embedding-ada-002"
 
 # VECDB_TYPE must be one of: "chromadb",
@@ -118,6 +121,13 @@ SUMMARY_CHUNK_SIZE = 6000
 SUMMARY_CHUNK_OVERLAP = 0
 SUMMARY_LLM_PROVIDER = "azureopenai"
 SUMMARY_LLM_MODEL = "gpt-35-turbo"
+
+# settings for confidential documents
+PRIVATE_LLM_PROVIDER = "ollama"
+PRIVATE_LLM_MODEL = "zephyr"
+PRIVATE_EMBEDDINGS_PROVIDER = "ollama"
+PRIVATE_EMBEDDINGS_MODEL = "nomic-embed-text"
+PRIVATE_SUMMARY_LLM_MODEL = "zephyr"
 
 # SEARCH_TYPE must be one of: "similarity", "similarity_score_threshold"
 SEARCH_TYPE = "similarity_score_threshold"

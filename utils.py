@@ -251,3 +251,12 @@ def detect_language(text: str, number_of_characters: int = 1000) -> str:
         if 'No features in text' in str(e):
             # Handle the specific error where no features are found in the text
             return 'unknown'
+
+
+def get_relevant_models(private: bool) -> Tuple[str, str, str, str]:
+    if private:
+        return settings.PRIVATE_LLM_PROVIDER, settings.PRIVATE_LLM_MODEL, \
+               settings.PRIVATE_EMBEDDINGS_PROVIDER, settings.PRIVATE_EMBEDDINGS_MODEL
+    else:
+        return settings.LLM_PROVIDER, settings.LLM_MODEL, \
+               settings.EMBEDDINGS_PROVIDER, settings.EMBEDDINGS_MODEL
