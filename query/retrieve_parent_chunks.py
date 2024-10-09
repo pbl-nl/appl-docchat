@@ -6,7 +6,8 @@ from langchain_core.documents import Document
 from langchain_core.pydantic_v1 import Field
 from langchain_core.retrievers import BaseRetriever
 from langchain_core.vectorstores import VectorStore
-
+# local imports
+import settings
 
 class SearchType(str, Enum):
     """
@@ -60,7 +61,9 @@ class ParentDocumentRetriever(BaseRetriever):
                 query, **self.search_kwargs
             )
         elif self.search_type == SearchType.SIMILARITY:
-            child_docs = self.vectorstore.similarity_search(query, **self.search_kwargs)
+            child_docs = self.vectorstore.similarity_search(
+                query, **self.search_kwargs
+            )
         elif self.search_type == SearchType.SIMILARITY_SCORE_THRESHOLD:
             docs_and_similarities = self.vectorstore.similarity_search_with_relevance_scores(
                 query, **self.search_kwargs
@@ -86,6 +89,5 @@ class ParentDocumentRetriever(BaseRetriever):
                 parent_chunk_ids.append(parent_chunk_id)
                 parent_docs.append(parent_doc)
 
-        # return parent docs
-        # SPT restrict to maximally chunk_k!
-        return [parent_doc for parent_doc in parent_docs if parent_doc is not None]
+        # return maximally chunk_k parent docs
+        return [parent_doc for parent_doc in parent_docs if parent_doc is not None][:settings.CHUNK_K]
