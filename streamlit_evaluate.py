@@ -100,7 +100,7 @@ def set_page_config():
     """
     sets the page configuration
     """
-    st.set_page_config(page_title="ChatNMDC evaluation", page_icon=':books:', layout='wide')
+    st.set_page_config(page_title="Evaluation", page_icon=':books:', layout='wide')
     logger.info("\nExecuted set_page_config()")
 
 
