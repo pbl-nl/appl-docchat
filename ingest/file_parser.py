@@ -71,7 +71,7 @@ class FileParser:
 
         return pages, metadata
 
-    def parse_pymupdf(self, file_path: str) -> Tuple[str, List[Tuple[int, str]], Dict[str, str]]:
+    def parse_pymupdf(self, file_path: str) -> Tuple[List[Tuple[int, str]], Dict[str, str]]:
         """
         Extracts and return the page blocks and metadata from the PDF file
         Then determines which blocks of text should be merged, depending on whether the previous block was a
