@@ -7,6 +7,7 @@ import sys
 import datetime as dt
 import pathlib
 import numpy as np
+from loguru import logger
 from langdetect import detect, LangDetectException
 # local imports
 import settings
@@ -89,8 +90,12 @@ def is_relevant_file(content_folder_path: str, my_file: str) -> bool:
     bool
         True if file is relevant, otherwise False
     """
-    return ((os.path.isfile(os.path.join(content_folder_path, my_file))) and
-            (os.path.splitext(my_file)[1] in [".docx", ".html", ".md", ".pdf", ".txt"]))
+    relevant = ((os.path.isfile(os.path.join(content_folder_path, my_file))) and
+                (os.path.splitext(my_file)[1] in [".docx", ".html", ".md", ".pdf", ".txt"]))
+    if not relevant:
+        logger.info(f"Skipping ingestion of file {my_file} because it has extension {os.path.splitext(my_file)[1]}")
+
+    return relevant
 
 
 def get_relevant_files_in_folder(content_folder_path: str) -> List[str]:
@@ -106,9 +111,7 @@ def get_relevant_files_in_folder(content_folder_path: str) -> List[str]:
     List[str]
         tuple of content folder path and vector database folder path
     """
-    files_in_folder = [f for f in os.listdir(content_folder_path) if is_relevant_file(content_folder_path, f)]
-
-    return files_in_folder
+    return [f for f in os.listdir(content_folder_path) if is_relevant_file(content_folder_path, f)]
 
 
 def exit_program() -> None:

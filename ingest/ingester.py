@@ -180,13 +180,7 @@ class Ingester:
         new_files = []
 
         # get all relevant files in the folder
-        files_in_folder = [f for f in os.listdir(self.content_folder)
-                           if os.path.isfile(os.path.join(self.content_folder, f))]
         relevant_files_in_folder = ut.get_relevant_files_in_folder(self.content_folder)
-        for file in files_in_folder:
-            if file not in relevant_files_in_folder:
-                logger.info(f"Skipping ingestion of file {file} because it has extension {file[-4:]}")
-
         # if the vector store already exists, get the set of ingested files from the vector store
         if os.path.exists(self.vecdb_folder):
             # get chroma vector store
