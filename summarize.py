@@ -28,9 +28,11 @@ def main():
     # choose way of summarizing
     summarization_method = input("Summarization Method [map_reduce, refine]: ")
     if summarization_method not in ["map_reduce", "refine"]:
-        logger.info("Exiting because of invalid user input")
+        logger.info("Exiting because of invalid user input, please choose map_reduce or refine")
         ut.exit_program()
     else:
+        # create subfolder for storage of summaries if not existing
+        ut.create_summaries_folder(content_folder_name)
         content_folder_path, _ = ut.create_vectordb_name(content_folder_name)
         summarizer = Summarizer(content_folder_path=content_folder_path,
                                 summarization_method=summarization_method,

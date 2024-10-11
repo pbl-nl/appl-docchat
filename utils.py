@@ -20,6 +20,18 @@ def create_vectordb_folder() -> None:
         os.mkdir(os.path.join(pathlib.Path().resolve(), settings.VECDB_DIR))
 
 
+def create_summaries_folder(content_folder_name: str) -> None:
+    """ Creates subfolder for storage of summaries if not existing
+
+    Parameters
+    ----------
+    content_folder_name : str
+        name of the content folder (without the path)
+    """
+    if "summaries" not in os.listdir(os.path.join(pathlib.Path().resolve(), settings.DOC_DIR, content_folder_name)):
+        os.mkdir(os.path.join(pathlib.Path().resolve(), settings.DOC_DIR, content_folder_name, "summaries"))
+
+
 def create_vectordb_name(content_folder_name: str,
                          retriever_type: str = None,
                          embeddings_model: str = None,
@@ -65,11 +77,11 @@ def create_vectordb_name(content_folder_name: str,
         if chunk_overlap_child is None else str(chunk_overlap_child)
     # vectordb_name is created from retriever_type, embeddings_model, text_splitter_method and
     # parent and child chunk_size and chunk_overlap
-    vectordb_name = retriever_type + "_" + embeddings_model + "_" + text_splitter_method + "_" + \
-        chunk_size + "_" + chunk_overlap + "_" + chunk_size_child + "_" + chunk_overlap_child
+    vectordb_name = content_folder_name + "_" + retriever_type + "_" + embeddings_model + "_" + \
+        text_splitter_method + "_" + chunk_size + "_" + chunk_overlap + "_" + chunk_size_child + "_" + \
+        chunk_overlap_child
 
-    vectordb_folder_path = os.path.join(pathlib.Path().resolve(), settings.VECDB_DIR,
-                                        content_folder_name + "_" + vectordb_name)
+    vectordb_folder_path = os.path.join(pathlib.Path().resolve(), settings.VECDB_DIR, vectordb_name)
 
     return content_folder_path, vectordb_folder_path
 
