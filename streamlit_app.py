@@ -21,6 +21,7 @@ def click_go_button() -> None:
 
 @st.cache_data
 def create_and_show_summary(my_summary_type: str,
+                            my_content_folder_name: str,
                             my_folder_path_selected: str,
                             my_selected_documents: List[str]) -> None:
     """
@@ -30,6 +31,8 @@ def create_and_show_summary(my_summary_type: str,
     ----------
     my_summary_type : str
         chosen summary type, either "Short" or "Long"
+    my_content_folder_name : str
+        name of content folder (without path)
     my_folder_path_selected : str
         path of content folder
     selected_documents : List[str]
@@ -41,6 +44,8 @@ def create_and_show_summary(my_summary_type: str,
         summarization_method = "refine"
 
     logger.info(f"Starting create_and_show_summary() with summarization method {summarization_method}")
+    # create subfolder for storage of summaries if not existing
+    ut.create_summaries_folder(my_content_folder_name)
     summarizer = Summarizer(content_folder_path=my_folder_path_selected,
                             summarization_method=summarization_method,
                             text_splitter_method=settings.SUMMARY_TEXT_SPLITTER_METHOD,
@@ -62,7 +67,7 @@ def create_and_show_summary(my_summary_type: str,
                                             str(file_name) + "_" + str.lower(summarization_method) + ".txt")
                 # if summary does not exist yet, create it
                 if not os.path.isfile(summary_name):
-                    my_spinner_message = f'''Creating summary for {file}.\n
+                    my_spinner_message = f'''Creating {my_summary_type.lower()} summary for {file}.\n
                     Depending on the size of the file and the type of summary, this may take a while. Please wait...'''
                     with st.spinner(my_spinner_message):
                         summarizer.summarize_file(file)
@@ -180,7 +185,7 @@ def document_selector(documents: List[str]) -> List[str]:
         list of selected valid documents
     """
     # Creating a multi-select dropdown
-    my_document_name_selected = st.sidebar.multiselect(label="***SELECT ANY/ALL FILES***",
+    my_document_name_selected = st.sidebar.multiselect(label="***SELECT ANY / ALL FILES***",
                                                        options=documents,
                                                        default=documents[0],
                                                        key='document_selector')
@@ -476,6 +481,7 @@ if st.session_state['is_GO_clicked']:
     if summary_type in ["Short", "Long"]:
         # show the summary at the top of the screen
         create_and_show_summary(my_summary_type=summary_type,
+                                my_content_folder_name=folder_name_selected,
                                 my_folder_path_selected=folder_path_selected,
                                 my_selected_documents=document_selection)
     # show button "Clear Conversation"

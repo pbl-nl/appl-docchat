@@ -67,6 +67,18 @@ Execution is done in the activated virtual environment with <code>python ingest.
 The file query.py can be used to query any folder with documents, provided that the associated vector database exists.<br>
 Execution is done in the activated virtual environment with <code>python query.py</code>
 
+### Summarizing documents
+The file summarize.py can be used to summarize every file individually in a document folder. Two options for summarization are implemented:
+* Map Reduce: this will create a summary in a fast way<br>
+* Refine: this will create a more refined summary, but can take a long time to run, especially for larger documents
+
+Execution is done in the activated virtual environment with <code>python summarize.py</code>. The user will be prompted for the summarization method
+
+### Ingesting and querying documents through a Streamlit User Interface
+The functionalities described above can also be used through a User Interface.<br>
+In the activated virtual environment, the UI can be started with <code>streamlit run streamlit_app.py</code><br>
+When this command is used, a browser session will open automatically
+
 ### Querying multiple documents with multiple questions in batch
 The file review.py uses the standard question-answer technique but allows you to ask multiple questions to each document in a folder. 
 * Create a subfolder with the name <B>review</B> in folder docs/XXXX with XXXX as the name of your document folder
@@ -75,25 +87,12 @@ The file review.py uses the standard question-answer technique but allows you to
 Execution is done in the activated virtual environment with <code>python review.py</code>
 All the results, including the answers and the sources used to create the answers, are stored in a file result.csv which is also stored in the subfolder <B>review</B>
 
-### Ingesting and querying documents through a Streamlit User Interface
-The functionalities described above can also be used through a User Interface.<br>
-In the activated virtual environment, the UI can be started with <code>streamlit run streamlit_app.py</code><br>
-When this command is used, a browser session will open automatically
-
-### Summarizing documents
-The file summarize.py can be used to summarize every file individually in a document folder. Three options for summarization are implemented:
-* Map Reduce: this will create a summary in a fast way. The time (and quality) to create a summary depends on the number of centroids chosen. This is a parameter in settings.py<br>
-* Refine: this will create a more refined summary, but can take a long time to run, especially for larger documents
-* Hybrid: combines both methods above
-
-Execution is done in the activated virtual environment with <code>python summarize.py</code>. The user will be prompted for the summarization method, either "Map_Reduce", "Refine" or "Hybrid"
-
-### Evaluation of Question Answer results
+### For developers: Evaluation of Question Answer results
 The file evaluate.py can be used to evaluate the generated answers for a list of questions, provided that the file eval.json exists, containing 
 not only the list of questions but also the related list of desired answers (ground truth).<br>
 Evaluation is done at folder level (one or multiple folders) in the activated virtual environment with <code>python evaluate.py</code><br>
 
-### Monitoring the evaluation results through a Streamlit User Interface
+### For developers: Monitoring the evaluation results through a Streamlit User Interface
 All evaluation results can be viewed by using a dedicated User Interface.<br>
 In the activated virtual environment, this evaluation UI can be started with <code>streamlit run streamlit_evaluate.py</code><br>
 When this command is used, a browser session will open automatically
