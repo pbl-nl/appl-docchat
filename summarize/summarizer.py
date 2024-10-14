@@ -62,7 +62,7 @@ class Summarizer:
         creates summary for one specific file
         """
         loader = PyPDFLoader(os.path.join(self.content_folder_path, file))
-        docs = loader.load_and_split(text_splitter=self.text_splitter)
+        docs = loader.load_and_split(text_splitter=self.text_splitter())
         summary = self.chain.invoke(docs)["output_text"]
         # store summary on disk
         file_name, _ = os.path.splitext(file)

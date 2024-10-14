@@ -12,6 +12,25 @@ from langdetect import detect, LangDetectException
 # local imports
 import settings
 
+language_map = {
+    'cs':'czech',
+    'da':'danish',
+    'nl':'dutch',
+    'en':'english',
+    'et':'estonian',
+    'fi':'finnish',
+    'fr':'french',
+    'de':'german',
+    'el':'greek',
+    'it':'italian',
+    'no':'norwegian',
+    'pl':'polish',
+    'pt':'portuguese',
+    'sl':'slovene',
+    'es':'spanish',
+    'sv':'swedish',
+    'tr':'turkish'
+} #languages supported by nltk
 
 def create_vectordb_folder() -> None:
     """ Creates subfolder for storage of vector databases if not existing
