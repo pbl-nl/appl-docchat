@@ -7,6 +7,7 @@ from query.llm_creator import LLMCreator
 from ingest.splitter_creator import SplitterCreator
 import settings
 import utils as ut
+from langchain_core.prompts import PromptTemplate
 
 
 class Summarizer:
@@ -39,9 +40,6 @@ class Summarizer:
         self.llm = LLMCreator(llm_provider=self.llm_provider,
                               llm_model=self.llm_model).get_llm()
 
-        # create summarization chain
-        self.chain = load_summarize_chain(llm=self.llm, chain_type=self.chain_type)
-
     def summarize_folder(self) -> None:
         """
         creates summaries of all files in the folder, using the chosen summarization method. One summary per file.
@@ -63,6 +61,7 @@ class Summarizer:
         """
         loader = PyPDFLoader(os.path.join(self.content_folder_path, file))
         docs = loader.load_and_split(text_splitter=self.text_splitter)
+        self.make_chain(docs)
         summary = self.chain.invoke(docs)["output_text"]
         # store summary on disk
         file_name, _ = os.path.splitext(file)
@@ -70,3 +69,40 @@ class Summarizer:
                               str.lower(self.chain_type) + ".txt")
         with open(file=result, mode="w", encoding="utf8") as f:
             f.write(summary)
+
+    def make_chain(self, docs):
+        page_contents = ' '.join(doc.page_content for doc in docs)
+        language = ut.language_map.get(ut.detect_language(page_contents), 'english')
+        partial_prompt = f'Write a concise summary of the following in {language} language: '
+        prompt_template = partial_prompt + """
+
+        "{text}"
+
+        CONCISE SUMMARY:"""
+
+        PROMPT = PromptTemplate(template=prompt_template, input_variables=["text"])
+
+        if self.chain_type == "map_reduce":
+            kwargs = {
+                'map_prompt' : PROMPT,
+                'combine_prompt': PROMPT
+            }
+        else:
+            partial_prompt = f"\
+                Given the new context, refine the original summary in the {language} language.\
+                If the context isn't useful, return the original summary."
+            REFINE_PROMPT_TMPL = """\
+                Your job is to produce a final summary.
+                We have provided an existing summary up to a certain point: {existing_answer}
+                We have the opportunity to refine the existing summary (only if needed) with some more context below.
+                ------------
+                {text}
+                ------------\
+                """ + partial_prompt
+            REFINE_PROMPT = PromptTemplate.from_template(REFINE_PROMPT_TMPL)
+            kwargs = {
+                "question_prompt": PROMPT,
+                "refine_prompt":REFINE_PROMPT
+            }
+        
+        self.chain = load_summarize_chain(llm=self.llm, chain_type=self.chain_type, **kwargs)
