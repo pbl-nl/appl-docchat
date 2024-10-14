@@ -1,6 +1,7 @@
 import langchain.text_splitter as splitter
 # local imports
 import settings
+import utils as ut
 
 
 class SplitterCreator():
@@ -18,16 +19,15 @@ class SplitterCreator():
         Get the text splitter object
         """
         if self.text_splitter_method == "NLTKTextSplitter":
-            text_splitter = splitter.NLTKTextSplitter(
+            return lambda language = 'english': splitter.NLTKTextSplitter(
                 separator="\n\n",
-                language="english",
+                language=ut.language_map.get(language,'english'),
                 chunk_size=self.chunk_size,
                 chunk_overlap=self.chunk_overlap
             )
         elif self.text_splitter_method == "RecursiveCharacterTextSplitter":
-            text_splitter = splitter.RecursiveCharacterTextSplitter(
+            return lambda language = "english": splitter.RecursiveCharacterTextSplitter(
                 chunk_size=self.chunk_size,
                 separators=["\n\n", "\n", ".", "!", "?", ",", " ", ""],
                 chunk_overlap=self.chunk_overlap
             )
-        return text_splitter

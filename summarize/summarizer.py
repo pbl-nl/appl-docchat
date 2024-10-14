@@ -32,7 +32,7 @@ class Summarizer:
         # create splitter object
         self.text_splitter = SplitterCreator(text_splitter_method=self.text_splitter_method,
                                              chunk_size=self.chunk_size,
-                                             chunk_overlap=self.chunk_overlap).get_splitter()
+                                             chunk_overlap=self.chunk_overlap).get_splitter()()
 
         # create llm object
         load_dotenv()

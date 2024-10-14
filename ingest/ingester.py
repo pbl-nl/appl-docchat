@@ -92,6 +92,7 @@ class Ingester:
         Split the text into chunks and return them as Documents.
         """
         docs: List[docstore.Document] = []
+        language = metadata['Language']
 
         prv_page_num = -1
         for page_num, text in texts:
@@ -99,7 +100,7 @@ class Ingester:
             # reset chunk number to 0 only when text is from new page
             if page_num != prv_page_num:
                 chunk_num = 0
-            chunk_texts = self.splitter.split_text(text)
+            chunk_texts = self.splitter(language).split_text(text)
             for chunk_text in chunk_texts:
                 # in case of parent retriever, split the parent chunk texts again, into smaller child chunk texts
                 # and add parent chunk text as metadata to child chunk text
@@ -107,7 +108,7 @@ class Ingester:
                     # determine parent chunk embedding. It needs to be stored as a string in the vector database
                     parent_chunk_embedding = ','.join(str(x) for x in embeddings.embed_documents([chunk_text])[0])
                     # determine child chunks
-                    child_chunk_texts = self.splitter_child.split_text(chunk_text)
+                    child_chunk_texts = self.splitter_child(language).split_text(chunk_text)
                     # determine child document to store in the vector database
                     for child_chunk_text in child_chunk_texts:
                         # metadata = {"title": , "author": , "indicator_url": , "indicator_closed": , "filename": ,
