@@ -2,11 +2,14 @@ import os
 from langchain.chains.summarize import load_summarize_chain
 from langchain_community.document_loaders import PyPDFLoader
 from dotenv import load_dotenv
+from langchain_core.prompts import PromptTemplate
 # local imports
 from query.llm_creator import LLMCreator
 from ingest.splitter_creator import SplitterCreator
+from ingest.file_parser import FileParser
 import settings
 import utils as ut
+import prompts.prompt_templates as pr
 
 
 class Summarizer:
@@ -29,18 +32,36 @@ class Summarizer:
         self.llm_provider = settings.LLM_PROVIDER if llm_provider is None else llm_provider
         self.llm_model = settings.LLM_MODEL if llm_model is None else llm_model
 
-        # create splitter object
-        self.text_splitter = SplitterCreator(text_splitter_method=self.text_splitter_method,
-                                             chunk_size=self.chunk_size,
-                                             chunk_overlap=self.chunk_overlap).get_splitter()
-
         # create llm object
         load_dotenv()
         self.llm = LLMCreator(llm_provider=self.llm_provider,
                               llm_model=self.llm_model).get_llm()
 
-        # create summarization chain
-        self.chain = load_summarize_chain(llm=self.llm, chain_type=self.chain_type)
+    def make_chain(self, my_language):
+        """
+        defines the load_summarize_chain to use, depending on method chosen
+        """
+        if self.chain_type == "map_reduce":
+            partial_prompt = f"Write a concise summary of the following in the {my_language} language: "
+            map_reduce_prompt = PromptTemplate(template=partial_prompt + pr.SUMMARY_PROMPT_TEMPLATE,
+                                               input_variables=["text"])
+            kwargs = {
+                'map_prompt': map_reduce_prompt,
+                'combine_prompt': map_reduce_prompt
+            }
+        else:
+            partial_prompt = f"Given the new context, refine the original summary in the {my_language} language. \
+            If the context isn't useful, return the original summary."
+            map_reduce_prompt = PromptTemplate(template=partial_prompt + pr.SUMMARY_PROMPT_TEMPLATE,
+                                               input_variables=["text"])
+            refine_prompt = PromptTemplate(template=pr.SUMMARY_REFINE_TEMPLATE + partial_prompt,
+                                           input_variables=["existing_answer", "text"])
+            kwargs = {
+                "question_prompt": map_reduce_prompt,
+                "refine_prompt": refine_prompt
+            }
+
+        return load_summarize_chain(llm=self.llm, chain_type=self.chain_type, **kwargs)
 
     def summarize_folder(self) -> None:
         """
@@ -61,9 +82,19 @@ class Summarizer:
         """
         creates summary for one specific file
         """
+        # detect language first
+        file_parser = FileParser()
+        _, metadata = file_parser.parse_file(os.path.join(self.content_folder_path, file))
+        language = ut.LANGUAGE_MAP.get(metadata['Language'], 'english')
+        # create splitter object
+        text_splitter = SplitterCreator(text_splitter_method=self.text_splitter_method,
+                                        chunk_size=self.chunk_size,
+                                        chunk_overlap=self.chunk_overlap).get_splitter(language)
+
         loader = PyPDFLoader(os.path.join(self.content_folder_path, file))
-        docs = loader.load_and_split(text_splitter=self.text_splitter)
-        summary = self.chain.invoke(docs)["output_text"]
+        docs = loader.load_and_split(text_splitter=text_splitter)
+        chain = self.make_chain(language)
+        summary = chain.invoke(docs)["output_text"]
         # store summary on disk
         file_name, _ = os.path.splitext(file)
         result = os.path.join(self.content_folder_path, "summaries", str(file_name) + "_" +

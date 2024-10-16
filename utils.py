@@ -12,6 +12,26 @@ from langdetect import detect, LangDetectException
 # local imports
 import settings
 
+LANGUAGE_MAP = {
+    'cs': 'czech',
+    'da': 'danish',
+    'nl': 'dutch',
+    'en': 'english',
+    'et': 'estonian',
+    'fi': 'finnish',
+    'fr': 'french',
+    'de': 'german',
+    'el': 'greek',
+    'it': 'italian',
+    'no': 'norwegian',
+    'pl': 'polish',
+    'pt': 'portuguese',
+    'sl': 'slovene',
+    'es': 'spanish',
+    'sv': 'swedish',
+    'tr': 'turkish'
+}  # languages supported by nltk
+
 
 def create_vectordb_folder() -> None:
     """ Creates subfolder for storage of vector databases if not existing
@@ -121,7 +141,7 @@ def get_relevant_files_in_folder(content_folder_path: str) -> List[str]:
     Returns
     -------
     List[str]
-        tuple of content folder path and vector database folder path
+        list of files, without path
     """
     return [f for f in os.listdir(content_folder_path) if is_relevant_file(content_folder_path, f)]
 
