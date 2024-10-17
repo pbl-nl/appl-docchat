@@ -41,20 +41,21 @@ class Summarizer:
         """
         defines the load_summarize_chain to use, depending on method chosen
         """
+        partial_map_reduce_prompt = f"Write a concise summary of the following in the {my_language} language: "
+        partial_refine_prompt = f"Given the new context, refine the original summary in the {my_language} language. \
+        If the context isn't useful, return the original summary."
+
         if self.chain_type == "map_reduce":
-            partial_prompt = f"Write a concise summary of the following in the {my_language} language: "
-            map_reduce_prompt = PromptTemplate(template=partial_prompt + pr.SUMMARY_PROMPT_TEMPLATE,
+            map_reduce_prompt = PromptTemplate(template=partial_map_reduce_prompt + pr.SUMMARY_PROMPT_TEMPLATE,
                                                input_variables=["text"])
             kwargs = {
                 'map_prompt': map_reduce_prompt,
                 'combine_prompt': map_reduce_prompt
             }
         else:
-            partial_prompt = f"Given the new context, refine the original summary in the {my_language} language. \
-            If the context isn't useful, return the original summary."
-            map_reduce_prompt = PromptTemplate(template=partial_prompt + pr.SUMMARY_PROMPT_TEMPLATE,
+            map_reduce_prompt = PromptTemplate(template=partial_map_reduce_prompt + pr.SUMMARY_PROMPT_TEMPLATE,
                                                input_variables=["text"])
-            refine_prompt = PromptTemplate(template=pr.SUMMARY_REFINE_TEMPLATE + partial_prompt,
+            refine_prompt = PromptTemplate(template=pr.SUMMARY_REFINE_TEMPLATE + partial_refine_prompt,
                                            input_variables=["existing_answer", "text"])
             kwargs = {
                 "question_prompt": map_reduce_prompt,
