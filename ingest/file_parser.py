@@ -76,6 +76,8 @@ class FileParser:
         metadata = self.get_metadata(file_path, doc.metadata)
         # print(f"parse_pymupdf: metadata = {metadata}")
         pages = []
+        page_with_max_text = -1
+        max_page_text_length = -1
 
         # for each page in pdf file
         logger.info("Extracting text from pdf file")
@@ -113,10 +115,6 @@ class FileParser:
                         block_is_pagenr = True
                         block_is_valid = False
                         # print(f"block {block[5]}: {block_text} is a page number")
-
-                    # # text must have "paragraph" tag
-                    # if block_tag != "<p>":
-                    #     block_is_valid = False
 
                     # block text should not represent any form of paragraph title
                     pattern_paragraph = r'^\d+(\.\d+)*\s*.+$'
@@ -171,12 +169,19 @@ class FileParser:
                 pages.append((i, prv_block_text))
                 # print(f"added to page {i}: {prv_block_text}")
 
+            # store pagenr with maximum amount of characters for language detection of document
+            page_text_length = len(pages[i][1])
+            if page_text_length > max_page_text_length:
+                page_with_max_text = i
+                max_page_text_length = page_text_length
+
             # tabs = page.find_tables() # locate and extract any tables on page
             # print(f"{len(tabs.tables)} table found on {page}") # display number of found tables
             # if tabs.tables:  # at least one table found?
             #     pprint.pprint(tabs[0].extract())  # print content of first table
+
         metadata['Language'] = metadata['Language'] if 'Language' in metadata.keys() else \
-            ut.detect_language(pages[0][1])
+            ut.detect_language(pages[page_with_max_text][1])
         logger.info(f"The language detected for this document is {metadata['Language']}")
 
         return pages, metadata
