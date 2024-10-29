@@ -5,6 +5,8 @@ from langchain_community.document_loaders import BSHTMLLoader
 from langchain_community.document_loaders import TextLoader
 from langchain_community.document_loaders import UnstructuredWordDocumentLoader
 import fitz
+from docx2pdf import convert
+import os
 # local imports
 import utils as ut
 
@@ -211,19 +213,19 @@ class FileParser:
         """
         Extract and return the pages and metadata from the word document
         """
+        # convert docx to pdf
+        path_to_pdf = self.convert_docx_to_pdf(file_path)
         # load text and extract raw page
-        logger.info("Extracting text from word file")
-        loader = UnstructuredWordDocumentLoader(file_path)
-        text = loader.load()
-        raw_text = text[0].page_content
-        # currently not able to extract pages yet!
-        pages = [(1, raw_text)]
-        # extract metadata
-        logger.info("Extracting metadata")
-        metadata_text = text[0].metadata
-        logger.info(f"{getattr(metadata_text, 'title', 'no title')}")
-        metadata = self.get_metadata(file_path, metadata_text)
-        metadata['Language'] = metadata['Language'] if 'Language' in metadata.keys() else \
-            ut.detect_language(raw_text)
+        pages, metadata = self.parse_pymupdf(path_to_pdf)
+        # remove pdf
+        os.remove(path_to_pdf)
 
         return pages, metadata
+
+    def convert_docx_to_pdf(self, docx_path, pdf_path=None):
+        # If no pdf_path is provided, use the same base name as docx_path with .pdf extension
+        if pdf_path is None:
+            pdf_path = docx_path.replace('.docx', '.pdf')
+        print(type(docx_path))
+        convert(docx_path, pdf_path)
+        return pdf_path
