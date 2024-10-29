@@ -11,6 +11,7 @@ from loguru import logger
 from langdetect import detect, LangDetectException
 # local imports
 import settings
+from ingest.vectorstore_creator import VectorStoreCreator
 
 LANGUAGE_MAP = {
     'cs': 'czech',
@@ -31,6 +32,18 @@ LANGUAGE_MAP = {
     'sv': 'swedish',
     'tr': 'turkish'
 }  # languages supported by nltk
+
+
+def retrieve_languages_from_vector_store(content_folder_name, embeddings_model=None):
+    _, vecdb_folder_path = create_vectordb_name(content_folder_name=content_folder_name,
+                                                    embeddings_model=(embeddings_model or settings.EMBEDDINGS_MODEL))
+
+    vector_store = VectorStoreCreator().get_vectorstore(embeddings= None, 
+                                                        content_folder=content_folder_name, 
+                                                        vecdb_folder=vecdb_folder_path)
+    all_documents = vector_store.get()
+    languages = set([LANGUAGE_MAP.get(metadata['Language'], 'english') for metadata in all_documents['metadatas']])
+    return languages
 
 
 def create_vectordb_folder() -> None:
