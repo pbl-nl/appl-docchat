@@ -23,6 +23,7 @@ class LLMCreator():
         """
         returns, based on settings, the llm object
         """
+        llm = None
         if self.llm_provider == "openai":
             logger.info("Use OpenAI LLM")
             llm = ChatOpenAI(
@@ -46,19 +47,10 @@ class LLMCreator():
             )
         elif self.llm_provider == "azureopenai":
             logger.info("Use Azure OpenAI LLM")
-            # token_provider = get_bearer_token_provider(
-            #     DefaultAzureCredential(),
-            #     "https://cognitiveservices.azure.com/.default"
-            # )
             llm = AzureChatOpenAI(model=self.llm_model,
                                   azure_deployment=os.environ["AZURE_OPENAI_LLM_DEPLOYMENT_NAME"],
                                   api_version=os.environ["AZURE_OPENAI_API_VERSION"],
                                   temperature=0)
-            # llm = AzureChatOpenAI(model=self.llm_model,
-            #                       azure_deployment=os.environ["AZURE_OPENAI_LLM_DEPLOYMENT_NAME"],
-            #                       api_version=os.environ["AZURE_OPENAI_API_VERSION"],
-            #                       azure_ad_token_provider=token_provider,
-            #                       temperature=0)
         logger.info(f"Retrieved model: {self.llm_model}")
 
         return llm
