@@ -196,9 +196,42 @@ class Ingester:
             collection = vector_store.get()  # dict_keys(['ids', 'embeddings', 'documents', 'metadatas'])
             files_in_store = [metadata['filename'] for metadata in collection['metadatas']]
             files_in_store = list(set(files_in_store))
+
+            # get all converted files that are relevant (.docx files are converted to .pdf and stored under conversions)
+            converted_folder_path = os.path.join(self.content_folder,'conversions')
+            to_be_updated = []
+            if os.path.exists(converted_folder_path):
+                converted_files = [f.split('.pdf')[0] #removing .pdf to be left with .docx etc.
+                                for f in ut.get_relevant_files_in_folder(converted_folder_path) 
+                                if f.endswith('.pdf')] # ensure that user did not add non pdf file to conversions
+                
+                # Check for last changed date of non-pdf files
+                filename_lastchange_dict = { metadata['filename']: metadata.get('last_change_time', None)
+                                                for metadata in collection['metadatas'] }
+                to_be_updated = [ file for file in converted_files 
+                    if (os.path.exists(os.path.join(self.content_folder, file))) and # ensure that original file is not removed
+                    (filename_lastchange_dict[file+'.pdf'] != os.stat(os.path.join(self.content_folder, file)).st_mtime) ]
+
+                # if .docx file is not converted to pdf before, it should be kept as .docx to be converted and
+                # ingested. Otherwise, keep the file as .docx.pdf
+                relevant_files_in_folder = [f if f not in converted_files else f'{f}.pdf' #.docx.pdf
+                                            for f in relevant_files_in_folder]
+                
             # check if files were added or removed
             new_files = [file for file in relevant_files_in_folder if file not in files_in_store]
             files_deleted = [file for file in files_in_store if file not in relevant_files_in_folder]
+            
+            # Synchronize the vector store and conversions (pdf copy of .docx etc.)
+            files_to_be_removed = [file for file in files_deleted 
+                                   if os.path.splitext(os.path.splitext(file)[0])[1] in [".docx", ".txt", ".html", ".md"]]
+            for file in files_to_be_removed:
+                converted_file_path = os.path.join(converted_folder_path, file)
+                if os.path.exists(converted_file_path): #make sure user did not remove manually
+                    os.remove(converted_file_path)
+
+            new_files.extend(to_be_updated) 
+            files_deleted.extend(to_be_updated) # before adding the files old information needs to be removed from vector store
+
             # delete all chunks from the vector store that belong to files removed from the folder
             if len(files_deleted) > 0:
                 logger.info(f"Files are deleted, so vector store for {self.content_folder} needs to be updated")

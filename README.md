@@ -59,6 +59,21 @@ This can be done in the activated environment by starting a Python interactive s
 Once in the Python session, type <code>import nltk</code> + Enter<br>
 Then <code>nltk.download('punkt')</code> + Enter
 
+### HTML File Ingestion Requirements
+
+To enable the ingestion of HTML files, the `wkhtmltopdf` utility must be installed. Download the necessary binaries from the following link:
+
+- [Download wkhtmltopdf](https://wkhtmltopdf.org/downloads.html)
+
+After installation, ensure that the path to the `wkhtmltopdf` executable is correctly assigned to the variable `path_wkhtmltopdf` in the `file_parser.convert_html_to_pdf()` function. This step is crucial for converting HTML files to PDF format during the ingestion process.
+
+Example:
+```python
+# file_parser.py
+def convert_html_to_pdf(html_path):
+    path_wkhtmltopdf = "/path/to/wkhtmltopdf"  # Update this with your installed path
+    # Conversion logic using the specified wkhtmltopdf_path
+
 ### Ingesting documents
 The file ingest.py can be used to vectorize all documents in a chosen folder and store the vectors and texts in a vector database for later use.<br>
 Execution is done in the activated virtual environment with <code>python ingest.py</code>

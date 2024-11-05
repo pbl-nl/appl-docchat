@@ -5,6 +5,11 @@ from langchain_community.document_loaders import BSHTMLLoader
 from langchain_community.document_loaders import TextLoader
 from langchain_community.document_loaders import UnstructuredWordDocumentLoader
 import fitz
+from docx2pdf import convert
+import os
+from fpdf import FPDF
+import re
+import pdfkit
 # local imports
 import utils as ut
 
@@ -43,26 +48,6 @@ class FileParser:
                 # add filename to metadata
                 "filename": file_path.split('\\')[-1]
                 }
-
-    def parse_html(self, file_path: str) -> Tuple[List[Tuple[int, str]], Dict[str, str]]:
-        """
-        Extract and return the pages and metadata from the html file
-        """
-        # load text and extract raw page
-        logger.info("Extracting text from html file")
-        loader = BSHTMLLoader(file_path, open_encoding='utf-8')
-        data = loader.load()
-        raw_text = data[0].page_content.replace('\n', '')
-        pages = [(1, raw_text)]  # html files do not have multiple pages
-        # extract metadata
-        logger.info("Extracting metadata")
-        metadata_text = data[0].metadata
-        logger.info(f"{getattr(metadata_text, 'title', 'no title')}")
-        metadata = self.get_metadata(file_path, metadata_text)
-        metadata['Language'] = metadata['Language'] if 'Language' in metadata.keys() else \
-            ut.detect_language(raw_text)
-
-        return pages, metadata
 
     def parse_pymupdf(self, file_path: str) -> Tuple[List[Tuple[int, str]], Dict[str, str]]:
         """
@@ -185,25 +170,28 @@ class FileParser:
         logger.info(f"The language detected for this document is {metadata['Language']}")
 
         return pages, metadata
+    
+    def parse_html(self, file_path: str) -> Tuple[List[Tuple[int, str]], Dict[str, str]]:
+        """
+        Extract and return the pages and metadata from the html file
+        """
+        path_to_pdf = self.convert_html_to_pdf(file_path)
+        # load text and extract raw page
+        pages, metadata = self.parse_pymupdf(path_to_pdf)
+        
+        metadata["last_change_time"] = os.stat(file_path).st_mtime
+
+        return pages, metadata
 
     def parse_txt(self, file_path: str) -> Tuple[List[Tuple[int, str]], Dict[str, str]]:
         """
         Extract and return the pages and metadata from the text file
         """
-        # load text and extract raw page
-        logger.info("Extracting text from txt file")
-        loader = TextLoader(file_path=file_path, autodetect_encoding=True)
-        text = loader.load()
-        raw_text = text[0].page_content
-        # txt files do not have multiple pages
-        pages = [(1, raw_text)]
-        # extract metadata
-        logger.info("Extracting metadata")
-        metadata_text = text[0].metadata
-        logger.info(f"{getattr(metadata_text, 'title', 'no title')}")
-        metadata = self.get_metadata(file_path, metadata_text)
-        metadata['Language'] = metadata['Language'] if 'Language' in metadata.keys() else \
-            ut.detect_language(raw_text)
+        path_to_pdf = self.convert_txt_to_pdf(file_path)
+
+        pages, metadata = self.parse_pymupdf(path_to_pdf)
+
+        metadata["last_change_time"] = os.stat(file_path).st_mtime
 
         return pages, metadata
 
@@ -211,19 +199,66 @@ class FileParser:
         """
         Extract and return the pages and metadata from the word document
         """
+        # convert docx to pdf
+        path_to_pdf = self.convert_docx_to_pdf(file_path)
         # load text and extract raw page
-        logger.info("Extracting text from word file")
-        loader = UnstructuredWordDocumentLoader(file_path)
-        text = loader.load()
-        raw_text = text[0].page_content
-        # currently not able to extract pages yet!
-        pages = [(1, raw_text)]
-        # extract metadata
-        logger.info("Extracting metadata")
-        metadata_text = text[0].metadata
-        logger.info(f"{getattr(metadata_text, 'title', 'no title')}")
-        metadata = self.get_metadata(file_path, metadata_text)
-        metadata['Language'] = metadata['Language'] if 'Language' in metadata.keys() else \
-            ut.detect_language(raw_text)
+        pages, metadata = self.parse_pymupdf(path_to_pdf)
+
+        metadata["last_change_time"] = os.stat(file_path).st_mtime
 
         return pages, metadata
+
+    def convert_docx_to_pdf(self, docx_path, pdf_path=None):
+        folder, file = os.path.split(docx_path)
+        pdf_path = os.path.join(folder,"conversions",file+'.pdf')
+
+        if not os.path.exists(os.path.join(folder,'conversions')):
+            os.mkdir(os.path.join(folder,'conversions'))
+
+        convert(docx_path, pdf_path)
+        return pdf_path
+    
+    def convert_txt_to_pdf(self, file_path):
+        # Create a PDF object
+        pdf = FPDF()
+        pdf.add_page()
+        pdf.set_font("Arial", size=12)
+        folder, file = os.path.split(file_path)
+        pdf_path = os.path.join(folder,"conversions",file+'.pdf')
+
+        if not os.path.exists(os.path.join(folder,'conversions')):
+            os.mkdir(os.path.join(folder,'conversions'))
+
+        # Read the content of the text file
+        with open(file_path, "r", encoding="utf-8") as file:
+            for line in file:
+                # Remove non-ASCII characters using regex
+                # otherwise we have to download fonts
+                clean_line = re.sub(r'[^\x00-\x7F]+', '', line)
+                pdf.multi_cell(190, 10, txt=clean_line, align="L")
+
+        # Save the PDF to a specified location
+        pdf.output(pdf_path)
+
+        return pdf_path
+    
+    def convert_html_to_pdf(self, file_path):
+        path_wkhtmltopdf = r"C:\Program Files\wkhtmltopdf\bin\wkhtmltopdf.exe"
+        config = pdfkit.configuration(wkhtmltopdf=path_wkhtmltopdf)
+
+        with open(file_path, "r", encoding="utf-8") as file:
+            html = file.read()
+
+        folder, file = os.path.split(file_path)
+        pdf_path = os.path.join(folder,"conversions",file+'.pdf')
+
+        if not os.path.exists(os.path.join(folder,'conversions')):
+            os.mkdir(os.path.join(folder,'conversions'))
+
+        try:
+            pdfkit.from_string(html, pdf_path, configuration=config)
+            logger.info(f"PDF created successfully at: {pdf_path}")
+        except Exception as e:
+            logger.info(f"Failed to create PDF: {e}")
+
+        return pdf_path
