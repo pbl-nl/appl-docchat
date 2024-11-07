@@ -13,8 +13,8 @@ def folderlist_creator():
     Creates a list of folder names
     Evaluation folder names are found in evaluation output files in folder /evaluate
     """
-    folders = [f[:-8] for f in os.listdir(settings.EVAL_DIR) if
-               (os.path.isfile(os.path.join(settings.EVAL_DIR, f)) and f.endswith("_agg.tsv"))]
+    folders = [f[:-8] for f in os.listdir(os.path.join(settings.EVAL_DIR, "results")) if
+               (os.path.isfile(os.path.join(settings.EVAL_DIR, "results", f)) and f.endswith("_agg.tsv"))]
     logger.info("Executed evaluation folderlist_creator()")
 
     return folders
@@ -36,8 +36,8 @@ def compose_dataframes_from_all_eval_files(eval_folders: List[str]) -> Tuple[pd.
     """
     found_eval_folder = False
     for eval_folder in eval_folders:
-        eval_agg_file_name = os.path.join(settings.EVAL_DIR, eval_folder + "_agg.tsv")
-        eval_file_name = os.path.join(settings.EVAL_DIR, eval_folder + ".tsv")
+        eval_agg_file_name = os.path.join(settings.EVAL_DIR, "results", eval_folder + "_agg.tsv")
+        eval_file_name = os.path.join(settings.EVAL_DIR, "results", eval_folder + ".tsv")
         if not found_eval_folder:
             df_agg = pd.read_csv(eval_agg_file_name, sep="\t")
             df = pd.read_csv(eval_file_name, sep="\t")
