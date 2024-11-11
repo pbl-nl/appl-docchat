@@ -1,4 +1,5 @@
 # imports
+from typing import List
 from loguru import logger
 from langchain_core.vectorstores import VectorStore
 from langchain.retrievers.multi_query import MultiQueryRetriever
@@ -16,12 +17,13 @@ class RetrieverCreator():
     """
     Retriever class to import into other modules
     """
-    def __init__(self, vectorstore: VectorStore, retriever_type: str = None, chunk_k: int = None,
-                 chunk_k_child: int = None, search_type: str = None, score_threshold: float = None,
-                 rerank: bool = None, rerank_provider: str = None, rerank_model: str = None,
-                 chunk_k_for_rerank: int = None, multiquery: bool = None) -> None:
+    def __init__(self, vectorstore: VectorStore, retriever_type: str = None, retriever_weights: List[float] = None,
+                 chunk_k: int = None, chunk_k_child: int = None, search_type: str = None,
+                 score_threshold: float = None, rerank: bool = None, rerank_provider: str = None,
+                 rerank_model: str = None, chunk_k_for_rerank: int = None, multiquery: bool = None) -> None:
         self.vectorstore = vectorstore
         self.retriever_type = settings.RETRIEVER_TYPE if retriever_type is None else retriever_type
+        self.retriever_weights = settings.RETRIEVER_WEIGHTS if retriever_weights is None else retriever_weights
         self.chunk_k = settings.CHUNK_K if chunk_k is None else chunk_k
         self.chunk_k_child = settings.CHUNK_K_CHILD if chunk_k_child is None else chunk_k_child
         self.search_type = settings.SEARCH_TYPE if search_type is None else search_type
@@ -81,7 +83,8 @@ class RetrieverCreator():
         vectorstore_retriever = self.vectorstore.as_retriever(search_type=self.search_type,
                                                               search_kwargs=search_kwargs)
         # Now set EnsembleRetriever for hybrid search
-        retriever = EnsembleRetriever(retrievers=[bm25_retriever, vectorstore_retriever], weights=[0.3, 0.7])
+        retriever = EnsembleRetriever(retrievers=[bm25_retriever, vectorstore_retriever],
+                                      weights=self.retriever_weights)
 
         return retriever
 
@@ -137,8 +140,8 @@ class RetrieverCreator():
         """
         if self.rerank:
             retriever = self.get_compression_retriever(search_filter)
-            logger.info(f"Reranking activated with base_reriever {self.retriever_type} \
-                          and compressor {self.rerank_provider}")
+            logger.info(f"""Reranking activated with base_reriever {self.retriever_type}
+                         and compressor {self.rerank_provider}""")
         else:
             if self.retriever_type == "vectorstore":
                 retriever = self.get_vectorstore_retriever(search_filter)
