@@ -87,6 +87,10 @@ VECDB_TYPE = "chromadb"
 # CHUNK_K_CHILD and CHUNK_OVERLAP_CHILD
 RETRIEVER_TYPE = "vectorstore"
 
+# Only applicable if RETRIEVER_TYPE has been set to "hybrid"
+# First element represents the weight for BM25 retriever, second element the weight for vectorstore retriever
+RETRIEVER_WEIGHTS = [0.7, 0.3]
+
 # MULTIQUERY indicator for whether or not defining multiple queries from users' query
 # Value must be False or True
 MULTIQUERY = False
@@ -95,7 +99,7 @@ MULTIQUERY = False
 RERANK = True
 # RERANK_PROVIDER represents the provider of the reranker model. Must be one of "flashrank_rerank",
 RERANK_PROVIDER = "flashrank_rerank"
-# RERANK_MODEL represents the reranking model, must be one of the models that have been manually downloaded 
+# RERANK_MODEL represents the reranking model, must be one of the models that have been manually downloaded
 # from https://huggingface.co/prithivida/flashrank/tree/main
 # For more info, see also https://github.com/PrithivirajDamodaran/FlashRank
 RERANK_MODEL = "ms-marco-MultiBERT-L-12"
