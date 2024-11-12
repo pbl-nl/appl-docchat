@@ -1,10 +1,11 @@
 from typing import Dict, List, Tuple
+import os
 import re
 from loguru import logger
 from langchain_community.document_loaders import BSHTMLLoader
 from langchain_community.document_loaders import TextLoader
-from langchain_community.document_loaders import UnstructuredWordDocumentLoader
 import fitz
+from docx2pdf import convert
 # local imports
 import utils as ut
 
@@ -12,11 +13,25 @@ import utils as ut
 class FileParser:
     """
     A class with functionality to parse various kinds of files
+    Preparation for ingestion of text into vectorstore
     """
     def __init__(self) -> None:
         pass
 
-    def parse_file(self, file_path: str):
+    def parse_file(self, file_path: str) -> Tuple[List[Tuple[int, str]], Dict[str, str]]:
+        """
+        Calls function for parsing the file depending on the file extension
+
+        Parameters
+        ----------
+        file_path : str
+            the filepath of the file to parse
+
+        Returns
+        -------
+        Tuple[List[Tuple[int, str]], Dict[str, str]]
+            tuple of pages (list of tuples of pagenumbers and page texts) and metadata (dictionary)
+        """
         if file_path.endswith(".pdf"):
             raw_pages, metadata = self.parse_pymupdf(file_path)
         elif file_path.endswith(".txt") or file_path.endswith(".md"):
@@ -29,11 +44,23 @@ class FileParser:
         # return raw text from pages and metadata
         return raw_pages, metadata
 
-    def get_metadata(self, file_path: str, doc_metadata: str):
+    def get_metadata(self, file_path: str, doc_metadata: Dict[str, str]) -> Dict[str, str]:
         """
         Extracts the following metadata from the pdf document:
         title, author(s) and full filename
         For CLO, indicator_url and indicator_closed are added, they will have no effect for other documents
+
+        Parameters
+        ----------
+        file_path : str
+            the filepath of the file to parse
+        doc_metadata : Dict[str, str]
+            metadata of the document
+
+        Returns
+        -------
+        Dict[str, str]
+            extended metadata of the document
         """
         return {"title": doc_metadata.get('title', '').strip(),
                 "author": doc_metadata.get('author', '').strip(),
@@ -44,9 +71,41 @@ class FileParser:
                 "filename": file_path.split('\\')[-1]
                 }
 
+    def convert_docx_to_pdf(self, docx_path: str) -> str:
+        """
+        converts a Word file (.docx) to a pdf file and stores the pdf file in subfolder "conversions"
+
+        Parameters
+        ----------
+        docx_path : str
+            path of Word file to parse
+
+        Returns
+        -------
+        str
+            path of output pdf file
+        """
+        folder, file = os.path.split(docx_path)
+        pdf_path = os.path.join(folder, "conversions", file + '.pdf')
+        if not os.path.exists(os.path.join(folder, 'conversions')):
+            os.mkdir(os.path.join(folder, 'conversions'))
+        convert(input_path=docx_path, output_path=pdf_path, keep_active=True)
+
+        return pdf_path
+
     def parse_html(self, file_path: str) -> Tuple[List[Tuple[int, str]], Dict[str, str]]:
         """
         Extract and return the pages and metadata from the html file
+
+        Parameters
+        ----------
+        file_path : str
+            the filepath of the html file to parse
+
+        Returns
+        -------
+        Tuple[List[Tuple[int, str]], Dict[str, str]]
+            tuple of pages (list of tuples of pagenumbers and page texts) and metadata (dictionary)
         """
         # load text and extract raw page
         logger.info("Extracting text from html file")
@@ -61,6 +120,8 @@ class FileParser:
         metadata = self.get_metadata(file_path, metadata_text)
         metadata['Language'] = metadata['Language'] if 'Language' in metadata.keys() else \
             ut.detect_language(raw_text)
+        logger.info(f"The language detected for this document is {metadata['Language']}")
+        metadata["last_change_time"] = os.stat(file_path).st_mtime
 
         return pages, metadata
 
@@ -69,12 +130,23 @@ class FileParser:
         Extracts and return the page blocks and metadata from the PDF file
         Then determines which blocks of text should be merged, depending on whether the previous block was a
         paragraph header
+
+        Parameters
+        ----------
+        file_path : str
+            the filepath of the pdf file to parse
+
+        Returns
+        -------
+        Tuple[List[Tuple[int, str]], Dict[str, str]]
+            tuple of pages (list of tuples of pagenumbers and page texts) and metadata (dictionary)
         """
         logger.info("Extracting pdf metadata")
         doc = fitz.open(file_path)
-        # print(f"parse_pymupdf: doc.metadata = {doc.metadata}")
+        # when pdf is a conversion, store the original filename in the vectorstore
+        if 'conversions' in file_path:
+            file_path = file_path.replace('conversions\\', '').split('.pdf')[0]
         metadata = self.get_metadata(file_path, doc.metadata)
-        # print(f"parse_pymupdf: metadata = {metadata}")
         pages = []
         page_with_max_text = -1
         max_page_text_length = -1
@@ -106,7 +178,6 @@ class FileParser:
                     if bool(re.match(pattern_pagenr, block_text)):
                         block_is_pagenr = True
                         block_is_valid = False
-                        # print(f"block {block[5]}: {block_text} is a page number")
 
                     # block text should not represent a page header or footer containing a pipe character
                     # and some text
@@ -114,18 +185,15 @@ class FileParser:
                     if bool(re.match(pattern_pagenr, block_text)):
                         block_is_pagenr = True
                         block_is_valid = False
-                        # print(f"block {block[5]}: {block_text} is a page number")
 
                     # block text should not represent any form of paragraph title
                     pattern_paragraph = r'^\d+(\.\d+)*\s*.+$'
                     if bool(re.match(pattern_paragraph, block_text)):
                         if not block_is_pagenr:
                             block_is_paragraph = True
-                            # print(f"block {block[5]}: {block_text} is a paragraph")
 
                     # if current block is content
                     if block_is_valid and (not block_is_paragraph):
-                        # print(f"block {block[5]} is valid and not a paragraph: {block_text} ")
                         # and the previous block was a paragraph
                         if prv_block_is_paragraph:
                             # extend the paragraph block text with a newline character and the current block text
@@ -145,7 +213,6 @@ class FileParser:
                             if prv_block_is_valid and (not prv_block_is_paragraph):
                                 # add text of previous block to pages together with page number
                                 pages.append((i, prv_block_text))
-                                # print(f"added to page {i}: {prv_block_text}")
                                 # and empty the previous block text
                                 prv_block_text = ""
                             # if previous block was not relevant
@@ -167,7 +234,6 @@ class FileParser:
             if prv_block_is_valid and (not prv_block_is_paragraph):
                 # add text of previous block to pages together with page number
                 pages.append((i, prv_block_text))
-                # print(f"added to page {i}: {prv_block_text}")
 
             # store pagenr with maximum amount of characters for language detection of document
             page_text_length = len(pages[i][1])
@@ -183,12 +249,23 @@ class FileParser:
         metadata['Language'] = metadata['Language'] if 'Language' in metadata.keys() else \
             ut.detect_language(pages[page_with_max_text][1])
         logger.info(f"The language detected for this document is {metadata['Language']}")
+        metadata["last_change_time"] = os.stat(file_path).st_mtime
 
         return pages, metadata
 
     def parse_txt(self, file_path: str) -> Tuple[List[Tuple[int, str]], Dict[str, str]]:
         """
         Extract and return the pages and metadata from the text file
+
+        Parameters
+        ----------
+        file_path : str
+            the filepath of the txt file to parse
+
+        Returns
+        -------
+        Tuple[List[Tuple[int, str]], Dict[str, str]]
+            tuple of pages (list of tuples of pagenumbers and page texts) and metadata (dictionary)
         """
         # load text and extract raw page
         logger.info("Extracting text from txt file")
@@ -204,26 +281,28 @@ class FileParser:
         metadata = self.get_metadata(file_path, metadata_text)
         metadata['Language'] = metadata['Language'] if 'Language' in metadata.keys() else \
             ut.detect_language(raw_text)
+        logger.info(f"The language detected for this document is {metadata['Language']}")
+        metadata["last_change_time"] = os.stat(file_path).st_mtime
 
         return pages, metadata
 
     def parse_word(self, file_path: str) -> Tuple[List[Tuple[int, str]], Dict[str, str]]:
         """
-        Extract and return the pages and metadata from the word document
+        First, the word file is converted to a pdf file
+        Then the pages and metadata are extracted and returned from the pdf document
+
+        Parameters
+        ----------
+        file_path : str
+            the filepath of the docx file to parse
+
+        Returns
+        -------
+        Tuple[List[Tuple[int, str]], Dict[str, str]]
+            tuple of pages (list of tuples of pagenumbers and page texts) and metadata (dictionary)
         """
-        # load text and extract raw page
-        logger.info("Extracting text from word file")
-        loader = UnstructuredWordDocumentLoader(file_path)
-        text = loader.load()
-        raw_text = text[0].page_content
-        # currently not able to extract pages yet!
-        pages = [(1, raw_text)]
-        # extract metadata
-        logger.info("Extracting metadata")
-        metadata_text = text[0].metadata
-        logger.info(f"{getattr(metadata_text, 'title', 'no title')}")
-        metadata = self.get_metadata(file_path, metadata_text)
-        metadata['Language'] = metadata['Language'] if 'Language' in metadata.keys() else \
-            ut.detect_language(raw_text)
+        # convert docx to pdf
+        path_to_pdf = self.convert_docx_to_pdf(file_path)
+        pages, metadata = self.parse_pymupdf(path_to_pdf)
 
         return pages, metadata
