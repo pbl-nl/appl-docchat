@@ -206,7 +206,6 @@ class Ingester:
                                         for metadata in collection['metadatas']}
             files_updated = [file for file in relevant_files_in_folder
                              if (file not in files_added) and
-                                (os.path.exists(os.path.join(self.content_folder, file))) and
                                 (filename_lastchange_dict[file] !=
                                  os.stat(os.path.join(self.content_folder, file)).st_mtime)]
 
@@ -220,6 +219,8 @@ class Ingester:
                     idx_metadata = collection['metadatas'][idx]
                     if idx_metadata['filename'] in to_delete:
                         idx_id_to_delete.append(idx_id)
+                        if idx_metadata['filename'].endswith(".docx"):
+                            os.remove(os.path.join(self.content_folder, "conversions", idx_metadata['filename'] + ".pdf"))
                 vector_store.delete(idx_id_to_delete)
                 logger.info("Deleted files from vectorstore")
 
