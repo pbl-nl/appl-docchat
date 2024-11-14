@@ -26,9 +26,9 @@ deepdiff==7.0.1
 defusedxml==0.7.1
 Deprecated==1.2.14
 dill==0.3.8
-diskcache==5.6.3
 distro==1.9.0
 dnspython==2.6.1
+docx2pdf==0.1.8
 email_validator==2.1.1
 emoji==2.12.1
 fastapi==0.111.0
@@ -70,7 +70,6 @@ langchain-openai==0.1.8
 langchain-text-splitters==0.2.1
 langdetect==1.0.9
 langsmith==0.1.77
-llama_cpp_python==0.2.76
 loguru==0.7.2
 lxml==5.2.2
 markdown-it-py==3.0.0
@@ -132,6 +131,7 @@ python-iso639==2024.4.27
 python-magic==0.4.27
 python-multipart==0.0.9
 pytz==2024.1
+pywin32==308
 PyYAML==6.0.1
 ragas==0.1.9
 rank-bm25==0.2.2
@@ -163,7 +163,6 @@ tbb==2021.12.0
 tenacity==8.3.0
 threadpoolctl==3.5.0
 tiktoken==0.7.0
-tinycss2==1.2.1
 tokenizers==0.19.1
 toml==0.10.2
 toolz==0.12.1

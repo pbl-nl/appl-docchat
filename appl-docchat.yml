@@ -43,9 +43,9 @@ dependencies:
     - deepdiff==7.0.1
     - deprecated==1.2.14
     - dill==0.3.8
-    - diskcache==5.6.3
     - distro==1.9.0
     - dnspython==2.6.1
+    - docx2pdf==0.1.8
     - email-validator==2.1.1
     - emoji==2.12.1
     - fastapi==0.111.0
@@ -87,7 +87,6 @@ dependencies:
     - langchain-text-splitters==0.2.1
     - langdetect==1.0.9
     - langsmith==0.1.77
-    - llama-cpp-python==0.2.76
     - loguru==0.7.2
     - lxml==5.2.2
     - markdown-it-py==3.0.0
@@ -148,6 +147,7 @@ dependencies:
     - python-magic==0.4.27
     - python-multipart==0.0.9
     - pytz==2024.1
+    - pywin32==308
     - pyyaml==6.0.1
     - ragas==0.1.9
     - rank-bm25==0.2.2

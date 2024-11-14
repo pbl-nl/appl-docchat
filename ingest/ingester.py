@@ -115,7 +115,7 @@ class Ingester:
                     # determine child document to store in the vector database
                     for child_chunk_text in child_chunk_texts:
                         # metadata = {"title": , "author": , "indicator_url": , "indicator_closed": , "filename": ,
-                        #             "Language": }
+                        #             "Language": , "last_change_time": }
                         metadata_combined = {
                             "page_number": page_num,
                             "parent_chunk_num": chunk_num,
@@ -128,15 +128,15 @@ class Ingester:
                         doc = docstore.Document(
                             page_content=child_chunk_text,
                             # metadata_combined = {"title": , "author": , "indicator_url": , "indicator_closed": ,
-                            #                      "filename": , "Language": , "page_number": , "chunk": ,
-                            #                      "parent_chunk": , "parent_chunk_id", "parent_chunk_embedding: ,
-                            #                      "source": }
+                            #                      "filename": , "Language": , "last_change_time": ,"page_number": ,
+                            #                      "chunk": , "parent_chunk": , "parent_chunk_id",
+                            #                      "parent_chunk_embedding: , "source": }
                             metadata=metadata_combined
                         )
                         docs.append(doc)
                 else:
                     # metadata = {"title": , "author": , "indicator_url": , "indicator_closed": , "filename": ,
-                    #             "Language": }
+                    #             "Language": , "last_change_time": }
                     metadata_combined = {
                         "page_number": page_num,
                         "chunk": chunk_num,
@@ -146,7 +146,8 @@ class Ingester:
                     doc = docstore.Document(
                         page_content=chunk_text,
                         # metadata_combined = {"title": , "author": , "indicator_url": , "indicator_closed": ,
-                        # "filename": , "Language": , "page_number": , "chunk": , "source": }
+                        #                      "filename": , "Language": , "last_change_time": , "page_number": ,
+                        #                      "chunk": , "source": }
                         metadata=metadata_combined
                     )
                     docs.append(doc)
@@ -181,13 +182,13 @@ class Ingester:
                                        self.embeddings_model).get_embeddings()
 
         # create empty list representing added files
-        new_files = []
+        files_added = []
 
         # get all relevant files in the folder
         relevant_files_in_folder = ut.get_relevant_files_in_folder(self.content_folder)
         # if the vector store already exists, get the set of ingested files from the vector store
         if os.path.exists(self.vecdb_folder):
-            # get chroma vector store
+            # get vector store
             vector_store = VectorStoreCreator(self.vecdb_type).get_vectorstore(embeddings,
                                                                                self.collection_name,
                                                                                self.vecdb_folder)
@@ -196,20 +197,34 @@ class Ingester:
             collection = vector_store.get()  # dict_keys(['ids', 'embeddings', 'documents', 'metadatas'])
             files_in_store = [metadata['filename'] for metadata in collection['metadatas']]
             files_in_store = list(set(files_in_store))
-            # check if files were added or removed
-            new_files = [file for file in relevant_files_in_folder if file not in files_in_store]
+
+            # check if files were added, removed or updated
+            files_added = [file for file in relevant_files_in_folder if file not in files_in_store]
             files_deleted = [file for file in files_in_store if file not in relevant_files_in_folder]
-            # delete all chunks from the vector store that belong to files removed from the folder
-            if len(files_deleted) > 0:
+            # Check for last changed date
+            filename_lastchange_dict = {metadata['filename']: metadata.get('last_change_time', None)
+                                        for metadata in collection['metadatas']}
+            files_updated = [file for file in relevant_files_in_folder
+                             if (file not in files_added) and
+                                (os.path.exists(os.path.join(self.content_folder, file))) and
+                                (filename_lastchange_dict[file] !=
+                                 os.stat(os.path.join(self.content_folder, file)).st_mtime)]
+
+            # delete from vector store all chunks associated with deleted or updated files
+            to_delete = files_deleted + files_updated
+            if len(to_delete) > 0:
                 logger.info(f"Files are deleted, so vector store for {self.content_folder} needs to be updated")
                 idx_id_to_delete = []
                 for idx in range(len(collection['ids'])):
                     idx_id = collection['ids'][idx]
                     idx_metadata = collection['metadatas'][idx]
-                    if idx_metadata['filename'] in files_deleted:
+                    if idx_metadata['filename'] in to_delete:
                         idx_id_to_delete.append(idx_id)
                 vector_store.delete(idx_id_to_delete)
                 logger.info("Deleted files from vectorstore")
+
+            # add to vector store all chunks associated with added or updated files
+            to_add = files_added + files_updated
         # else it needs to be created first
         else:
             logger.info(f"Vector store to be created for folder {self.content_folder}")
@@ -218,15 +233,15 @@ class Ingester:
                                                                                self.collection_name,
                                                                                self.vecdb_folder)
             # all relevant files in the folder are to be ingested into the vector store
-            new_files = list(relevant_files_in_folder)
+            to_add = list(relevant_files_in_folder)
 
         # If there are any files to be ingested into the vector store
-        if len(new_files) > 0:
+        if len(to_add) > 0:
             logger.info(f"Files are added, so vector store for {self.content_folder} needs to be updated")
             # create FileParser object
             file_parser = FileParser()
 
-            for file in new_files:
+            for file in to_add:
                 file_path = os.path.join(self.content_folder, file)
                 # extract raw text pages and metadata according to file type
                 raw_texts, metadata = file_parser.parse_file(file_path)

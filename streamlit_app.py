@@ -294,10 +294,13 @@ def handle_query(my_folder_path_selected: str,
         with st.expander("Paragraphs used for answer"):
             for i, document in enumerate(response["source_documents"]):
                 filename = document.metadata['filename']
-                docpath = os.path.join(my_folder_path_selected, filename)
+                if filename.endswith(".docx"):
+                    docpath = os.path.join(my_folder_path_selected, "conversions", filename + ".pdf")
+                else:
+                    docpath = os.path.join(my_folder_path_selected, filename)
                 pagenr = document.metadata['page_number']
                 content = document.page_content
-                if filename.endswith(".pdf"):
+                if (filename.endswith(".pdf")) or (filename.endswith(".docx")):
                     exp_textcol, _, exp_imgcol = st.columns([0.3, 0.1, 0.6])
                 else:
                     exp_textcol, _ = st.columns([0.9, 0.1])
@@ -305,7 +308,7 @@ def handle_query(my_folder_path_selected: str,
                     # add 1 to metadata page_number because that starts at 0
                     st.write(f"**file: {filename}, page {pagenr + 1}**")
                     st.write(f"{document.page_content}")
-                if filename.endswith(".pdf"):
+                if (filename.endswith(".pdf")) or (filename.endswith(".docx")):
                     with exp_imgcol:
                         doc = fitz.open(docpath)
                         page = doc.load_page(pagenr)
