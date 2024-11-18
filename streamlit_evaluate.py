@@ -8,16 +8,45 @@ import settings
 import utils as ut
 
 
-def folderlist_creator():
+def folderlist_creator(include_all: bool = True):
     """
     Creates a list of folder names
     Evaluation folder names are found in evaluation output files in folder /evaluate
     """
     folders = [f[:-8] for f in os.listdir(os.path.join(settings.EVAL_DIR, "results")) if
                (os.path.isfile(os.path.join(settings.EVAL_DIR, "results", f)) and f.endswith("_agg.tsv"))]
+    if (include_all) and (len(folders) > 1):
+        folders.insert(0, "All")
+
     logger.info("Executed evaluation folderlist_creator()")
 
     return folders
+
+
+def folder_selector(folders: List[str]) -> Tuple[str, str, str]:
+    """
+    selects a document folder and creates the asscciated document folder path and vector database path
+
+    Parameters
+    ----------
+    folders : List[str]
+        list of available folders
+
+    Returns
+    -------
+    Tuple[str, str, str]
+        tuple of selected folder name, its path and its vector database
+    """
+    # Select source folder with docs
+    my_folder_names_selected = st.sidebar.multiselect(label="***SELECT ANY / ALL FOLDERS***",
+                                                      default="All",
+                                                      options=folders)
+    logger.info(f"folder_name_selected is now {my_folder_names_selected}")
+    # get associated source folder path and vectordb path
+    # my_folder_path_selected = os.path.join(settings.EVAL_DIR, "results", my_folder_name_selected)
+    logger.info("Executed folder_selector()")
+
+    return my_folder_names_selected
 
 
 def compose_dataframes_from_all_eval_files(eval_folders: List[str]) -> Tuple[pd.DataFrame, pd.DataFrame]:
@@ -35,47 +64,42 @@ def compose_dataframes_from_all_eval_files(eval_folders: List[str]) -> Tuple[pd.
         dataframe with aggregated results and dataframe with detailed results
     """
     found_eval_folder = False
+    if eval_folders == ["All"]:
+        eval_folders = folderlist_creator(include_all=False)
+        print(eval_folders)
     for eval_folder in eval_folders:
         eval_agg_file_name = os.path.join(settings.EVAL_DIR, "results", eval_folder + "_agg.tsv")
         eval_file_name = os.path.join(settings.EVAL_DIR, "results", eval_folder + ".tsv")
         if not found_eval_folder:
             df_agg = pd.read_csv(eval_agg_file_name, sep="\t")
-            df = pd.read_csv(eval_file_name, sep="\t")
+            df_det = pd.read_csv(eval_file_name, sep="\t")
             found_eval_folder = True
         else:
             df_agg = pd.concat([df_agg, pd.read_csv(eval_agg_file_name, sep="\t")], axis=0)
-            df = pd.concat([df, pd.read_csv(eval_file_name, sep="\t")], axis=0)
+            df_det = pd.concat([df_det, pd.read_csv(eval_file_name, sep="\t")], axis=0)
     df_agg = df_agg.sort_values(by="timestamp", ascending=False)
 
-    admin_columns = ["folder", "timestamp", "eval_file"]
+    admin_columns_agg = ["folder", "timestamp", "eval_file"]
     result_columns = ["answer_relevancy", "context_precision", "faithfulness", "context_recall"]
     settings_dict = ut.get_settings_as_dictionary("settings.py")
     settings_columns = list(settings_dict.keys())
+    # select only relevant settings from all settings to show in dataframe
+    relevant_setting_columns = [setting_column for setting_column in settings_columns if setting_column not in
+                                ["EMBEDDINGS_PROVIDER", "VECDBTYPE", "RERANK_PROVIDER", "LLM_PROVIDER",
+                                 "SUMMARY_TEXT_SPLITTER_METHOD", "SUMMARY_CHUNK_SIZE", "SUMMARY_CHUNK_OVERLAP",
+                                 "SUMMARY_LLM_PROVIDER", "SUMMARY_LLM_MODEL", "PRIVATE_LLM_PROVIDER",
+                                 "PRIVATE_LLM_MODEL", "PRIVATE_EMBEDDINGS_PROVIDER", "PRIVATE_SUMMARY_LLM_MODEL",
+                                 "CHAIN_NAME", "CHAIN_TYPE"]]
 
     # force order of columns for aggregated results
-    df_agg = df_agg.loc[:, admin_columns + result_columns + settings_columns]
-    df = df.sort_values(by="timestamp", ascending=False)
+    df_agg = df_agg.loc[:, admin_columns_agg + result_columns + relevant_setting_columns]
+    df_det = df_det.sort_values(by="timestamp", ascending=False)
 
     # force order of columns for detailed results
-    df = df.loc[:, admin_columns + ["question", "ground_truth", "answer", "contexts"] + result_columns]
+    admin_columns_det = ["folder", "timestamp", "eval_file", "file"]
+    df_det = df_det.loc[:, admin_columns_det + ["question", "ground_truth", "answer", "contexts"] + result_columns]
 
-    # from https://docs.streamlit.io/knowledge-base/using-streamlit/how-to-get-row-selections
-    df_agg_selections = df_agg.copy()
-    df_agg_selections.insert(0, "Select", False)
-    # Get dataframe row-selections from user with st.data_editor
-    df_agg_ed = st.data_editor(
-        df_agg_selections,
-        hide_index=True,
-        column_config={"Select": st.column_config.CheckboxColumn(required=True)},
-        disabled=df_agg.columns,
-    )
-    # store selected rows and use these to create list of timestamps
-    selected_rows = df_agg_ed[df_agg_ed.Select]
-    selected_timestamps = list(selected_rows["timestamp"])
-    # use selected timestamps as filter for detailed results
-    df = df.loc[df["timestamp"].isin(selected_timestamps), :]
-
-    return df_agg_ed, df
+    return df_agg, df_det
 
 
 @st.cache_data
@@ -113,8 +137,28 @@ initialize_page()
 
 # create list of content folders
 evaluation_folders_available = folderlist_creator()
+# chosen folder and associated vector database
+folder_names_selected = folder_selector(evaluation_folders_available)
+print(folder_names_selected)
+
+df_eval_agg, df_eval_det = compose_dataframes_from_all_eval_files(folder_names_selected)
 
 st.subheader("Aggregated results")
-df_eval_agg, df_eval = compose_dataframes_from_all_eval_files(evaluation_folders_available)
+# from https://docs.streamlit.io/knowledge-base/using-streamlit/how-to-get-row-selections
+df_eval_agg_select = df_eval_agg.copy()
+df_eval_agg_select.insert(0, "Select", False)
+# Get dataframe row-selections from user with st.data_editor
+df_agg_ed = st.data_editor(
+    df_eval_agg_select,
+    hide_index=True,
+    column_config={"Select": st.column_config.CheckboxColumn(required=True)},
+    disabled=df_eval_agg.columns,
+)
+# store selected rows and use these to create list of timestamps
+selected_rows = df_agg_ed[df_agg_ed.Select]
+selected_timestamps = list(selected_rows["timestamp"])
+# use selected timestamps as filter for detailed results
+df_eval_det = df_eval_det.loc[df_eval_det["timestamp"].isin(selected_timestamps), :]
+
 st.subheader("Detailed results")
-st.dataframe(df_eval, use_container_width=True)
+st.dataframe(df_eval_det, use_container_width=True)
