@@ -39,8 +39,7 @@ SYNTHESIZE_PROMPT_TEMPLATE = dedent("""For the question: \n {question} \n
     the clusters differ. Finally, summarize the clusters. \n\n
     Answer: {answer_string}""")
 
-YES_NO_TEMPLATE = dedent("""Use the context below to answer the question. 
-    Follow these instructions: Answer the question below only with "yes" or "no", DO NOT RETURN ANY OTHER TEXT OTHER THAN 
-    YES OR NO! If the context doesn't contain the information to answer the question, the answer will be "no"\n
-    Question: {question} \n
-    Context: {context}""")
+YES_NO_TEMPLATE = dedent("""Use the context below to answer the following question: {question}\n
+    Context: {context}\n\n
+    Answer the question only with 'yes' or 'no', DO NOT RETURN ANY OTHER TEXT OTHER THAN YES OR NO!\n
+    If the context doesn't contain the information to answer the question, the answer will be 'no' """)
