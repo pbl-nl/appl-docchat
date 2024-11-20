@@ -7,12 +7,10 @@ import sys
 import shutil  
 from pathlib import Path
 
-# local imports
-# sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
-# from ingest.ingester import Ingester
-# from query.querier import Querier
-from .context import Ingester
-from .context import Querier
+
+from ingest.ingester import Ingester
+from query.querier import Querier
+
 import utils as ut
 # Add the root directory to the system path
 # sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../../')))
