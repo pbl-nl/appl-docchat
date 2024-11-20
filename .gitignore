@@ -1,13 +1,11 @@
 # project specific folders
+/chunks
 /dev
+/docs
+/evaluate/results
 /vector_stores
-/docs/*/review
-/docs/*/summaries
-/flask_app/instance
-/docs/docset_*
 
 # project specific files
-/flask_app/config.py
 settings.py
 
 # backup files

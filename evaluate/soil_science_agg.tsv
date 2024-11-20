@@ -1,2 +1,0 @@
-folder	timestamp	ragas_score	answer_relevancy	context_precision	faithfulness	context_recall	LLM_TYPE	LLM_MODEL_TYPE	EMBEDDINGS_PROVIDER	EMBEDDINGS_MODEL	CHAIN_NAME	CHAIN_TYPE	SEARCH_TYPE	VECDB_TYPE	CHUNK_SIZE	CHUNK_OVERLAP	CHUNK_K
-soil_science	2023-11-05 17:50:51.066837	0.22557451795983233	0.8653690775981467	0.08695652173913043	0.9285714285714286	0.25	chatopenai	gpt35	openai	text-embedding-ada-002	conversationalretrievalchain	stuff	similarity	chromadb	1000	200	4

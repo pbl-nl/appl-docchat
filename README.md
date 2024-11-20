@@ -8,27 +8,25 @@ A RAG (Retrieval Augmented Generation) setup for further exploration of chatting
 
 ### Preparation
 1. Clone this repo to a folder of your choice
-2. Create a subfolder vector_stores in the root folder of the cloned repo
-3. In the root folder, create a file named ".env"
+2. In the root folder, create a file named ".env"
 3. When using the OpenAI API, enter your OpenAI API key in the first line of this file:<br>
 OPENAI_API_KEY="sk-....."<br>
-4. Save and close the .env file<br>
 * If you don't have an OpenAI API key yet, you can obtain one here: https://platform.openai.com/account/api-keys
 * Click on + Create new secret key
 * Enter an identifier name (optional) and click on Create secret key
-5. When using Azure OpenAI Services, enter the following variables in the .env file:
+4. When using Azure OpenAI Services, enter the following variables in the .env file:
   * AZURE_OPENAI_API_KEY
   * AZURE_OPENAI_ENDPOINT
   * AZURE_OPENAI_API_VERSION (e.g. "2024-02-01")
   * AZURE_OPENAI_LLM_DEPLOYMENT_NAME
-  * AZURE_OPENAI_EMB_DEPLOYMENT_NAME
+  * AZURE_OPENAI_EMB_DEPLOYMENT_NAME<br>
 The abovementioned variables can be found in your Azure OpenAI Services subscription
-6. In case you want to use one of the open source models API's that are available on Huggingface:<br>
+5. In case you want to use one of the open source models API's that are available on Huggingface:<br>
 Enter your Huggingface API key in the ".env" file :<br>
 HUGGINGFACEHUB_API_TOKEN="hf_....."<br>
 * If you don't have an Huggingface API key yet, you can register at https://huggingface.co/join
 * When registered and logged in, you can get your API key in your Huggingface profile settings
-7. This repository also allows for using one of the [Ollama](https://ollama.com/) open source models on-premise. You can do this by follwing the steps below:
+6. This repository also allows for using one of the [Ollama](https://ollama.com/) open source models on-premise. You can do this by following the steps below:
 * In Windows go to "Turn Windows features on or off" and check the features "Virtual Machine Platform" and "Windows Subsystem for Linux"
 * Download and install the Ubuntu Windows Subsystem for Linux (WSL) by opening a terminal window and type <code>wsl --install</code>
 * Start WSL by typing opening a terminal and typing <code>wsl</code>, and install Ollama with <code>curl -fsSL https://ollama.com/install.sh | sh</code>
@@ -61,6 +59,13 @@ This can be done in the activated environment by starting a Python interactive s
 Once in the Python session, type <code>import nltk</code> + Enter<br>
 Then <code>nltk.download('punkt')</code> + Enter
 
+### flashrank reranker
+This repo allows reranking the retrieved documents from the vector store. In order to use the FlashRank reranker, several steps must be taken
+1. Manually create a subfolder called "flashrank_models"
+2. Go to https://huggingface.co/prithivida/flashrank/tree/main and download any of the zipped models you are interested in to the subfolder and extract the zipfile there
+3. ! In your virtual environment, go to Lib/site-packages/flashrank and edit the Config.py: change default_cache_dir from "/tmp" to "flashrank_models"
+For more information on the Flashrank reranker, see https://github.com/PrithivirajDamodaran/FlashRank
+
 ### Ingesting documents
 The file ingest.py can be used to vectorize all documents in a chosen folder and store the vectors and texts in a vector database for later use.<br>
 Execution is done in the activated virtual environment with <code>python ingest.py</code>
@@ -68,6 +73,18 @@ Execution is done in the activated virtual environment with <code>python ingest.
 ### Querying documents
 The file query.py can be used to query any folder with documents, provided that the associated vector database exists.<br>
 Execution is done in the activated virtual environment with <code>python query.py</code>
+
+### Summarizing documents
+The file summarize.py can be used to summarize every file individually in a document folder. Two options for summarization are implemented:
+* Map Reduce: this will create a summary in a fast way<br>
+* Refine: this will create a more refined summary, but can take a long time to run, especially for larger documents
+
+Execution is done in the activated virtual environment with <code>python summarize.py</code>. The user will be prompted for the summarization method
+
+### Ingesting and querying documents through a Streamlit User Interface
+The functionalities described above can also be used through a User Interface.<br>
+In the activated virtual environment, the UI can be started with <code>streamlit run streamlit_app.py</code><br>
+When this command is used, a browser session will open automatically
 
 ### Querying multiple documents with multiple questions in batch
 The file review.py uses the standard question-answer technique but allows you to ask multiple questions to each document in a folder. 
@@ -77,26 +94,12 @@ The file review.py uses the standard question-answer technique but allows you to
 Execution is done in the activated virtual environment with <code>python review.py</code>
 All the results, including the answers and the sources used to create the answers, are stored in a file result.csv which is also stored in the subfolder <B>review</B>
 
-### Ingesting and querying documents through a Streamlit User Interface
-The functionalities described above can also be used through a User Interface.<br>
-In the activated virtual environment, the UI can be started with <code>streamlit run streamlit_app.py</code><br>
-When this command is used, a browser session will open automatically
-
-### Summarizing documents
-The file summarize.py can be used to summarize every file individually in a document folder. Three options for summarization are implemented:
-* Map Reduce: this will create a summary in a fast way. The time (and quality) to create a summary depends on the number of centroids chosen. This is a parameter in settings.py<br>
-* Refine: this will create a more refined summary, but can take a long time to run, especially for larger documents
-* Hybrid: combines both methods above
-
-Execution is done in the activated virtual environment with <code>python summarize.py</code>. The user will be prompted for the summarization method, either "Map_Reduce", "Refine" or "Hybrid"
-
-### Evaluation of Question Answer results
+### For developers: Evaluation of Question Answer results
 The file evaluate.py can be used to evaluate the generated answers for a list of questions, provided that the file eval.json exists, containing 
 not only the list of questions but also the related list of desired answers (ground truth).<br>
-Evaluation is done at folder level in the activated virtual environment with <code>python evaluate.py</code><br>
-It is also possible to run an evaluation over all folders with <code>python evaluate_all.py</code>
+Evaluation is done at folder level (one or multiple folders) in the activated virtual environment with <code>python evaluate.py</code><br>
 
-### Monitoring the evaluation results through a Streamlit User Interface
+### For developers: Monitoring the evaluation results through a Streamlit User Interface
 All evaluation results can be viewed by using a dedicated User Interface.<br>
 In the activated virtual environment, this evaluation UI can be started with <code>streamlit run streamlit_evaluate.py</code><br>
 When this command is used, a browser session will open automatically
@@ -107,6 +110,7 @@ This repo is mainly inspired by:
 - https://docs.langchain.com/docs/
 - https://blog.langchain.dev/tutorial-chatgpt-over-your-data/
 - https://github.com/PatrickKalkman/python-docuvortex/tree/master
+- https://github.com/PrithivirajDamodaran/FlashRank
 - https://blog.langchain.dev/evaluating-rag-pipelines-with-ragas-langsmith/
 - https://github.com/explodinggradients/ragas
 

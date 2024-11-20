@@ -13,14 +13,14 @@ class SplitterCreator():
         self.chunk_size = settings.CHUNK_SIZE if chunk_size is None else chunk_size
         self.chunk_overlap = settings.CHUNK_OVERLAP if chunk_overlap is None else chunk_overlap
 
-    def get_splitter(self):
+    def get_splitter(self, my_language="english"):
         """
         Get the text splitter object
         """
         if self.text_splitter_method == "NLTKTextSplitter":
             text_splitter = splitter.NLTKTextSplitter(
                 separator="\n\n",
-                language="english",
+                language=my_language,
                 chunk_size=self.chunk_size,
                 chunk_overlap=self.chunk_overlap
             )

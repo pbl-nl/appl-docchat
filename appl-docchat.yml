@@ -45,12 +45,14 @@ dependencies:
     - dill==0.3.8
     - distro==1.9.0
     - dnspython==2.6.1
+    - docx2pdf==0.1.8
     - email-validator==2.1.1
     - emoji==2.12.1
     - fastapi==0.111.0
     - fastapi-cli==0.0.4
     - filelock==3.14.0
     - filetype==1.2.0
+    - flashrank==0.2.9
     - flatbuffers==24.3.25
     - frozenlist==1.4.1
     - fsspec==2024.3.1
@@ -145,6 +147,7 @@ dependencies:
     - python-magic==0.4.27
     - python-multipart==0.0.9
     - pytz==2024.1
+    - pywin32==308
     - pyyaml==6.0.1
     - ragas==0.1.9
     - rank-bm25==0.2.2
