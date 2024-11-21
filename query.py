@@ -35,7 +35,7 @@ def main():
             question = input("Question: ")
             if question not in ["exit", "quit", "q"]:
                 # generate answer and include sources used to produce that answer
-                response = querier.ask_question(question, content_folder_name)
+                response = querier.ask_question(question)
                 logger.info(f"\nAnswer: {response['answer']}")
                 # if the retriever returns one or more chunks with a score above the threshold
                 if len(response["source_documents"]) > 0:
