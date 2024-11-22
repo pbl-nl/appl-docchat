@@ -10,6 +10,8 @@ from typing import Callable, Dict, List, Tuple, Any
 from loguru import logger
 import langchain.docstore.document as docstore
 from dotenv import load_dotenv
+import tiktoken
+import time
 # local imports
 import settings
 import utils as ut
@@ -169,8 +171,27 @@ class Ingester:
         # for cleaned_text in cleaned_texts:
         #     cleaned_chunks = self.split_text_into_chunks(cleaned_text, metadata)
         docs = self.texts_to_docs(cleaned_texts, embeddings, metadata)
-
         return docs
+
+
+    def count_ada_tokens(self, raw_texts: List[Tuple[int, str]]) -> int:
+        """
+        Counts the number of tokens in the given text for OpenAI's Ada embedding model.
+
+        Parameters:
+            text (str): The input text.
+
+        Returns:
+            int: The number of tokens.
+        """
+        total_tokens = 0
+        for num, text in raw_texts:
+            # Load the tokenizer for the Ada model
+            tokenizer = tiktoken.encoding_for_model("text-embedding-ada-002")
+            # Encode the text and count tokens
+            tokens = tokenizer.encode(text)
+            total_tokens += len(tokens)
+        return total_tokens
 
     def ingest(self) -> None:
         """
@@ -247,7 +268,12 @@ class Ingester:
                 # extract raw text pages and metadata according to file type
                 raw_texts, metadata = file_parser.parse_file(file_path)
                 documents = self.clean_texts_to_docs(raw_texts, embeddings, metadata)
-                logger.info(f"Extracted {len(documents)} chunks from {file}")
+                # count tokens
+                tokens_document = self.count_ada_tokens(raw_texts)
+                logger.info(f"Extracted {len(documents)} chunks (Tokens: {tokens_document}) from {file}")
+                if tokens_document > 10_000:
+                    logger.info("Pause for 20 seconds to avoid hitting rate limit")
+                    time.sleep(20)
                 vector_store.add_documents(
                     documents=documents,
                     embedding=embeddings,
