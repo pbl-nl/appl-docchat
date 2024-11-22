@@ -27,17 +27,19 @@ jobs:
           path: appl-docchat
         
       
-      - name: Install appl-docchat
-        run: pip install -e ./appl-docchat
 
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
           if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
 
+      - name: Install appl-docchat
+        run: pip install -e ./appl-docchat
+
       - name: Run tests
         run: |
           cd appl-docchat
+          mv settings_template.py settings.py
           python -m unittest discover tests
 
           
