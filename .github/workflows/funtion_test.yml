@@ -37,6 +37,7 @@ jobs:
 
       - name: Run tests
         run: |
+          cd appl-docchat
           python -m unittest discover tests
 
           
