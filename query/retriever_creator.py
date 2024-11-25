@@ -8,6 +8,7 @@ from langchain.retrievers import ContextualCompressionRetriever
 from langchain_community.retrievers import BM25Retriever
 from langchain_community.document_compressors.flashrank_rerank import FlashrankRerank
 from langchain_openai import ChatOpenAI
+from flashrank import Ranker
 # local imports
 import settings
 from query.retrieve_parent_chunks import ParentDocumentRetriever
@@ -115,10 +116,7 @@ class RetrieverCreator():
         search_kwargs = {"k": self.chunk_k_for_rerank}
         # filter, if set
         if search_filter is not None:
-            # logger.info(f"querying vector store with filter {search_filter}")
             search_kwargs["filter"] = search_filter
-        # if self.search_type == "similarity_score_threshold":
-        #     search_kwargs["score_threshold"] = self.score_threshold
         if self.retriever_type == "vectorstore":
             base_retriever = self.get_vectorstore_retriever(search_filter)
         elif self.retriever_type == "hybrid":
@@ -127,7 +125,23 @@ class RetrieverCreator():
             base_retriever = self.get_parent_document_retriever(search_filter)
 
         if self.rerank_provider == "flashrank_rerank":
-            compressor = FlashrankRerank(top_n=self.chunk_k, model=self.rerank_model)
+            # compressor = FlashrankRerank(top_n=self.chunk_k, model=self.rerank_model)
+            # ! For Windows systems, force the cache dir of Ranker class to be "flashrank_models" (otherwise
+            # you will run into error as cache dir is tried to be set to //tmp)
+            # Step 1: Define a wrapper for Ranker’s __init__ method to enforce custom cache_dir
+            original_init = Ranker.__init__
+
+            def custom_init(self, model_name, *args, **kwargs):
+                # Set the cache directory to your desired path
+                kwargs['cache_dir'] = 'flashrank_models'
+                # Call the original __init__ method with the modified cache_dir
+                original_init(self, model_name, *args, **kwargs)
+
+            # Step 2: Monkey-patch Ranker.__init__ with the custom init function
+            Ranker.__init__ = custom_init
+            compressor = FlashrankRerank(client=Ranker, top_n=self.chunk_k, model=self.rerank_model)
+
+            Ranker.__init__ = original_init
 
         retriever = ContextualCompressionRetriever(base_retriever=base_retriever,
                                                    base_compressor=compressor)
@@ -140,7 +154,7 @@ class RetrieverCreator():
         """
         if self.rerank:
             retriever = self.get_compression_retriever(search_filter)
-            logger.info(f"""Reranking activated with base_reriever {self.retriever_type}
+            logger.info(f"""Reranking activated with base_retriever {self.retriever_type}
                          and compressor {self.rerank_provider}""")
         else:
             if self.retriever_type == "vectorstore":
