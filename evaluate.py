@@ -1,17 +1,24 @@
 import os
 from typing import List, Tuple
+import asyncio
+import sys
 import json
 from collections import defaultdict
 import pandas as pd
 from loguru import logger
 from datasets import Dataset
 import langchain.docstore.document as docstore
+from langchain_openai import AzureChatOpenAI, AzureOpenAIEmbeddings
 from ragas import evaluation
 # local imports
 from ingest.ingester import Ingester
 from query.querier import Querier
 import settings
 import utils as ut
+
+print(sys.platform)
+if sys.platform.startswith("win"):
+    asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
 
 
 def get_eval_questions(evaluation_folder: str, eval_file: str) -> Tuple[List[str], List[str], List[str]]:
@@ -141,7 +148,22 @@ def get_ragas_results(answers: List[str],
     dataset = Dataset.from_dict(dataset_dict)
 
     # evaluate
-    result = evaluation.evaluate(dataset)
+    emb_model = settings.EMBEDDINGS_MODEL
+    llm_model = settings.LLM_MODEL
+    emb_deployment = settings.AZURE_EMBEDDING_DEPLOYMENT_MAP[emb_model]
+    llm_deployment = settings.AZURE_LLM_DEPLOYMENT_MAP[llm_model]
+    result = evaluation.evaluate(dataset,
+                                 llm=AzureChatOpenAI(model=llm_model,
+                                                     azure_deployment=llm_deployment,
+                                                     api_version=settings.AZURE_OPENAI_API_VERSION,
+                                                     azure_endpoint=settings.AZURE_OPENAI_ENDPOINT,
+                                                     temperature=0),
+                                 embeddings=AzureOpenAIEmbeddings(model=emb_model,
+                                                                  api_version=settings.AZURE_OPENAI_API_VERSION,
+                                                                  api_key=os.environ["AZURE_OPENAI_API_KEY"],
+                                                                  azure_deployment=emb_deployment,
+                                                                  azure_endpoint=settings.AZURE_OPENAI_ENDPOINT)
+                                 )
 
     return result
 

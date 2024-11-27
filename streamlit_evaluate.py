@@ -89,7 +89,7 @@ def compose_dataframes_from_all_eval_files(eval_folders: List[str]) -> Tuple[pd.
                                  "SUMMARY_TEXT_SPLITTER_METHOD", "SUMMARY_CHUNK_SIZE", "SUMMARY_CHUNK_OVERLAP",
                                  "SUMMARY_LLM_PROVIDER", "SUMMARY_LLM_MODEL", "PRIVATE_LLM_PROVIDER",
                                  "PRIVATE_LLM_MODEL", "PRIVATE_EMBEDDINGS_PROVIDER", "PRIVATE_SUMMARY_LLM_MODEL",
-                                 "CHAIN_NAME", "CHAIN_TYPE"]]
+                                 "CHAIN_NAME", "CHAIN_TYPE", "AZURE_OPENAI_ENDPOINT", "AZURE_OPENAI_API_VERSION"]]
 
     # force order of columns for aggregated results
     df_agg = df_agg.loc[:, admin_columns_agg + result_columns + relevant_setting_columns]
