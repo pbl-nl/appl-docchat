@@ -210,10 +210,12 @@ def get_settings_as_dictionary(file_name: str) -> Dict[str, Any]:
                 # Extract the variable name and value
                 variable_name = parts[0].strip()
                 variable_value = parts[1].strip()
-                # Use exec() to assign the value to the variable name
-                exec(f'{variable_name} = {variable_value}')
-                # Add the variable and its value to the dictionary
-                variables_dict[variable_name] = eval(variable_name)
+                # exclude embedding map and llm map
+                if not variable_value.startswith("{"):
+                    # Use exec() to assign the value to the variable name
+                    exec(f'{variable_name} = {variable_value}')
+                    # Add the variable and its value to the dictionary
+                    variables_dict[variable_name] = eval(variable_name)
 
     return variables_dict
 

@@ -163,11 +163,27 @@ AZURE_LLM_DEPLOYMENT_MAP = {
 
 # AZURE_OPENAI_ENDPOINT represents the Azure OpenAI endpoint used for connecting to Azure OpenAI API
 # This setting is only relevant when EMBEDDINGS_PROVIDER = "azureopenai" or LLM_PROVIDER = "azureopenai"
-AZURE_OPENAI_ENDPOINT = "https://pbl-openai-a-ca.openai.azure.com/"
+AZURE_OPENAI_ENDPOINT = "your_azure_openai_endpoint"
 
 # AZURE_OPENAI_API_VERSION represents the Azure OpenAI API version
 # This setting is only relevant when EMBEDDINGS_PROVIDER = "azureopenai" or LLM_PROVIDER = "azureopenai"
-AZURE_OPENAI_API_VERSION = "2024-05-01-preview"
+AZURE_OPENAI_API_VERSION = "your_azure_openai_api_version"
+
+# Similar settings as above, but specifically for evaluation
+# EVALUATION_EMBEDDINGS_PROVIDER must be one of "openai", "azureopenai"
+EVALUATION_EMBEDDINGS_PROVIDER = "azureopenai"
+# - If EVALUATION_EMBEDDINGS_PROVIDER is "openai", EVALUATION_EMBEDDINGS_MODEL must be one of:
+#   "text-embedding-ada-002", "text-embedding-3-small" or "text-embedding-3-large"
+# - If EVALUATION_EMBEDDINGS_PROVIDER is "azureopenai", EVALUATION_EMBEDDINGS_MODEL must be one of the embedding
+#   models deployed, e.g. "text-embedding-ada-002" or "text-embedding-3-large"
+EVALUATION_EMBEDDINGS_MODEL = "text-embedding-ada-002"
+# EVALUATION_LLM_PROVIDER must be one of "openai", "azureopenai"
+EVALUATION_LLM_PROVIDER = "azureopenai"
+# - If EVALUATION_LLM_PROVIDER is "openai", EVALUATION_LLM_MODEL must be one of:
+#   "gpt-3.5-turbo", "gpt-3.5-turbo-16k", "gpt-4" or "gpt-4o"
+# - If EVALUATION_LLM_PROVIDER is "azureopenai", EVALUATION_LLM_MODEL must be one of the LLM models deployed, e.g.:
+#   "gpt-35-turbo", "gpt-4" or "gpt-4o"
+EVALUATION_LLM_MODEL = "gpt-4o"
 
 # Similar settings as above, but specifically for creation of document summaries
 SUMMARY_TEXT_SPLITTER_METHOD = "RecursiveCharacterTextSplitter"
