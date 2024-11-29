@@ -8,13 +8,14 @@ import pandas as pd
 from loguru import logger
 from datasets import Dataset
 import langchain.docstore.document as docstore
-from langchain_openai import AzureChatOpenAI, AzureOpenAIEmbeddings
+from langchain_openai import ChatOpenAI, AzureChatOpenAI, OpenAIEmbeddings, AzureOpenAIEmbeddings
 from ragas import evaluation
 # local imports
 from ingest.ingester import Ingester
 from query.querier import Querier
 import settings
 import utils as ut
+from ingest.embeddings_creator import EmbeddingsCreator
 
 print(sys.platform)
 if sys.platform.startswith("win"):
@@ -147,23 +148,33 @@ def get_ragas_results(answers: List[str],
 
     dataset = Dataset.from_dict(dataset_dict)
 
-    # evaluate
-    emb_model = settings.EMBEDDINGS_MODEL
-    llm_model = settings.LLM_MODEL
-    emb_deployment = settings.AZURE_EMBEDDING_DEPLOYMENT_MAP[emb_model]
-    llm_deployment = settings.AZURE_LLM_DEPLOYMENT_MAP[llm_model]
-    result = evaluation.evaluate(dataset,
-                                 llm=AzureChatOpenAI(model=llm_model,
-                                                     azure_deployment=llm_deployment,
-                                                     api_version=settings.AZURE_OPENAI_API_VERSION,
-                                                     azure_endpoint=settings.AZURE_OPENAI_ENDPOINT,
-                                                     temperature=0),
-                                 embeddings=AzureOpenAIEmbeddings(model=emb_model,
-                                                                  api_version=settings.AZURE_OPENAI_API_VERSION,
-                                                                  api_key=os.environ["AZURE_OPENAI_API_KEY"],
-                                                                  azure_deployment=emb_deployment,
-                                                                  azure_endpoint=settings.AZURE_OPENAI_ENDPOINT)
-                                 )
+    # either evaluate with OpenAI models or Azure OpenAI models
+    emb_model = settings.EVALUATION_EMBEDDINGS_MODEL
+    llm_model = settings.EVALUATION_LLM_MODEL
+
+    if (settings.EVALUATION_EMBEDDINGS_PROVIDER == "azureopenai") and \
+       (settings.EVALUATION_LLM_PROVIDER == "azureopenai"):
+        emb_deployment = settings.AZURE_EMBEDDING_DEPLOYMENT_MAP[emb_model]
+        llm_deployment = settings.AZURE_LLM_DEPLOYMENT_MAP[llm_model]
+        result = evaluation.evaluate(dataset,
+            embeddings=AzureOpenAIEmbeddings(model=emb_model,
+                                             api_version=settings.AZURE_OPENAI_API_VERSION,
+                                             api_key=os.environ["AZURE_OPENAI_API_KEY"],
+                                             azure_deployment=emb_deployment,
+                                             azure_endpoint=settings.AZURE_OPENAI_ENDPOINT),
+            llm=AzureChatOpenAI(model=llm_model,
+                                azure_deployment=llm_deployment,
+                                api_version=settings.AZURE_OPENAI_API_VERSION,
+                                azure_endpoint=settings.AZURE_OPENAI_ENDPOINT,
+                                temperature=0)
+            )
+    else:
+        result = evaluation.evaluate(dataset,
+            embeddings=OpenAIEmbeddings(model=emb_model,
+                                        api_key=os.environ["OPENAI_API_KEY"]),
+            llm=ChatOpenAI(model=llm_model,
+                           temperature=0)
+            )
 
     return result
 
