@@ -60,10 +60,8 @@ Once in the Python session, type <code>import nltk</code> + Enter<br>
 Then <code>nltk.download('punkt')</code> + Enter
 
 ### flashrank reranker
-This repo allows reranking the retrieved documents from the vector store. In order to use the FlashRank reranker, several steps must be taken
-1. Manually create a subfolder called "flashrank_models"
-2. Go to https://huggingface.co/prithivida/flashrank/tree/main and download any of the zipped models you are interested in to the subfolder and extract the zipfile there
-3. ! In your virtual environment, go to Lib/site-packages/flashrank and edit the Config.py: change default_cache_dir from "/tmp" to "flashrank_models"
+This repo allows reranking the retrieved documents from the vector store, by using the FlashRank reranker
+The very first use will download and unzip the required model as indicated in settings.py from HuggingFace platform
 For more information on the Flashrank reranker, see https://github.com/PrithivirajDamodaran/FlashRank
 
 ### Ingesting documents
