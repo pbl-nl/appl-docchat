@@ -1,7 +1,7 @@
 """
 The utils module contains general functionality that can be used at various places in the application
 """
-from typing import Any, Dict, List, Tuple
+from typing import Any, Dict, List, Set, Tuple
 import os
 import sys
 import datetime as dt
@@ -9,8 +9,10 @@ import pathlib
 import numpy as np
 from loguru import logger
 from langdetect import detect, LangDetectException
+from langchain_community.vectorstores.chroma import Chroma
 # local imports
 import settings
+# from ingest.vectorstore_creator import VectorStoreCreator
 
 LANGUAGE_MAP = {
     'cs': 'czech',
@@ -33,15 +35,38 @@ LANGUAGE_MAP = {
 }  # languages supported by nltk
 
 
+def retrieve_languages_from_vector_store(vector_store: Chroma) -> Set[Tuple[str, str]]:
+    """
+    Creates a set of languages for all documents in a folder by retrieving language from vectorstore document metadata
+
+    Parameters
+    ----------
+    vector_store : Chroma
+        Chroma vector store object
+
+    Returns
+    -------
+    Set[Tuple[str, str]]
+        a set containing the tuples of language codes and languages, both in string form
+    """
+    all_documents = vector_store.get()
+    languages = {(metadata['Language'], LANGUAGE_MAP.get(metadata['Language'], 'english'))
+                 for metadata in all_documents['metadatas']}
+
+    return list(languages)
+
+
 def create_vectordb_folder() -> None:
-    """ Creates subfolder for storage of vector databases if not existing
+    """
+    Creates subfolder for storage of vector databases if not existing
     """
     if settings.VECDB_DIR not in os.listdir(pathlib.Path().resolve()):
         os.mkdir(os.path.join(pathlib.Path().resolve(), settings.VECDB_DIR))
 
 
 def create_summaries_folder(content_folder_name: str) -> None:
-    """ Creates subfolder for storage of summaries if not existing
+    """
+    Creates subfolder for storage of summaries if not existing
 
     Parameters
     ----------
@@ -60,7 +85,8 @@ def create_vectordb_name(content_folder_name: str,
                          chunk_overlap: int = None,
                          chunk_size_child: int = None,
                          chunk_overlap_child: int = None) -> Tuple[str, str]:
-    """ Creates the content folder path and vector database folder path
+    """
+    Creates the content folder path and vector database folder path
 
     Parameters
     ----------
@@ -131,7 +157,8 @@ def is_relevant_file(content_folder_path: str, my_file: str) -> bool:
 
 
 def get_relevant_files_in_folder(content_folder_path: str) -> List[str]:
-    """ Gets a list of relevant files from a given content folder path
+    """
+    Gets a list of relevant files from a given content folder path
 
     Parameters
     ----------
@@ -147,7 +174,8 @@ def get_relevant_files_in_folder(content_folder_path: str) -> List[str]:
 
 
 def exit_program() -> None:
-    """ Exits the Python process
+    """
+    Exits the Python process
     """
     print("Exiting the program...")
     sys.exit(0)
@@ -155,8 +183,9 @@ def exit_program() -> None:
 
 def getattr_or_default(obj: Any,
                        attr, default: Any = None) -> Any | None:
-    """ Get an attribute from an object, returning a default value if the attribute
-        is not found or its value is None
+    """
+    Get an attribute from an object, returning a default value if the attribute
+    is not found or its value is None
 
     Parameters
     ----------
@@ -178,7 +207,8 @@ def getattr_or_default(obj: Any,
 
 
 def get_settings_as_dictionary(file_name: str) -> Dict[str, Any]:
-    """ Turns the parameters read from the settings file into a dictionary
+    """
+    Turns the parameters read from the settings file into a dictionary
 
     Parameters
     ----------
@@ -221,7 +251,8 @@ def get_settings_as_dictionary(file_name: str) -> Dict[str, Any]:
 
 
 def get_timestamp() -> str:
-    """ returns the current time as a string, used for logging
+    """
+    Returns the current time as a string, used for logging
 
     Returns
     -------
@@ -233,7 +264,7 @@ def get_timestamp() -> str:
 
 def cosine_similarity(a: np.ndarray, b: np.ndarray) -> np.float64:
     """
-    _summary_
+    calculates the cosine similarity between two arrays of numbers
 
     Parameters
     ----------
@@ -276,6 +307,18 @@ def euclidean_distance(a: np.ndarray, b: np.ndarray) -> np.float64:
 def detect_language(text: str, number_of_characters: int = 1000) -> str:
     """
     Detects language based on the first X number of characters
+
+    Parameters
+    ----------
+    text : str
+        the text for which the language is detected
+    number_of_characters : int, optional
+        the number of characters frim the text to take into account for the language detection, by default 1000
+
+    Returns
+    -------
+    str
+        a string representing the detected language
     """
     text_snippet = text[:number_of_characters] if len(text) > number_of_characters else text
 
@@ -291,9 +334,47 @@ def detect_language(text: str, number_of_characters: int = 1000) -> str:
 
 
 def get_relevant_models(private: bool) -> Tuple[str, str, str, str]:
+    """
+    returns a tuple of LLM and embedding provider and model according to settings
+    depending on 'private' indicator
+
+    Parameters
+    ----------
+    private : bool
+        indicates whether documents to be queried are private or not
+
+    Returns
+    -------
+    Tuple[str, str, str, str]
+        tuple of LLM and embedding provider and model
+    """
     if private:
         return settings.PRIVATE_LLM_PROVIDER, settings.PRIVATE_LLM_MODEL, \
                settings.PRIVATE_EMBEDDINGS_PROVIDER, settings.PRIVATE_EMBEDDINGS_MODEL
     else:
         return settings.LLM_PROVIDER, settings.LLM_MODEL, \
                settings.EMBEDDINGS_PROVIDER, settings.EMBEDDINGS_MODEL
+
+
+def get_no_response_answer(language: str) -> str:
+    """
+    creates the response that the answer is not known, based on the language
+
+    Parameters
+    ----------
+    language : str
+        language identification string
+
+    Returns
+    -------
+    str
+        'I don't know' string in the appropriate language
+    """
+    if language == 'nl':
+        response = "Ik weet het niet omdat er geen relevante context is die het antwoord bevat"
+    elif language == 'de':
+        response = "Ich weiß es nicht, weil es keinen relevanten Kontext gibt, der die Antwort enthält"
+    else:
+        response = "I don't know because there is no relevant context containing the answer"
+
+    return response
