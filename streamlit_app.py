@@ -93,32 +93,17 @@ def display_chat_history() -> None:
 
 
 @st.cache_data
-def vectordb_folder_creator() -> None:
+def vectordb_folder_creator(my_folder_path_selected: str) -> None:
     """
     Creates subfolder for storage of vector databases if not existing
-    """
-    return ut.create_vectordb_folder()
+    
+    Parameters
+    ----------
+    my_folder_path_selected : str
+        the selected document folder path
 
-
-@st.cache_data
-def folderlist_creator() -> List[str]:
-    """
-    Creates a list of folder names (without path).
-    Folder names are found in DOC_DIR (see settings.py).
-
-    Returns
-    -------
-    List[str]
-        list of folder names to be shown in the UI
-    """
-    folders = []
-    for folder_name in os.listdir(settings.DOC_DIR):
-        folder_path = os.path.join(settings.DOC_DIR, folder_name)
-        if os.path.isdir(folder_path):
-            folders.append(folder_name)
-    logger.info("Executed folderlist_creator()")
-
-    return folders
+"""
+    return ut.create_vectordb_folder(my_folder_path_selected)
 
 
 @st.cache_data
@@ -128,8 +113,8 @@ def documentlist_creator(my_folder_path_selected: str) -> List[str]:
 
     Parameters
     ----------
-    folder : str
-        the selected document folder
+    my_folder_path_selected : str
+        the selected document folder path
 
     Returns
     -------
@@ -143,31 +128,6 @@ def documentlist_creator(my_folder_path_selected: str) -> List[str]:
     logger.info("Executed documentlist_creator()")
 
     return relevant_files_in_folder
-
-
-def folder_selector(folders: List[str]) -> Tuple[str, str, str]:
-    """
-    selects a document folder and creates the asscciated document folder path and vector database path
-
-    Parameters
-    ----------
-    folders : List[str]
-        list of available folders
-
-    Returns
-    -------
-    Tuple[str, str, str]
-        tuple of selected folder name, its path and its vector database
-    """
-    # Select source folder with docs
-    my_folder_name_selected = st.sidebar.selectbox(label="***SELECT A FOLDER***",
-                                                   options=folders)
-    logger.info(f"folder_name_selected is now {my_folder_name_selected}")
-    # get associated source folder path and vectordb path
-    my_folder_path_selected = os.path.join(settings.DOC_DIR, my_folder_name_selected)
-    logger.info("Executed folder_selector()")
-
-    return my_folder_name_selected, my_folder_path_selected
 
 
 def document_selector(documents: List[str]) -> List[str]:
@@ -354,7 +314,6 @@ def initialize_page() -> None:
     )
     logo_image = Image.open(settings.APP_LOGO)
     st.sidebar.image(logo_image, width=250)
-
     with st.expander("User manual"):
         # read app explanation from file explanation.txt
         with open(file=settings.APP_INFO, mode="r", encoding="utf8") as f:
@@ -431,78 +390,86 @@ def clear_history() -> None:
 set_page_config()
 # initialize page, executed only once per session
 initialize_page()
-# create subfolder for vector databases if necessary
-vectordb_folder_creator()
-# create list of content folders
-source_folders_available = folderlist_creator()
-# initialize session state variables
-initialize_session_state()
-# chosen folder and associated vector database
-folder_name_selected, folder_path_selected = folder_selector(source_folders_available)
-# available and selected documents
-document_names = documentlist_creator(folder_path_selected)
-document_selection = document_selector(document_names)
-# create checkbox to indicate whether chosen documents are private or not. Default is not checked
-confidential = st.sidebar.checkbox(label="confidential", help="check in case of private documents")
-# get relevant models
-llm_provider, llm_model, embeddings_provider, embeddings_model = ut.get_relevant_models(confidential)
-# determine name of associated vector database
-_, vecdb_folder_path = ut.create_vectordb_name(content_folder_name=folder_name_selected,
-                                               embeddings_model=embeddings_model)
-# creation of Querier object, executed only once per session
-querier = initialize_querier(my_llm_provider=llm_provider,
-                             my_llm_model=llm_model,
-                             my_embeddings_provider=embeddings_provider,
-                             my_embeddings_model=embeddings_model)
-# clear querier history if a switch in confidentiality is made
-if confidential != st.session_state['confidential']:
-    clear_history()
-st.session_state['confidential'] = confidential
-# clear querier history if a different folder or (set of) document(s) is chosen
-if (folder_name_selected != st.session_state['folder_selected']) or \
-   (document_selection != st.session_state['document_selected']):
-    clear_history()
-st.session_state['folder_selected'] = folder_name_selected
-st.session_state['document_selected'] = document_selection
-# create button to confirm folder selection. This button sets session_state['is_GO_clicked'] to True
-st.sidebar.button("GO", type="primary", on_click=click_go_button)
-# only start a conversation when a folder is selected and selection is confirmed with "GO" button
-if st.session_state['is_GO_clicked']:
-    logger.info("GO button is clicked")
-    # create or update vector database if necessary
-    check_vectordb(my_querier=querier,
-                   my_folder_name_selected=folder_name_selected,
-                   my_folder_path_selected=folder_path_selected,
-                   my_vecdb_folder_path_selected=vecdb_folder_path,
-                   my_embeddings_provider=embeddings_provider,
-                   my_embeddings_model=embeddings_model)
-    summary_type = st.sidebar.radio(label="Start with summary?",
-                                    options=["No", "Short", "Long"],
-                                    captions=["", "Quicker and shorter", "Slower but more extensive"],
-                                    index=0)
-    # if one of the options is chosen
-    if summary_type in ["Short", "Long"]:
-        # show the summary at the top of the screen
-        create_and_show_summary(my_summary_type=summary_type,
-                                my_content_folder_name=folder_name_selected,
-                                my_folder_path_selected=folder_path_selected,
-                                my_selected_documents=document_selection)
-    # show button "Clear Conversation"
-    clear_messages_button = st.button(label="Clear Conversation", key="clear")
-    # if button "Clear Conversation" is clicked
-    if clear_messages_button:
-        # clear all chat messages on screen and in Querier object
-        # NB: session state of "is_GO_clicked" and "folder_selected" remain unchanged
-        st.session_state['messages'] = []
-        querier.clear_history()
-        logger.info("Clear Conversation button clicked")
-    # display chat messages from history
-    display_chat_history()
-    # react to user input if a question has been asked
-    if prompt := st.chat_input("Your question"):
-        handle_query(my_folder_path_selected=folder_path_selected,
-                     my_querier=querier,
-                     my_prompt=prompt,
-                     my_document_selection=document_selection,
-                     my_folder_name_selected=folder_name_selected,
-                     my_vecdb_folder_path_selected=vecdb_folder_path)
+# allow user to set the path to the document folder
+folder_path_selected = st.sidebar.text_input(label="***ENTER THE DOCUMENT FOLDER PATH***",
+                                             help="""Please enter the full path e.g. Y:/User/troosts/chatpbl/...""")
+if folder_path_selected != "":
+    # get folder name with docs
+    folder_name_selected = os.path.basename(folder_path_selected)
+    print(folder_name_selected)
+    # create subfolder for vector databases if necessary
+    vectordb_folder_creator(folder_path_selected)
+    # # create list of content folders
+    # source_folders_available = folderlist_creator()
+    # initialize session state variables
+    initialize_session_state()
+    # # chosen folder and associated vector database
+    # folder_name_selected, folder_path_selected = folder_selector(source_folders_available)
+    # available and selected documents
+    document_names = documentlist_creator(folder_path_selected)
+    print(document_names)
+    document_selection = document_selector(document_names)
+    # create checkbox to indicate whether chosen documents are private or not. Default is not checked
+    confidential = st.sidebar.checkbox(label="confidential", help="check in case of private documents")
+    # get relevant models
+    llm_provider, llm_model, embeddings_provider, embeddings_model = ut.get_relevant_models(confidential)
+    # determine name of associated vector database
+    vecdb_folder_path = ut.create_vectordb_path(content_folder_path=folder_path_selected,
+                                                embeddings_model=embeddings_model)
+    # creation of Querier object, executed only once per session
+    querier = initialize_querier(my_llm_provider=llm_provider,
+                                my_llm_model=llm_model,
+                                my_embeddings_provider=embeddings_provider,
+                                my_embeddings_model=embeddings_model)
+    # clear querier history if a switch in confidentiality is made
+    if confidential != st.session_state['confidential']:
+        clear_history()
+    st.session_state['confidential'] = confidential
+    # clear querier history if a different folder or (set of) document(s) is chosen
+    if (folder_name_selected != st.session_state['folder_selected']) or \
+    (document_selection != st.session_state['document_selected']):
+        clear_history()
+    st.session_state['folder_selected'] = folder_name_selected
+    st.session_state['document_selected'] = document_selection
+    # create button to confirm folder selection. This button sets session_state['is_GO_clicked'] to True
+    st.sidebar.button("GO", type="primary", on_click=click_go_button)
+    # only start a conversation when a folder is selected and selection is confirmed with "GO" button
+    if st.session_state['is_GO_clicked']:
+        logger.info("GO button is clicked")
+        # create or update vector database if necessary
+        check_vectordb(my_querier=querier,
+                       my_folder_name_selected=folder_name_selected,
+                       my_folder_path_selected=folder_path_selected,
+                       my_vecdb_folder_path_selected=vecdb_folder_path,
+                       my_embeddings_provider=embeddings_provider,
+                       my_embeddings_model=embeddings_model)
+        summary_type = st.sidebar.radio(label="Start with summary?",
+                                        options=["No", "Short", "Long"],
+                                        captions=["", "Quicker and shorter", "Slower but more extensive"],
+                                        index=0)
+        # if one of the options is chosen
+        if summary_type in ["Short", "Long"]:
+            # show the summary at the top of the screen
+            create_and_show_summary(my_summary_type=summary_type,
+                                    my_content_folder_name=folder_name_selected,
+                                    my_folder_path_selected=folder_path_selected,
+                                    my_selected_documents=document_selection)
+        # show button "Clear Conversation"
+        clear_messages_button = st.button(label="Clear Conversation", key="clear")
+        # if button "Clear Conversation" is clicked
+        if clear_messages_button:
+            # clear all chat messages on screen and in Querier object
+            # NB: session state of "is_GO_clicked" and "folder_selected" remain unchanged
+            st.session_state['messages'] = []
+            querier.clear_history()
+            logger.info("Clear Conversation button clicked")
+        # display chat messages from history
+        display_chat_history()
+        # react to user input if a question has been asked
+        if prompt := st.chat_input("Your question"):
+            handle_query(my_folder_path_selected=folder_path_selected,
+                         my_querier=querier,
+                         my_prompt=prompt,
+                         my_document_selection=document_selection,
+                         my_folder_name_selected=folder_name_selected,
+                         my_vecdb_folder_path_selected=vecdb_folder_path)

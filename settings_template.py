@@ -7,12 +7,6 @@ APP_LOGO = "./images/b30.png"
 APP_INFO = "./info/explanation.txt"
 # header in Streamlit UI
 APP_HEADER = "ChatPBL"
-# filepath of folder with input documents, e.g. "./docs"
-DOC_DIR = "./docs"
-# filepath of folder with chunks, e.g. "./chunks"
-CHUNK_DIR = "./chunks"
-# folder for persistent vector databases, e.g. "vector_stores"
-VECDB_DIR = "vector_stores"
 # filepath of evaluation results folder, e.g. "./evaluate"
 EVAL_DIR = "./evaluate"
 # header in Streamlit evaluation UI
@@ -21,6 +15,8 @@ EVAL_APP_HEADER = "ChatPBL: evaluation"
 EVAL_APP_INFO = "./info/evaluation_explanation.txt"
 # CHAIN_VERBOSITY must be boolean. When set to True, the standalone question that is conveyed to LLM is shown
 CHAIN_VERBOSITY = False
+# Location of dotenv file
+ENVLOC = "path/to/dotenv/file"
 
 
 # ######### THE SETTINGS BELOW CAN BE USED FOR TESTING AND CUSTOMIZED TO YOUR PREFERENCE ##########
@@ -45,11 +41,11 @@ CHUNK_SIZE_CHILD = 200
 # CHUNK_K represents the number of chunks that is returned from the vector database as input for the LLM
 # Value must be integer (>=1)
 # NB: CHUNK_SIZE and CHUNK_K are related, make sure that CHUNK_K * CHUNK_SIZE < LLM window size
-CHUNK_K = 4
+CHUNK_K = 5
 # Only when RETRIEVER_TYPE is set to "parent":
 # CHUNK_K_CHILD represents the number of child chunks that is returned from the vector database.
 # Their corresponding parent chunks (number will be <= CHUNK_K_CHILD) are then used as input for the LLM
-CHUNK_K_CHILD = 4
+CHUNK_K_CHILD = 8
 
 # CHUNK_OVERLAP represents the overlap between 2 sequential text chunks, value must be integer (>=0 and < CHUNK_SIZE)
 CHUNK_OVERLAP = 200
@@ -190,7 +186,7 @@ SUMMARY_TEXT_SPLITTER_METHOD = "RecursiveCharacterTextSplitter"
 SUMMARY_CHUNK_SIZE = 6000
 SUMMARY_CHUNK_OVERLAP = 0
 SUMMARY_LLM_PROVIDER = "azureopenai"
-SUMMARY_LLM_MODEL = "gpt-35-turbo"
+SUMMARY_LLM_MODEL = "gpt-4o"
 
 # settings for confidential documents, using Ollama LLM and embedding model
 PRIVATE_LLM_PROVIDER = "ollama"

@@ -32,7 +32,7 @@ class Ingester:
                  text_splitter_method: str = None, text_splitter_method_child: str = None,
                  chunk_size: int = None, chunk_size_child: int = None,
                  chunk_overlap: int = None, chunk_overlap_child: int = None) -> None:
-        load_dotenv()
+        load_dotenv(dotenv_path=os.path.join(settings.ENVLOC, ".env"))
         self.collection_name = collection_name
         self.content_folder = content_folder
         self.vecdb_folder = vecdb_folder

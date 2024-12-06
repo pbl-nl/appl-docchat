@@ -33,39 +33,46 @@ LANGUAGE_MAP = {
 }  # languages supported by nltk
 
 
-def create_vectordb_folder() -> None:
-    """ Creates subfolder for storage of vector databases if not existing
+def create_vectordb_folder(my_folder_path_selected: str) -> None:
+    """ 
+    Creates subfolder for storage of vector databases if not existing
+    
+    Parameters
+    ----------
+    my_folder_path_selected : str
+        the selected document folder path
+
     """
-    if settings.VECDB_DIR not in os.listdir(pathlib.Path().resolve()):
-        os.mkdir(os.path.join(pathlib.Path().resolve(), settings.VECDB_DIR))
+    if "vector_stores" not in os.listdir(my_folder_path_selected):
+        os.mkdir(os.path.join(my_folder_path_selected, "vector_stores"))
 
 
-def create_summaries_folder(content_folder_name: str) -> None:
+def create_summaries_folder(my_folder_path_selected: str) -> None:
     """ Creates subfolder for storage of summaries if not existing
 
     Parameters
     ----------
-    content_folder_name : str
-        name of the content folder (without the path)
+    my_folder_path_selected : str
+        the selected document folder path
     """
-    if "summaries" not in os.listdir(os.path.join(pathlib.Path().resolve(), settings.DOC_DIR, content_folder_name)):
-        os.mkdir(os.path.join(pathlib.Path().resolve(), settings.DOC_DIR, content_folder_name, "summaries"))
+    if "summaries" not in os.listdir(my_folder_path_selected):
+        os.mkdir(os.path.join(my_folder_path_selected, "summaries"))
 
 
-def create_vectordb_name(content_folder_name: str,
+def create_vectordb_path(content_folder_path: str,
                          retriever_type: str = None,
                          embeddings_model: str = None,
                          text_splitter_method: str = None,
                          chunk_size: int = None,
                          chunk_overlap: int = None,
                          chunk_size_child: int = None,
-                         chunk_overlap_child: int = None) -> Tuple[str, str]:
+                         chunk_overlap_child: int = None) -> str:
     """ Creates the content folder path and vector database folder path
 
     Parameters
     ----------
-    content_folder_name : str
-        name of the content folder (without the path)
+    content_folder_path : str
+        name of the content folder (including the path)
     retriever_type : str, optional
         name of the retriever type, by default None
     embeddings_model : str, optional
@@ -83,10 +90,9 @@ def create_vectordb_name(content_folder_name: str,
 
     Returns
     -------
-    Tuple[str, str]
-        tuple of content folder path and vector database folder path
+    str
+        vector database folder path
     """
-    content_folder_path = os.path.join(settings.DOC_DIR, content_folder_name)
     retriever_type = settings.RETRIEVER_TYPE if retriever_type is None else retriever_type
     embeddings_model = settings.EMBEDDINGS_MODEL if embeddings_model is None else embeddings_model
     text_splitter_method = settings.TEXT_SPLITTER_METHOD if text_splitter_method is None else text_splitter_method
@@ -97,13 +103,13 @@ def create_vectordb_name(content_folder_name: str,
         if chunk_overlap_child is None else str(chunk_overlap_child)
     # vectordb_name is created from retriever_type, embeddings_model, text_splitter_method and
     # parent and child chunk_size and chunk_overlap
-    vectordb_name = content_folder_name + "_" + retriever_type + "_" + embeddings_model + "_" + \
+    vectordb_name = retriever_type + "_" + embeddings_model + "_" + \
         text_splitter_method + "_" + chunk_size + "_" + chunk_overlap + "_" + chunk_size_child + "_" + \
         chunk_overlap_child
 
-    vectordb_folder_path = os.path.join(pathlib.Path().resolve(), settings.VECDB_DIR, vectordb_name)
+    vectordb_folder_path = os.path.join(content_folder_path, "vector_stores", vectordb_name)
 
-    return content_folder_path, vectordb_folder_path
+    return vectordb_folder_path
 
 
 def is_relevant_file(content_folder_path: str, my_file: str) -> bool:
