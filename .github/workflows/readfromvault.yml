@@ -1,5 +1,7 @@
 name: ReadFromVault
-on:
+
+on: 
+  workflow_dispatch:
   push:
     branches:
       - main
@@ -11,3 +13,10 @@ jobs:
       uses: actions/checkout@v4
       with:
         fetch-depth: 0
+    - name: Authenticate to Azure
+      run: |
+        az login --service-principal -u ${{ secrets.PBL_CLIENT_ID }} -p ${{ secrets.PBL_CLIENT_SECRET }} --tenant ${{ secrets.PBL_TENANT_ID }}
+    - name: Fetch secret
+      run: |
+        az keyvault secret show --name openai-api-key --vault-name pbl-openai-a-kv
+  
