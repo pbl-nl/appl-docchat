@@ -21,7 +21,6 @@ def click_go_button() -> None:
 
 @st.cache_data
 def create_and_show_summary(my_summary_type: str,
-                            my_content_folder_name: str,
                             my_folder_path_selected: str,
                             my_selected_documents: List[str]) -> None:
     """
@@ -31,8 +30,6 @@ def create_and_show_summary(my_summary_type: str,
     ----------
     my_summary_type : str
         chosen summary type, either "Short" or "Long"
-    my_content_folder_name : str
-        name of content folder (without path)
     my_folder_path_selected : str
         path of content folder
     selected_documents : List[str]
@@ -45,7 +42,7 @@ def create_and_show_summary(my_summary_type: str,
 
     logger.info(f"Starting create_and_show_summary() with summarization method {summarization_method}")
     # create subfolder for storage of summaries if not existing
-    ut.create_summaries_folder(my_content_folder_name)
+    ut.create_summaries_folder(my_folder_path_selected)
     summarizer = Summarizer(content_folder_path=my_folder_path_selected,
                             summarization_method=summarization_method,
                             text_splitter_method=settings.SUMMARY_TEXT_SPLITTER_METHOD,
@@ -410,7 +407,8 @@ if folder_path_selected != "":
     print(document_names)
     document_selection = document_selector(document_names)
     # create checkbox to indicate whether chosen documents are private or not. Default is not checked
-    confidential = st.sidebar.checkbox(label="confidential", help="check in case of private documents")
+    # confidential = st.sidebar.checkbox(label="confidential", help="check in case of private documents")
+    confidential = False
     # get relevant models
     llm_provider, llm_model, embeddings_provider, embeddings_model = ut.get_relevant_models(confidential)
     # determine name of associated vector database
@@ -451,7 +449,6 @@ if folder_path_selected != "":
         if summary_type in ["Short", "Long"]:
             # show the summary at the top of the screen
             create_and_show_summary(my_summary_type=summary_type,
-                                    my_content_folder_name=folder_name_selected,
                                     my_folder_path_selected=folder_path_selected,
                                     my_selected_documents=document_selection)
         # show button "Clear Conversation"
