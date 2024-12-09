@@ -2,7 +2,7 @@ name: ReadFromVault
 on:
   push:
     branches:
-      - master
+      - main
 jobs:
   run:
     runs-on: ubuntu-latest
