@@ -33,7 +33,7 @@ class Summarizer:
         self.llm_model = settings.LLM_MODEL if llm_model is None else llm_model
 
         # create llm object
-        load_dotenv()
+        load_dotenv(dotenv_path=os.path.join(settings.ENVLOC, ".env"))
         self.llm = LLMCreator(llm_provider=self.llm_provider,
                               llm_model=self.llm_model).get_llm()
 
@@ -44,7 +44,7 @@ class Summarizer:
         partial_map_reduce_prompt = f"Write a concise summary of the following in the {my_language} language: "
         partial_refine_prompt = f"Given the new context, refine the original summary in the {my_language} language. \
         If the context isn't useful, return the original summary."
-
+        
         if self.chain_type == "map_reduce":
             map_reduce_prompt = PromptTemplate(template=partial_map_reduce_prompt + pr.SUMMARY_PROMPT_TEMPLATE,
                                                input_variables=["text"])
@@ -61,6 +61,7 @@ class Summarizer:
                 "question_prompt": map_reduce_prompt,
                 "refine_prompt": refine_prompt
             }
+            print(self.llm)
 
         return load_summarize_chain(llm=self.llm, chain_type=self.chain_type, **kwargs)
 

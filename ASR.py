@@ -11,7 +11,7 @@ def main():
     content_folder_name = input("Source folder of documents (without path): ")
     question_list_name = input('Please insert file name of question list: ') + '.txt'
     # get associated vectordb path
-    content_folder, _ = ut.create_vectordb_name(content_folder_name)
+    content_folder, _ = ut.create_vectordb_path(content_folder_name)
     question_list_path = os.path.join(content_folder, "review", question_list_name)
 
     # If vector store folder does not exist, stop

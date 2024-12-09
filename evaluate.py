@@ -327,7 +327,7 @@ def main(chunk_size: int = None, chunk_overlap: int = None, chunk_k: int = None)
     folder_list = eval_file_json.keys()
     for evaluation_folder in folder_list:
         # get associated source folder path and vectordb path
-        content_folder_path, vectordb_folder_path = ut.create_vectordb_name(content_folder_name=evaluation_folder,
+        content_folder_path, vectordb_folder_path = ut.create_vectordb_path(content_folder_name=evaluation_folder,
                                                                             chunk_size=chunk_size,
                                                                             chunk_overlap=chunk_overlap)
 

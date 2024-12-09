@@ -8,6 +8,9 @@ import settings
 import pandas as pd
 import utils as ut
 
+# geef pad op van documentenfolder
+# toon alle vector stores innsubfolder vector_stores
+# Toon alle chunks na keuze van vectorstore
 
 def click_GO_button():
     st.session_state['is_GO_clicked'] = True
@@ -32,7 +35,7 @@ def folder_selector(folders):
     folder_name = st.sidebar.selectbox("label=folder_selector", options=folders, label_visibility="hidden")
     logger.info(f"folder_name is now {folder_name}")
     # get associated source folder path and vectordb path
-    folder_path, vectordb_folder_path = ut.create_vectordb_name(content_folder_name=folder_name)
+    folder_path, vectordb_folder_path = ut.create_vectordb_path(content_folder_name=folder_name)
     logger.info(f"vectordb_folder_path is now {vectordb_folder_path}")
     if folder_name != st.session_state['folder_selected']:
         st.session_state['is_GO_clicked'] = False
