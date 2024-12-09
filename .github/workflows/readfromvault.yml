@@ -1,0 +1,13 @@
+name: ReadFromVault
+on:
+  push:
+    branches:
+      - main
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    steps:
+    - name: checkout # checkout repo content
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
