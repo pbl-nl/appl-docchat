@@ -25,12 +25,12 @@ class Summarizer:
         """
         self.content_folder_path = content_folder_path
         self.chain_type = summarization_method
-        self.text_splitter_method = settings.TEXT_SPLITTER_METHOD \
+        self.text_splitter_method = settings.SUMMARY_TEXT_SPLITTER_METHOD \
             if text_splitter_method is None else text_splitter_method
-        self.chunk_size = settings.CHUNK_SIZE if chunk_size is None else chunk_size
-        self.chunk_overlap = settings.CHUNK_OVERLAP if chunk_overlap is None else chunk_overlap
-        self.llm_provider = settings.LLM_PROVIDER if llm_provider is None else llm_provider
-        self.llm_model = settings.LLM_MODEL if llm_model is None else llm_model
+        self.chunk_size = settings.SUMMARY_CHUNK_SIZE if chunk_size is None else chunk_size
+        self.chunk_overlap = settings.SUMMARY_CHUNK_OVERLAP if chunk_overlap is None else chunk_overlap
+        self.llm_provider = settings.SUMMARY_LLM_PROVIDER if llm_provider is None else llm_provider
+        self.llm_model = settings.SUMMARY_LLM_MODEL if llm_model is None else llm_model
 
         # create llm object
         load_dotenv(dotenv_path=os.path.join(settings.ENVLOC, ".env"))
@@ -61,7 +61,6 @@ class Summarizer:
                 "question_prompt": map_reduce_prompt,
                 "refine_prompt": refine_prompt
             }
-            print(self.llm)
 
         return load_summarize_chain(llm=self.llm, chain_type=self.chain_type, **kwargs)
 
