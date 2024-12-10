@@ -12,6 +12,14 @@ from langdetect import detect, LangDetectException
 # local imports
 import settings
 
+VALID_EXTENSIONS = [
+    ".pdf",
+    ".docx",
+    ".html",
+    ".md",
+    ".txt"
+]
+
 LANGUAGE_MAP = {
     'cs': 'czech',
     'da': 'danish',
@@ -112,7 +120,7 @@ def create_vectordb_path(content_folder_path: str,
     return vectordb_folder_path
 
 
-def is_relevant_file(content_folder_path: str, my_file: str) -> bool:
+def is_relevant_file(content_folder_path: str, document_selection: List[str], my_file: str) -> bool:
     """
     decides whether or not a file is a relevant file
 
@@ -120,6 +128,8 @@ def is_relevant_file(content_folder_path: str, my_file: str) -> bool:
     ----------
     content_folder_path : str
         name of the content folder (including the path)
+    document_selection: List[str]
+        list of documents that have been selected
     my_file: str
         name of the file
 
@@ -128,28 +138,39 @@ def is_relevant_file(content_folder_path: str, my_file: str) -> bool:
     bool
         True if file is relevant, otherwise False
     """
-    relevant = ((os.path.isfile(os.path.join(content_folder_path, my_file))) and
-                (os.path.splitext(my_file)[1] in [".docx", ".html", ".md", ".pdf", ".txt"]))
+    if ((document_selection is None) or (document_selection == ["All"])):
+        relevant = ((os.path.isfile(os.path.join(content_folder_path, my_file))) and
+                    (os.path.splitext(my_file)[1] in VALID_EXTENSIONS))
+    else:
+        relevant = ((os.path.isfile(os.path.join(content_folder_path, my_file))) and
+                (my_file in document_selection) and
+                (os.path.splitext(my_file)[1] in VALID_EXTENSIONS))
+
     if not relevant:
-        logger.info(f"Skipping ingestion of file {my_file} because it has extension {os.path.splitext(my_file)[1]}")
+        if os.path.isfile(os.path.join(content_folder_path, my_file)):
+            logger.info(f"Skipping ingestion of {my_file} because it has extension {os.path.splitext(my_file)[1]}")
+        else:
+            logger.info(f"Skipping ingestion of {my_file} because it is a folder")
 
     return relevant
 
 
-def get_relevant_files_in_folder(content_folder_path: str) -> List[str]:
+def get_relevant_files_in_folder(content_folder_path: str, document_selection: List[str] = None) -> List[str]:
     """ Gets a list of relevant files from a given content folder path
 
     Parameters
     ----------
     content_folder_path : str
         name of the content folder (including the path)
+    document_selection: List[str]
+        list of documents that have been selected
 
     Returns
     -------
     List[str]
         list of files, without path
     """
-    return [f for f in os.listdir(content_folder_path) if is_relevant_file(content_folder_path, f)]
+    return [f for f in os.listdir(content_folder_path) if is_relevant_file(content_folder_path, document_selection, f)]
 
 
 def exit_program() -> None:
