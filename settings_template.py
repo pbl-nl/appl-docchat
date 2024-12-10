@@ -186,7 +186,9 @@ SUMMARY_TEXT_SPLITTER_METHOD = "RecursiveCharacterTextSplitter"
 SUMMARY_CHUNK_SIZE = 6000
 SUMMARY_CHUNK_OVERLAP = 0
 SUMMARY_LLM_PROVIDER = "azureopenai"
-SUMMARY_LLM_MODEL = "gpt-4o"
+# !! With the langchain version in appl-docchat.yaml it is necessary to choose gpt-35-turbo 
+# if SUMMARY_LLM_PROVIDER = "azureopenai"
+SUMMARY_LLM_MODEL = "gpt-35-turbo"
 
 # settings for confidential documents, using Ollama LLM and embedding model
 PRIVATE_LLM_PROVIDER = "ollama"

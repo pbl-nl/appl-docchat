@@ -46,8 +46,8 @@ def main():
                                 text_splitter_method=settings.SUMMARY_TEXT_SPLITTER_METHOD,
                                 chunk_size=settings.SUMMARY_CHUNK_SIZE,
                                 chunk_overlap=settings.SUMMARY_CHUNK_OVERLAP,
-                                llm_provider=llm_provider,
-                                llm_model=llm_model)
+                                llm_provider=settings.SUMMARY_LLM_PROVIDER,
+                                llm_model=settings.SUMMARY_LLM_MODEL)
         logger.info(f"Starting summarizer with method {summarization_method}")
         summarizer.summarize_folder()
         logger.info(f"{content_folder_name} successfully summarized.")
