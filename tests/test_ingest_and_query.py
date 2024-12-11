@@ -24,8 +24,6 @@ class TestIngester(unittest.TestCase):
         """Test if the sample_function runs without raising any errors."""
         try:
             # define model type
-            embeddings_model = "text-embedding-ada-002"
-
             content_folder_name = 'unit_test_openai'
             content_folder_path, vectordb_folder_path = ut.create_vectordb_name(content_folder_name)
             # delete a vector base if one is in place
@@ -34,20 +32,17 @@ class TestIngester(unittest.TestCase):
             print(vectordb_folder_path)
             self.ingester = Ingester(collection_name='UT_openai_' + content_folder_name,
                                      content_folder=content_folder_path,
-                                     vecdb_folder=vectordb_folder_path,
-                                     embeddings_model=embeddings_model)
+                                     vecdb_folder=vectordb_folder_path)
             self.ingester.ingest()
             self.assertEqual(None, None)
             del self.ingester
         except Exception as e:
             self.fail(f"The function raised an error: {e}")
 
-
 class TestQuerier(unittest.TestCase):
     '''test the query of different providers'''
 
     def test_openai(self):
-
         content_folder_name = 'unit_test_openai'
         _, vectordb_folder_path = ut.create_vectordb_name(content_folder_name)
         querier = Querier()
