@@ -34,20 +34,20 @@ jobs:
       #- name: Install appl-docchat
       #  run: pip install -e ./appl-docchat
 
-      - name: Create .env File
-          run: |
-            #!/bin/bash
-            AZURE_OPENAI_API_KEY="${{secrets.OPENAI_API_KEY}}"
-            AZURE_OPENAI_LLM_DEPLOYMENT_NAME="${{secrets.AZURE_OPENAI_LLM_DEPLOYMENT_NAME}}"
-            AZURE_OPENAI_ENDPOINT="${{secrets.AZURE_OPENAI_ENDPOINT}}"
-            AZURE_OPENAI_EMB_DEPLOYMENT_NAME='${{AZURE_OPENAI_EMB_DEPLOYMENT_NAME}}'
+      - name: Create env File
+        run: |
+          #!/bin/bash
+          AZURE_OPENAI_API_KEY="${{secrets.OPENAI_API_KEY}}"
+          AZURE_OPENAI_LLM_DEPLOYMENT_NAME="${{secrets.AZURE_OPENAI_LLM_DEPLOYMENT_NAME}}"
+          AZURE_OPENAI_ENDPOINT="${{secrets.AZURE_OPENAI_ENDPOINT}}"
+          AZURE_OPENAI_EMB_DEPLOYMENT_NAME='${{AZURE_OPENAI_EMB_DEPLOYMENT_NAME}}'
 
-            # Create the .env file and populate it
-            echo "AZURE_OPENAI_API_KEY=$AZURE_OPENAI_API_KEY" > .env
-            echo "AZURE_OPENAI_LLM_DEPLOYMENT_NAME=$AZURE_OPENAI_LLM_DEPLOYMENT_NAME" >> .env
-            echo "AZURE_OPENAI_ENDPOINT=$AZURE_OPENAI_ENDPOINT" >> .env
-            echo "AZURE_OPENAI_EMB_DEPLOYMENT_NAME=$AZURE_OPENAI_EMB_DEPLOYMENT_NAME" >> .env
-            cat .env
+          # Create the .env file and populate it
+          echo "AZURE_OPENAI_API_KEY=$AZURE_OPENAI_API_KEY" > .env
+          echo "AZURE_OPENAI_LLM_DEPLOYMENT_NAME=$AZURE_OPENAI_LLM_DEPLOYMENT_NAME" >> .env
+          echo "AZURE_OPENAI_ENDPOINT=$AZURE_OPENAI_ENDPOINT" >> .env
+          echo "AZURE_OPENAI_EMB_DEPLOYMENT_NAME=$AZURE_OPENAI_EMB_DEPLOYMENT_NAME" >> .env
+          cat .env
 
 
       - name: Run tests
