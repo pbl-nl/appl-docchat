@@ -1,9 +1,7 @@
 name: CI
 
-
 permissions:
   contents: read
-
 
 jobs:
   test:
