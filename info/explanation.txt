@@ -1,17 +1,29 @@
-# Welcome to ChatPBL!
+# Welcome!
 
-To directly start chatting with documents in natural language, first choose a document folder in the sidebar.<br><br>
-Is there no folder with documents you want to query yet? No problem, it is possible to create your own folder, the application will then create a "vector database" based on the documents in our folder so this extra step will take some time.<br>
+To start chatting with documents in natural language, first create a folder in a place of your choice (e.g. "Y/User/xxxx/ChatPBL/docs with xxxx your user name) and put there the documents you would like to chat with.<br>
+Once the document folder is created, copy-paste the path from the address bar in Windows File Explorer to the text box in the left sidebar, and hit Enter. The text box will remember the last path that was entered.
 
-It only takes a few steps to create and use your own document folder:
-1. In the folder "docs", create a subfolder with a distinctive name 
-2. Put any relevant documents you want to chat with in that folder
-3. Refresh the screen of this app (shift + F5)
-4. Choose the newly created folder in the sidebar and click 'OK'. A "vector database" will be created from your documents. Depending on the size of the folder, this may take some time.
-5. Once the creation of the vector database is finished, you can start chatting with your documents<br><br>
+The application will list the files available in the folder for chatting in the multiselect box below the text box containing the folder path.<br>
+Select all documents in the folder to chat with (default) or make a selection of files. Once you have made your selection, click the GO button.<br>
+If you start a chat with the chosen documents for the first time, their content, divided into 'text chunks', are added to a 'vector database'. This will take some time, depending on the number of files and their size, so please be patient...<br>
+The application will also detect any changes in the document folder that was chosen (added, updated or deleted files) and will update the vector database accordingly.<br>
+Once the creation of the vector database is finished, you can start chatting with your documents by entering your prompt in the bar at the bottom of the screen and hitting Enter.<br>
+It can be useful to start the chat with a summary of the selected documents. There is a choice between a concise summary and a more detailed summery. Warning: creation of a detailed summary can take a long time for larger sized documents!<br>
+Once summaries have been created for certain documents, they will be stored, in order to prevent the summary creation the next time you use the application<br>    
 
-Some characteristics of this application:<br>
-* <b>The app has memory:</b> This means that a question can refer to an answer that was given to the question before<br>
-* <b>The app shows the sources:</b> When an answer is given, a list of source chunks is also returned so you can check which context was used to construct the answer<br>
-* <b>The app is multilingual:</b> here is an example conversation<br>
+Some further characteristics of this application:<br>
+* <b>Multiple file types:</b> The app allows you to chat with the following file types: .pdf, .docx, .txt, .html and .md<br>
+* <b>Memory:</b> The app has memory which means that a question can refer to an answer that was given to the question before. When you ask a question that has no relation with the previous question, it is recommended to clear the conversation first with the 'Clear conversation' button.<br>
+* <b>Verifiable answers:</b> When an answer is given, a list of source chunks is returned so you can check which context was used by the application to construct the answer.<br>
+The chunk texts can be copy-pasted and the page of the text in the document chunk is also shown with the chunk text highlighted in yellow (.pdf and .docx only).<br>
+* <b>Multilingual:</b> The app can handle documents of many languages. The answer to a question will be a given in the language that was used for the question.<br>
 
+#### How text chunks are selected
+This application is based on so-called vector similarity search, hence the creation of the vector database. This means that both the text chunks in the vector database and your prompt are converted to numerical vectors.<br>
+In this way, the distance between the prompt vector and all available chunk vectors in the database is calculated. A number (this is a setting) of 'closest' chunks are then selected, assuming that they contain the answer to the question.<br>
+From your prompt and the selected text chunks, a context is created (see this as an extended prompt). Finally, a Large Language Model is used to formulate the answer to the original prompt, based on the context.<br>
+All this means that the words that you use in your prompt influence the values ​​in the numerical vector and therefore which chunks are chosen. In general, the more specific you are with the words you use in your prompt, the more specific (and better) the answer will be.<br>
+This technique of vector similarity search also implies that this application is not very good in answering questions that requires knowledge of relationships between text chunks from different documents, or in answering 'meta' questions like: "What are the most important themes in the documents?"<br>
+
+#### Closing the application again
+This is a 2-step process: first go to the terminal that was used to launch the application and hit Ctrl+C (once or twice), then answer "Y" to the question that appears. Then go to the browser tab and close the tab.
