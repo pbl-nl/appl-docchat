@@ -131,7 +131,7 @@ python-iso639==2024.4.27
 python-magic==0.4.27
 python-multipart==0.0.9
 pytz==2024.1
-pywin32==308
+pywin32==308; platform_system == "Windows"
 PyYAML==6.0.1
 ragas==0.1.9
 rank-bm25==0.2.2
@@ -190,3 +190,5 @@ wrapt==1.16.0
 xxhash==3.4.1
 yarl==1.9.4
 zipp==3.19.2
+docx2pdf
+
