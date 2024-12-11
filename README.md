@@ -8,19 +8,14 @@ A RAG (Retrieval Augmented Generation) setup for further exploration of chatting
 
 ### Preparation
 1. Clone this repo to a folder of your choice
-2. In the root folder, create a file named ".env"
+2. In a folder of your choice, create a file named ".env"
 3. When using the OpenAI API, enter your OpenAI API key in the first line of this file:<br>
 OPENAI_API_KEY="sk-....."<br>
 * If you don't have an OpenAI API key yet, you can obtain one here: https://platform.openai.com/account/api-keys
 * Click on + Create new secret key
 * Enter an identifier name (optional) and click on Create secret key
-4. When using Azure OpenAI Services, enter the following variables in the .env file:
-  * AZURE_OPENAI_API_KEY
-  * AZURE_OPENAI_ENDPOINT
-  * AZURE_OPENAI_API_VERSION (e.g. "2024-02-01")
-  * AZURE_OPENAI_LLM_DEPLOYMENT_NAME
-  * AZURE_OPENAI_EMB_DEPLOYMENT_NAME<br>
-The abovementioned variables can be found in your Azure OpenAI Services subscription
+4. When using Azure OpenAI Services, enter the variable AZURE_OPENAI_API_KEY="....." in the .env file<br>
+The value of this variable can be found in your Azure OpenAI Services subscription
 5. In case you want to use one of the open source models API's that are available on Huggingface:<br>
 Enter your Huggingface API key in the ".env" file :<br>
 HUGGINGFACEHUB_API_TOKEN="hf_....."<br>
@@ -85,8 +80,8 @@ In the activated virtual environment, the UI can be started with <code>streamlit
 When this command is used, a browser session will open automatically
 
 ### Querying multiple documents with multiple questions in batch
-The file review.py uses the standard question-answer technique but allows you to ask multiple questions to each document in a folder. 
-* Create a subfolder with the name <B>review</B> in folder docs/XXXX with XXXX as the name of your document folder
+The file review.py uses the standard question-answer technique but allows you to ask multiple questions to each document in a folder sequentially. 
+* Create a subfolder with the name <B>review</B> in a document folder
 * Secondly, add a file with the name <B>questions.txt</B> in the review folder with all your questions. The file expects a header with column names <B>Question Type</B> and <B>Question</B> for example. Then add all your question types ('Initial', or 'Follow Up' when the question refers to the previous question) and questions tab-separated in the following lines. You can find an example in the docs/CAP_nis folder.<br>
 
 Execution is done in the activated virtual environment with <code>python review.py</code>
