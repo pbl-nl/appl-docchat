@@ -24,7 +24,6 @@ class TestIngester(unittest.TestCase):
         """Test if the sample_function runs without raising any errors."""
         try:
             # define model type
-            embeddings_provider = "openai"
             embeddings_model = "text-embedding-ada-002"
 
             content_folder_name = 'unit_test_openai'
@@ -36,7 +35,6 @@ class TestIngester(unittest.TestCase):
             self.ingester = Ingester(collection_name='UT_openai_' + content_folder_name,
                                      content_folder=content_folder_path,
                                      vecdb_folder=vectordb_folder_path,
-                                     embeddings_provider=embeddings_provider,
                                      embeddings_model=embeddings_model)
             self.ingester.ingest()
             self.assertEqual(None, None)
@@ -49,11 +47,10 @@ class TestQuerier(unittest.TestCase):
     '''test the query of different providers'''
 
     def test_openai(self):
-        llm_provider = "openai"
-        llm_model = "gpt-3.5-turbo"
+
         content_folder_name = 'unit_test_openai'
         _, vectordb_folder_path = ut.create_vectordb_name(content_folder_name)
-        querier = Querier(llm_provider=llm_provider, llm_model=llm_model)
+        querier = Querier()
         querier.make_chain(content_folder_name, vectordb_folder_path)
         _ = querier.ask_question('What is her education?')
         self.assertEqual(None, None)
