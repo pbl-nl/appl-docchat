@@ -142,19 +142,20 @@ def document_selector(documents: List[str]) -> List[str]:
         list of selected valid documents
     """
     # Creating a multi-select dropdown
-    my_document_name_selected = st.sidebar.multiselect(label="***SELECT ANY / ALL FILES***",
-                                                       options=documents,
-                                                       default=documents[0],
-                                                       key='document_selector')
-    logger.info(f"document_name_selected is now {my_document_name_selected}")
+    my_document_names_selected = st.sidebar.multiselect(label="***SELECT ANY / ALL FILES***",
+                                                        options=documents,
+                                                        default=documents[0],
+                                                        key='document_selector')
+    logger.info(f"document_names_selected is now {my_document_names_selected}")
     logger.info("Executed document_selector()")
 
-    return my_document_name_selected
+    return my_document_names_selected
 
 
 def check_vectordb(my_querier: Querier,
                    my_folder_name_selected: str,
                    my_folder_path_selected: str,
+                   my_documents_selected: List[str],
                    my_vecdb_folder_path_selected: str,
                    my_embeddings_provider: str,
                    my_embeddings_model: str) -> None:
@@ -186,6 +187,7 @@ def check_vectordb(my_querier: Querier,
     with st.spinner(my_spinner_message):
         ingester = Ingester(collection_name=my_folder_name_selected,
                             content_folder=my_folder_path_selected,
+                            document_selection = my_documents_selected,
                             vecdb_folder=my_vecdb_folder_path_selected,
                             embeddings_provider=my_embeddings_provider,
                             embeddings_model=my_embeddings_model)
@@ -331,8 +333,8 @@ def initialize_session_state() -> None:
         st.session_state['is_GO_clicked'] = False
     if 'folder_selected' not in st.session_state:
         st.session_state['folder_selected'] = ""
-    if 'document_selected' not in st.session_state:
-        st.session_state['document_selected'] = ""
+    if 'documents_selected' not in st.session_state:
+        st.session_state['documents_selected'] = ""
     if 'confidential' not in st.session_state:
         st.session_state['confidential'] = False
     if 'messages' not in st.session_state:
@@ -424,48 +426,53 @@ if folder_path_selected != "":
     st.session_state['confidential'] = confidential
     # clear querier history if a different folder or (set of) document(s) is chosen
     if (folder_name_selected != st.session_state['folder_selected']) or \
-    (document_selection != st.session_state['document_selected']):
+    (document_selection != st.session_state['documents_selected']):
         clear_history()
     st.session_state['folder_selected'] = folder_name_selected
-    st.session_state['document_selected'] = document_selection
+    st.session_state['documents_selected'] = document_selection
     # create button to confirm folder selection. This button sets session_state['is_GO_clicked'] to True
     st.sidebar.button("GO", type="primary", on_click=click_go_button)
     # only start a conversation when a folder is selected and selection is confirmed with "GO" button
     if st.session_state['is_GO_clicked']:
         logger.info("GO button is clicked")
-        # create or update vector database if necessary
-        check_vectordb(my_querier=querier,
-                       my_folder_name_selected=folder_name_selected,
-                       my_folder_path_selected=folder_path_selected,
-                       my_vecdb_folder_path_selected=vecdb_folder_path,
-                       my_embeddings_provider=embeddings_provider,
-                       my_embeddings_model=embeddings_model)
-        summary_type = st.sidebar.radio(label="Start with summary?",
-                                        options=["No", "Short", "Long"],
-                                        captions=["", "Quicker and shorter", "Slower but more extensive"],
-                                        index=0)
-        # if one of the options is chosen
-        if summary_type in ["Short", "Long"]:
-            # show the summary at the top of the screen
-            create_and_show_summary(my_summary_type=summary_type,
-                                    my_folder_path_selected=folder_path_selected,
-                                    my_selected_documents=document_selection)
-        # show button "Clear Conversation"
-        clear_messages_button = st.button(label="Clear Conversation", key="clear")
-        # if button "Clear Conversation" is clicked
-        if clear_messages_button:
-            # clear all chat messages on screen and in Querier object
-            # NB: session state of "is_GO_clicked" and "folder_selected" remain unchanged
-            st.session_state['messages'] = []
-            querier.clear_history()
-            logger.info("Clear Conversation button clicked")
-        # display chat messages from history
-        display_chat_history()
-        # react to user input if a question has been asked
-        if prompt := st.chat_input("Your question"):
-            handle_query(my_folder_path_selected=folder_path_selected,
-                         my_querier=querier,
-                         my_prompt=prompt,
-                         my_document_selection=document_selection,
-                         my_folder_name_selected=folder_name_selected,
-                         my_vecdb_folder_path_selected=vecdb_folder_path)
+        if len(document_selection) > 0:
+            # create or update vector database if necessary
+            check_vectordb(my_querier=querier,
+                        my_folder_name_selected=folder_name_selected,
+                        my_folder_path_selected=folder_path_selected,
+                        my_documents_selected = document_selection,
+                        my_vecdb_folder_path_selected=vecdb_folder_path,
+                        my_embeddings_provider=embeddings_provider,
+                        my_embeddings_model=embeddings_model)
+            summary_type = st.sidebar.radio(label="Start with summary?",
+                                            options=["No", "Short", "Long"],
+                                            captions=["", "Quicker and shorter", "Slower but more extensive"],
+                                            index=0)
+            # if one of the options is chosen
+            if summary_type in ["Short", "Long"]:
+                # show the summary at the top of the screen
+                create_and_show_summary(my_summary_type=summary_type,
+                                        my_folder_path_selected=folder_path_selected,
+                                        my_selected_documents=document_selection)
+            # show button "Clear Conversation"
+            clear_messages_button = st.button(label="Clear Conversation", key="clear")
+            # if button "Clear Conversation" is clicked
+            if clear_messages_button:
+                # clear all chat messages on screen and in Querier object
+                # NB: session state of "is_GO_clicked" and "folder_selected" remain unchanged
+                st.session_state['messages'] = []
+                querier.clear_history()
+                logger.info("Clear Conversation button clicked")
+            # display chat messages from history
+            display_chat_history()
+            # react to user input if a question has been asked
+            if prompt := st.chat_input("Your question"):
+                handle_query(my_folder_path_selected=folder_path_selected,
+                            my_querier=querier,
+                            my_prompt=prompt,
+                            my_document_selection=document_selection,
+                            my_folder_name_selected=folder_name_selected,
+                            my_vecdb_folder_path_selected=vecdb_folder_path)
+        else:
+            st.write("Please choose one or more documents to query")
+    
