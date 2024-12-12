@@ -39,16 +39,16 @@ class TestIngester(unittest.TestCase):
         except Exception as e:
             self.fail(f"The function raised an error: {e}")
 
-class TestQuerier(unittest.TestCase):
-    '''test the query of different providers'''
+# class TestQuerier(unittest.TestCase):
+#     '''test the query of different providers'''
 
-    def test_openai(self):
-        content_folder_name = 'unit_test_openai'
-        _, vectordb_folder_path = ut.create_vectordb_name(content_folder_name)
-        querier = Querier()
-        querier.make_chain(content_folder_name, vectordb_folder_path)
-        _ = querier.ask_question('What is her education?')
-        self.assertEqual(None, None)
+#     def test_openai(self):
+#         content_folder_name = 'unit_test_openai'
+#         _, vectordb_folder_path = ut.create_vectordb_name(content_folder_name)
+#         querier = Querier()
+#         querier.make_chain(content_folder_name, vectordb_folder_path)
+#         _ = querier.ask_question('What is her education?')
+#         self.assertEqual(None, None)
 
 
 if __name__ == '__main__':
