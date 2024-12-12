@@ -114,7 +114,7 @@ RETRIEVER_WEIGHTS = [0.7, 0.3]
 MULTIQUERY = False
 
 # RERANK indicator for whether or not to apply reranking after retrieval
-RERANK = True
+RERANK = False
 # RERANK_PROVIDER represents the provider of the reranker model. Must be one of "flashrank_rerank",
 RERANK_PROVIDER = "flashrank_rerank"
 # RERANK_MODEL represents the reranking model, must be one of the models that are available for download
@@ -129,6 +129,7 @@ CHUNKS_K_FOR_RERANK = 20
 # LLM_PROVIDER must be "ollama" in case of using a downloaded Ollama LLM
 # LLM_PROVIDER must be "azureopenai" in case of using the Azure OpenAI Services API
 LLM_PROVIDER = "azureopenai"
+
 # - If LLM_PROVIDER is "openai", LLM_MODEL must be one of:
 #   "gpt-3.5-turbo", context window size = 4097 tokens (equivalent to ~3000 words)
 #   "gpt-3.5-turbo-16k", context window size = 16385 tokens
