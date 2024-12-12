@@ -311,15 +311,14 @@ def initialize_page() -> None:
     )
     logo_image = Image.open(settings.APP_LOGO)
     st.sidebar.image(logo_image, width=250)
+    _, col2, _ = st.columns([0.4, 0.2, 0.4])
+    with col2:
+        st.header(settings.APP_HEADER)
     with st.expander("User manual"):
         # read app explanation from file explanation.txt
         with open(file=settings.APP_INFO, mode="r", encoding="utf8") as f:
             explanation = f.read()
         st.markdown(body=explanation, unsafe_allow_html=True)
-        st.image("./images/multilingual.png")
-    _, col2, _ = st.columns([0.4, 0.2, 0.4])
-    with col2:
-        st.header(settings.APP_HEADER)
 
     logger.info("Executed initialize_page()")
 
