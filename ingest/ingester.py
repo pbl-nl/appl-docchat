@@ -105,6 +105,7 @@ class Ingester:
             # reset chunk number to 0 only when text is from new page
             if page_num != prv_page_num:
                 chunk_num = 0
+                child_chunk_num = 0
             chunk_texts = splitter.split_text(text)
             for chunk_text in chunk_texts:
                 # in case of parent retriever, split the parent chunk texts again, into smaller child chunk texts
@@ -120,6 +121,7 @@ class Ingester:
                         #             "Language": , "last_change_time": }
                         metadata_combined = {
                             "page_number": page_num,
+                            "chunk": child_chunk_num,
                             "parent_chunk_num": chunk_num,
                             "parent_chunk": chunk_text,
                             "parent_chunk_id": f"{metadata['filename']}_p{page_num}_c{chunk_num}",
@@ -131,11 +133,12 @@ class Ingester:
                             page_content=child_chunk_text,
                             # metadata_combined = {"title": , "author": , "indicator_url": , "indicator_closed": ,
                             #                      "filename": , "Language": , "last_change_time": ,"page_number": ,
-                            #                      "chunk": , "parent_chunk": , "parent_chunk_id",
+                            #                      "chunk": , "parent_chunk_num", "parent_chunk": , "parent_chunk_id",
                             #                      "parent_chunk_embedding: , "source": }
                             metadata=metadata_combined
                         )
                         docs.append(doc)
+                        child_chunk_num += 1
                 else:
                     # metadata = {"title": , "author": , "indicator_url": , "indicator_closed": , "filename": ,
                     #             "Language": , "last_change_time": }
