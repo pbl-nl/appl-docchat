@@ -7,79 +7,47 @@ from dotenv import load_dotenv
 import settings
 import pandas as pd
 import utils as ut
+from ingest.embeddings_creator import EmbeddingsCreator
+from ingest.vectorstore_creator import VectorStoreCreator
 
-# geef pad op van documentenfolder
-# toon alle vector stores innsubfolder vector_stores
-# Toon alle chunks na keuze van vectorstore
 
 def click_GO_button():
     st.session_state['is_GO_clicked'] = True
 
 
-def folderlist_creator():
-    """
-    Creates a list of folder names (without path).
-    Folder names are found in DOC_DIR (see settings).
-    """
-    folders = []
-    for folder_name in os.listdir(settings.CHUNK_DIR):
-        folder_path = os.path.join(settings.CHUNK_DIR, folder_name)
-        if os.path.isdir(folder_path):
-            folders.append(folder_name)
-    logger.info("Executed folderlist_creator()")
-    return folders
+def get_chunks(my_embeddings_model: str, folder_name_selected: str, vectorstore_folder_path: str):
+    # get embeddings
+    my_embeddings = EmbeddingsCreator(embeddings_provider = "azureopenai",
+                                      embeddings_model = my_embeddings_model).get_embeddings()
 
+    # get vector store
+    vector_store = VectorStoreCreator(settings.VECDB_TYPE).get_vectorstore(embeddings=my_embeddings,
+                                                                           content_folder=folder_name_selected,
+                                                                           vecdb_folder=vectorstore_folder_path)
+    # determine the files that are added or deleted
+    collection = vector_store.get()  # dict_keys(['ids', 'embeddings', 'documents', 'metadatas'])
+    collection_size = len(collection['ids'])
+    chunks = []
+    for idx in range(collection_size):
+        idx_metadata = collection['metadatas'][idx]
+        filename = idx_metadata["filename"]
+        page = idx_metadata["page_number"]
+        chunk = idx_metadata["chunk"]
+        idx_document = collection['documents'][idx]
+        chunks.append((filename, page, chunk, f"page: {page}, chunk: {chunk}\n\n" + idx_document))
 
-def folder_selector(folders):
-    # Select source folder with docs
-    folder_name = st.sidebar.selectbox("label=folder_selector", options=folders, label_visibility="hidden")
-    logger.info(f"folder_name is now {folder_name}")
-    # get associated source folder path and vectordb path
-    folder_path, vectordb_folder_path = ut.create_vectordb_path(content_folder_name=folder_name)
-    logger.info(f"vectordb_folder_path is now {vectordb_folder_path}")
-    if folder_name != st.session_state['folder_selected']:
-        st.session_state['is_GO_clicked'] = False
-    # set session state of selected folder to new source folder
-    st.session_state['folder_selected'] = folder_name
-    return folder_name, folder_path
+    chunks = sorted(chunks, key=lambda x: (x[0], x[1], x[2]))
 
-
-def get_chunks(my_folder):
-    # get collection names available in vectordb
-    # loop over files in folder
-    files_in_folder = os.listdir(my_folder)
-    first = True
-    for file in files_in_folder:
-        if file != "all_chunks.tsv":
-            path = os.path.join(my_folder, file)
-            if first:
-                # simply read the dataframe
-                df_out = pd.read_csv(filepath_or_buffer=path, sep="\t")
-                first = False
-            else:
-                # read the file in a dataframe and add the information to the current one
-                df_in = pd.read_csv(filepath_or_buffer=path, sep="\t")
-                df_out = df_out.merge(
-                    df_in,
-                    on=["chunk"],
-                    how="outer",
-                )
-    path_out = os.path.join(my_folder, "all_chunks.tsv")
-    df_out.to_csv(path_out, sep="\t", index=False)
-    return df_out
-
+    return collection_size, chunks
 
 @st.cache_data
 def initialize_page():
     """
     Initializes the main page with a page header and app info
     """
-    imagecol, headercol = st.columns([0.3, 0.7])
+    st.header("Chunks analysis")
     logo_image = Image.open(settings.APP_LOGO)
-    with imagecol:
-        st.image(logo_image, width=250)
-    with headercol:
-        st.header("chatNMDC: chunks")
+    st.sidebar.image(logo_image, width=250)
     load_dotenv()
     logger.info("Executed initialize_page()")
 
@@ -87,12 +55,10 @@ def initialize_page():
 def initialize_session_state():
     if 'is_GO_clicked' not in st.session_state:
         st.session_state['is_GO_clicked'] = False
-    if 'folder_selected' not in st.session_state:
-        st.session_state['folder_selected'] = ""
 
 
 def set_page_config():
-    st.set_page_config(page_title="ChatNMDC chunks", page_icon=':books:', layout='wide')
+    st.set_page_config(page_title="Chunks analysis", page_icon=':books:', layout='wide')
     logger.info("\nExecuted set_page_config()")
 
 
@@ -101,20 +67,63 @@ def set_page_config():
 set_page_config()
 # Initialize page, executed only once per session
 initialize_page()
-# create list of vector store folders
-source_folders_available = folderlist_creator()
 # initialize session state variables
 initialize_session_state()
+# allow user to set the path to the document folder
+folder_path_selected = st.sidebar.text_input(label="***ENTER THE DOCUMENT FOLDER PATH***",
+                                             help="""Please enter the full path e.g. Y:/User/troosts/chatpbl/...""")
+if folder_path_selected != "":
+    load_dotenv(dotenv_path=os.path.join(settings.ENVLOC, ".env"))
+    # define the selected folder name
+    folder_name_selected = os.path.basename(folder_path_selected)
+    # get the names of the vector database folders
+    vectorstore_folders = os.listdir(os.path.join(folder_path_selected, "vector_stores"))
+    num_vectorstores = len(vectorstore_folders)
+    columns = st.columns(num_vectorstores)
 
-# Chosen folder and associated vector database
-folder_name_selected, folder_path_selected = folder_selector(source_folders_available)
+    # Create button to confirm folder selection. This button sets session_state['is_GO_clicked'] to True
+    st.sidebar.button("GO", type="primary", on_click=click_GO_button)
 
-# Create button to confirm folder selection. This button sets session_state['is_GO_clicked'] to True
-st.sidebar.button("GO", type="primary", on_click=click_GO_button)
-
-# Only start a conversation when a folder is selected and selection is confirmed with "GO" button
-if st.session_state['is_GO_clicked']:
-    chunks_folder = os.path.join(settings.CHUNK_DIR, folder_name_selected)
-    df_chunks = get_chunks(chunks_folder)
-    st.subheader("Chunks available")
-    st.dataframe(data=df_chunks, hide_index=True)
+    if st.session_state['is_GO_clicked']:
+        first_vectorstore = True
+        # For each folder
+        for i, col in enumerate(columns):
+            vectorstore_folder  = vectorstore_folders[i]
+            vectorstore_folder_path = os.path.join(folder_path_selected, "vector_stores", vectorstore_folder)
+            #  extract the settings that were used to create the folder
+            vectorstore_settings = vectorstore_folder.split("_")
+            retriever_type = vectorstore_settings[0]
+            embedding_model = vectorstore_settings[1]
+            text_splitter_method = vectorstore_settings[2]
+            if retriever_type == "parent":
+                chunk_k = vectorstore_settings[5]
+                chunk_overlap = vectorstore_settings[6]
+            else:
+                chunk_k = vectorstore_settings[3]
+                chunk_overlap = vectorstore_settings[4]
+            # define a dataframe and add settings
+            df = pd.DataFrame(columns=[vectorstore_folder])
+            df.loc[len(df)] = f"retriever_type = {retriever_type}"
+            df.loc[len(df)] = f"embedding_model = {embedding_model}"
+            df.loc[len(df)] = f"text_splitter = {text_splitter_method}"
+            df.loc[len(df)] = f"chunk_k = {chunk_k}"
+            df.loc[len(df)] = f"chunk_overlap = {chunk_overlap}"
+            # add chunks in vectorstore to dataframe
+            collection_size, chunks = get_chunks(my_embeddings_model=embedding_model,
+                                                 folder_name_selected=folder_name_selected,
+                                                 vectorstore_folder_path=vectorstore_folder_path)
+            df.loc[len(df)] = ""
+            df.loc[len(df)] = f"number of chunks: {collection_size}"
+            prv_file = ""
+            file_num = 0
+            for chunk in chunks:
+                if chunk[0] != prv_file:
+                    if file_num > 0:
+                        df.loc[len(df)] = ""
+                    prv_file = chunk[0]
+                    file_num += 1
+                    df.loc[len(df)] = f"filename: {chunk[0]}"
+                else:
+                    df.loc[len(df)] = chunk[3]
+            with col:
+                st.dataframe(data=df, height=1000, use_container_width=True, hide_index=True)
