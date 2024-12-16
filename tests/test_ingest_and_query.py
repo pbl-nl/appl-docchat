@@ -20,35 +20,32 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../../'
 class TestIngester(unittest.TestCase):
     '''test the ingestion of different modules'''
 
-    def test_openai(self):
+    def test_openai_ingest(self):
         """Test if the sample_function runs without raising any errors."""
-        try:
-            # define model type
-            embeddings_provider = "openai"
-            embeddings_model = "text-embedding-ada-002"
+        # define model type
+        embeddings_provider = "openai"
+        embeddings_model = "text-embedding-ada-002"
 
-            content_folder_name = 'unit_test_openai'
-            content_folder_path, vectordb_folder_path = ut.create_vectordb_name(content_folder_name)
-            # delete a vector base if one is in place
-            if os.path.exists(vectordb_folder_path):
-                shutil.rmtree(vectordb_folder_path)
-            print(vectordb_folder_path)
-            self.ingester = Ingester(collection_name='UT_openai_' + content_folder_name,
-                                     content_folder=content_folder_path,
-                                     vecdb_folder=vectordb_folder_path,
-                                     embeddings_provider=embeddings_provider,
-                                     embeddings_model=embeddings_model)
-            self.ingester.ingest()
-            self.assertEqual(None, None)
-            del self.ingester
-        except Exception as e:
-            self.fail(f"The function raised an error: {e}")
+        content_folder_name = 'unit_test_openai'
+        content_folder_path, vectordb_folder_path = ut.create_vectordb_name(content_folder_name)
+        # delete a vector base if one is in place
+        # if os.path.exists(vectordb_folder_path):
+        #     shutil.rmtree(vectordb_folder_path)
+        print(vectordb_folder_path)
+        self.ingester = Ingester(collection_name='UT_openai_' + content_folder_name,
+                                    content_folder=content_folder_path,
+                                    vecdb_folder=vectordb_folder_path,
+                                    embeddings_provider=embeddings_provider,
+                                    embeddings_model=embeddings_model)
+        self.ingester.ingest()
+        self.assertEqual(None, None)
+        del self.ingester
 
 
 class TestQuerier(unittest.TestCase):
     '''test the query of different providers'''
 
-    def test_openai(self):
+    def test_openai_query(self):
         llm_provider = "openai"
         llm_model = "gpt-3.5-turbo"
         content_folder_name = 'unit_test_openai'
