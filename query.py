@@ -7,7 +7,9 @@ import utils as ut
 
 def main():
     # get source folder with docs from user
-    content_folder_name = input("Source folder of documents (without path): ")
+    content_folder_path = input("Source folder of documents (including path): ")
+    # Get content folder name from path
+    content_folder_name = os.path.basename(content_folder_path)
     # Get private docs indicator from user
     confidential_yn = input("Are there any confidential documents in the folder? (y/n) ")
     confidential = confidential_yn in ["y", "Y"]
@@ -20,8 +22,8 @@ def main():
                       embeddings_model=embeddings_model)
 
     # get associated vectordb path
-    _, vecdb_folder_path = ut.create_vectordb_name(content_folder_name=content_folder_name,
-                                                   embeddings_model=embeddings_model)
+    vecdb_folder_path = ut.create_vectordb_path(content_folder_path=content_folder_path,
+                                                embeddings_model=embeddings_model)
 
     # if vector store folder does not exist, stop
     if not os.path.exists(vecdb_folder_path):

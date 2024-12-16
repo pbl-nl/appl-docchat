@@ -2,7 +2,7 @@
 /chunks
 /dev
 /docs
-/evaluate/results
+/evaluate/results/*.tsv
 /vector_stores
 
 # project specific files

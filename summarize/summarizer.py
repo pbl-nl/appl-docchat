@@ -25,15 +25,15 @@ class Summarizer:
         """
         self.content_folder_path = content_folder_path
         self.chain_type = summarization_method
-        self.text_splitter_method = settings.TEXT_SPLITTER_METHOD \
+        self.text_splitter_method = settings.SUMMARY_TEXT_SPLITTER_METHOD \
             if text_splitter_method is None else text_splitter_method
-        self.chunk_size = settings.CHUNK_SIZE if chunk_size is None else chunk_size
-        self.chunk_overlap = settings.CHUNK_OVERLAP if chunk_overlap is None else chunk_overlap
-        self.llm_provider = settings.LLM_PROVIDER if llm_provider is None else llm_provider
-        self.llm_model = settings.LLM_MODEL if llm_model is None else llm_model
+        self.chunk_size = settings.SUMMARY_CHUNK_SIZE if chunk_size is None else chunk_size
+        self.chunk_overlap = settings.SUMMARY_CHUNK_OVERLAP if chunk_overlap is None else chunk_overlap
+        self.llm_provider = settings.SUMMARY_LLM_PROVIDER if llm_provider is None else llm_provider
+        self.llm_model = settings.SUMMARY_LLM_MODEL if llm_model is None else llm_model
 
         # create llm object
-        load_dotenv()
+        load_dotenv(dotenv_path=os.path.join(settings.ENVLOC, ".env"))
         self.llm = LLMCreator(llm_provider=self.llm_provider,
                               llm_model=self.llm_model).get_llm()
 
@@ -44,7 +44,7 @@ class Summarizer:
         partial_map_reduce_prompt = f"Write a concise summary of the following in the {my_language} language: "
         partial_refine_prompt = f"Given the new context, refine the original summary in the {my_language} language. \
         If the context isn't useful, return the original summary."
-
+        
         if self.chain_type == "map_reduce":
             map_reduce_prompt = PromptTemplate(template=partial_map_reduce_prompt + pr.SUMMARY_PROMPT_TEMPLATE,
                                                input_variables=["text"])

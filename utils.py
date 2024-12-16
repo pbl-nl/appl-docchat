@@ -12,6 +12,14 @@ from langdetect import detect, LangDetectException
 # local imports
 import settings
 
+VALID_EXTENSIONS = [
+    ".pdf",
+    ".docx",
+    ".html",
+    ".md",
+    ".txt"
+]
+
 LANGUAGE_MAP = {
     'cs': 'czech',
     'da': 'danish',
@@ -33,39 +41,46 @@ LANGUAGE_MAP = {
 }  # languages supported by nltk
 
 
-def create_vectordb_folder() -> None:
-    """ Creates subfolder for storage of vector databases if not existing
+def create_vectordb_folder(my_folder_path_selected: str) -> None:
+    """ 
+    Creates subfolder for storage of vector databases if not existing
+    
+    Parameters
+    ----------
+    my_folder_path_selected : str
+        the selected document folder path
+
     """
-    if settings.VECDB_DIR not in os.listdir(pathlib.Path().resolve()):
-        os.mkdir(os.path.join(pathlib.Path().resolve(), settings.VECDB_DIR))
+    if "vector_stores" not in os.listdir(my_folder_path_selected):
+        os.mkdir(os.path.join(my_folder_path_selected, "vector_stores"))
 
 
-def create_summaries_folder(content_folder_name: str) -> None:
+def create_summaries_folder(my_folder_path_selected: str) -> None:
     """ Creates subfolder for storage of summaries if not existing
 
     Parameters
     ----------
-    content_folder_name : str
-        name of the content folder (without the path)
+    my_folder_path_selected : str
+        the selected document folder path
     """
-    if "summaries" not in os.listdir(os.path.join(pathlib.Path().resolve(), settings.DOC_DIR, content_folder_name)):
-        os.mkdir(os.path.join(pathlib.Path().resolve(), settings.DOC_DIR, content_folder_name, "summaries"))
+    if "summaries" not in os.listdir(my_folder_path_selected):
+        os.mkdir(os.path.join(my_folder_path_selected, "summaries"))
 
 
-def create_vectordb_name(content_folder_name: str,
+def create_vectordb_path(content_folder_path: str,
                          retriever_type: str = None,
                          embeddings_model: str = None,
                          text_splitter_method: str = None,
                          chunk_size: int = None,
                          chunk_overlap: int = None,
                          chunk_size_child: int = None,
-                         chunk_overlap_child: int = None) -> Tuple[str, str]:
+                         chunk_overlap_child: int = None) -> str:
     """ Creates the content folder path and vector database folder path
 
     Parameters
     ----------
-    content_folder_name : str
-        name of the content folder (without the path)
+    content_folder_path : str
+        name of the content folder (including the path)
     retriever_type : str, optional
         name of the retriever type, by default None
     embeddings_model : str, optional
@@ -83,10 +98,9 @@ def create_vectordb_name(content_folder_name: str,
 
     Returns
     -------
-    Tuple[str, str]
-        tuple of content folder path and vector database folder path
+    str
+        vector database folder path
     """
-    content_folder_path = os.path.join(settings.DOC_DIR, content_folder_name)
     retriever_type = settings.RETRIEVER_TYPE if retriever_type is None else retriever_type
     embeddings_model = settings.EMBEDDINGS_MODEL if embeddings_model is None else embeddings_model
     text_splitter_method = settings.TEXT_SPLITTER_METHOD if text_splitter_method is None else text_splitter_method
@@ -97,16 +111,16 @@ def create_vectordb_name(content_folder_name: str,
         if chunk_overlap_child is None else str(chunk_overlap_child)
     # vectordb_name is created from retriever_type, embeddings_model, text_splitter_method and
     # parent and child chunk_size and chunk_overlap
-    vectordb_name = content_folder_name + "_" + retriever_type + "_" + embeddings_model + "_" + \
+    vectordb_name = retriever_type + "_" + embeddings_model + "_" + \
         text_splitter_method + "_" + chunk_size + "_" + chunk_overlap + "_" + chunk_size_child + "_" + \
         chunk_overlap_child
 
-    vectordb_folder_path = os.path.join(pathlib.Path().resolve(), settings.VECDB_DIR, vectordb_name)
+    vectordb_folder_path = os.path.join(content_folder_path, "vector_stores", vectordb_name)
 
-    return content_folder_path, vectordb_folder_path
+    return vectordb_folder_path
 
 
-def is_relevant_file(content_folder_path: str, my_file: str) -> bool:
+def is_relevant_file(content_folder_path: str, document_selection: List[str], my_file: str) -> bool:
     """
     decides whether or not a file is a relevant file
 
@@ -114,6 +128,8 @@ def is_relevant_file(content_folder_path: str, my_file: str) -> bool:
     ----------
     content_folder_path : str
         name of the content folder (including the path)
+    document_selection: List[str]
+        list of documents that have been selected
     my_file: str
         name of the file
 
@@ -122,28 +138,39 @@ def is_relevant_file(content_folder_path: str, my_file: str) -> bool:
     bool
         True if file is relevant, otherwise False
     """
-    relevant = ((os.path.isfile(os.path.join(content_folder_path, my_file))) and
-                (os.path.splitext(my_file)[1] in [".docx", ".html", ".md", ".pdf", ".txt"]))
+    if ((document_selection is None) or (document_selection == ["All"])):
+        relevant = ((os.path.isfile(os.path.join(content_folder_path, my_file))) and
+                    (os.path.splitext(my_file)[1] in VALID_EXTENSIONS))
+    else:
+        relevant = ((os.path.isfile(os.path.join(content_folder_path, my_file))) and
+                (my_file in document_selection) and
+                (os.path.splitext(my_file)[1] in VALID_EXTENSIONS))
+
     if not relevant:
-        logger.info(f"Skipping ingestion of file {my_file} because it has extension {os.path.splitext(my_file)[1]}")
+        if os.path.isfile(os.path.join(content_folder_path, my_file)):
+            logger.info(f"Skipping ingestion of {my_file} because it has extension {os.path.splitext(my_file)[1]}")
+        else:
+            logger.info(f"Skipping ingestion of {my_file} because it is a folder")
 
     return relevant
 
 
-def get_relevant_files_in_folder(content_folder_path: str) -> List[str]:
+def get_relevant_files_in_folder(content_folder_path: str, document_selection: List[str] = None) -> List[str]:
     """ Gets a list of relevant files from a given content folder path
 
     Parameters
     ----------
     content_folder_path : str
         name of the content folder (including the path)
+    document_selection: List[str]
+        list of documents that have been selected
 
     Returns
     -------
     List[str]
         list of files, without path
     """
-    return [f for f in os.listdir(content_folder_path) if is_relevant_file(content_folder_path, f)]
+    return [f for f in os.listdir(content_folder_path) if is_relevant_file(content_folder_path, document_selection, f)]
 
 
 def exit_program() -> None:
@@ -210,10 +237,12 @@ def get_settings_as_dictionary(file_name: str) -> Dict[str, Any]:
                 # Extract the variable name and value
                 variable_name = parts[0].strip()
                 variable_value = parts[1].strip()
-                # Use exec() to assign the value to the variable name
-                exec(f'{variable_name} = {variable_value}')
-                # Add the variable and its value to the dictionary
-                variables_dict[variable_name] = eval(variable_name)
+                # exclude embedding map and llm map
+                if not variable_value.startswith("{"):
+                    # Use exec() to assign the value to the variable name
+                    exec(f'{variable_name} = {variable_value}')
+                    # Add the variable and its value to the dictionary
+                    variables_dict[variable_name] = eval(variable_name)
 
     return variables_dict
 

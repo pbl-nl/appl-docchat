@@ -1,3 +1,4 @@
+import os
 from typing import Dict, Any
 from dotenv import load_dotenv
 from langchain.chains.conversational_retrieval.base import ConversationalRetrievalChain
@@ -22,7 +23,7 @@ class Querier:
     def __init__(self, llm_provider=None, llm_model=None, embeddings_provider=None, embeddings_model=None,
                  vecdb_type=None, chain_name=None, chain_type=None, chain_verbosity=None, search_type=None,
                  score_threshold=None, chunk_k=None):
-        load_dotenv()
+        load_dotenv(dotenv_path=os.path.join(settings.ENVLOC, ".env"))
         self.llm_provider = settings.LLM_PROVIDER if llm_provider is None else llm_provider
         self.llm_model = settings.LLM_MODEL if llm_model is None else llm_model
         self.embeddings_provider = settings.EMBEDDINGS_PROVIDER if embeddings_provider is None else embeddings_provider
@@ -56,7 +57,7 @@ class Querier:
         Parameters
         ----------
         content_folder : str
-            the content folder
+            the content folder name
         vecdb_folder : str
             the folder of the vector databse that is associated with the content folder
         search_filter : Dict, optional

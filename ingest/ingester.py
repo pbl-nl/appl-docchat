@@ -27,15 +27,15 @@ class Ingester:
     When instantiating without parameters, attributes get values from settings.py
     """
     def __init__(self, collection_name: str, content_folder: str, vecdb_folder: str,
-                 embeddings_provider: str = None, embeddings_model: str = None,
-                 retriever_type: str = None, vecdb_type: str = None,
-                 text_splitter_method: str = None, text_splitter_method_child: str = None,
-                 chunk_size: int = None, chunk_size_child: int = None,
+                 document_selection: List[str] = None, embeddings_provider: str = None, embeddings_model: str = None,
+                 retriever_type: str = None, vecdb_type: str = None, text_splitter_method: str = None,
+                 text_splitter_method_child: str = None, chunk_size: int = None, chunk_size_child: int = None,
                  chunk_overlap: int = None, chunk_overlap_child: int = None) -> None:
-        load_dotenv()
+        load_dotenv(dotenv_path=os.path.join(settings.ENVLOC, ".env"))
         self.collection_name = collection_name
         self.content_folder = content_folder
         self.vecdb_folder = vecdb_folder
+        self.document_selection = document_selection
         self.embeddings_provider = settings.EMBEDDINGS_PROVIDER if embeddings_provider is None else embeddings_provider
         self.embeddings_model = settings.EMBEDDINGS_MODEL if embeddings_model is None else embeddings_model
         self.retriever_type = settings.RETRIEVER_TYPE if retriever_type is None else retriever_type
@@ -105,6 +105,7 @@ class Ingester:
             # reset chunk number to 0 only when text is from new page
             if page_num != prv_page_num:
                 chunk_num = 0
+                child_chunk_num = 0
             chunk_texts = splitter.split_text(text)
             for chunk_text in chunk_texts:
                 # in case of parent retriever, split the parent chunk texts again, into smaller child chunk texts
@@ -120,6 +121,7 @@ class Ingester:
                         #             "Language": , "last_change_time": }
                         metadata_combined = {
                             "page_number": page_num,
+                            "chunk": child_chunk_num,
                             "parent_chunk_num": chunk_num,
                             "parent_chunk": chunk_text,
                             "parent_chunk_id": f"{metadata['filename']}_p{page_num}_c{chunk_num}",
@@ -131,11 +133,12 @@ class Ingester:
                             page_content=child_chunk_text,
                             # metadata_combined = {"title": , "author": , "indicator_url": , "indicator_closed": ,
                             #                      "filename": , "Language": , "last_change_time": ,"page_number": ,
-                            #                      "chunk": , "parent_chunk": , "parent_chunk_id",
+                            #                      "chunk": , "parent_chunk_num", "parent_chunk": , "parent_chunk_id",
                             #                      "parent_chunk_embedding: , "source": }
                             metadata=metadata_combined
                         )
                         docs.append(doc)
+                        child_chunk_num += 1
                 else:
                     # metadata = {"title": , "author": , "indicator_url": , "indicator_closed": , "filename": ,
                     #             "Language": , "last_change_time": }
@@ -206,7 +209,9 @@ class Ingester:
         files_added = []
 
         # get all relevant files in the folder
-        relevant_files_in_folder = ut.get_relevant_files_in_folder(self.content_folder)
+        relevant_files_in_folder_selected = ut.get_relevant_files_in_folder(self.content_folder,
+                                                                            self.document_selection)
+        relevant_files_in_folder_all = ut.get_relevant_files_in_folder(self.content_folder)
         # if the vector store already exists, get the set of ingested files from the vector store
         if os.path.exists(self.vecdb_folder):
             # get vector store
@@ -220,12 +225,15 @@ class Ingester:
             files_in_store = list(set(files_in_store))
 
             # check if files were added, removed or updated
-            files_added = [file for file in relevant_files_in_folder if file not in files_in_store]
-            files_deleted = [file for file in files_in_store if file not in relevant_files_in_folder]
+            # files_added depend on the selection that has been made
+            # files_updated depend on the selction that has been made
+            # files_deleted depend on all files in the folder
+            files_added = [file for file in relevant_files_in_folder_selected if file not in files_in_store]
+            files_deleted = [file for file in files_in_store if file not in relevant_files_in_folder_all]
             # Check for last changed date
             filename_lastchange_dict = {metadata['filename']: metadata.get('last_change_time', None)
                                         for metadata in collection['metadatas']}
-            files_updated = [file for file in relevant_files_in_folder
+            files_updated = [file for file in relevant_files_in_folder_selected
                              if (file not in files_added) and
                                 (filename_lastchange_dict[file] !=
                                  os.stat(os.path.join(self.content_folder, file)).st_mtime)]
@@ -255,7 +263,7 @@ class Ingester:
                                                                                self.collection_name,
                                                                                self.vecdb_folder)
             # all relevant files in the folder are to be ingested into the vector store
-            to_add = list(relevant_files_in_folder)
+            to_add = list(relevant_files_in_folder_selected)
 
         # If there are any files to be ingested into the vector store
         if len(to_add) > 0:

@@ -7,12 +7,6 @@ APP_LOGO = "./images/b30.png"
 APP_INFO = "./info/explanation.txt"
 # header in Streamlit UI
 APP_HEADER = "ChatPBL"
-# filepath of folder with input documents, e.g. "./docs"
-DOC_DIR = "./docs"
-# filepath of folder with chunks, e.g. "./chunks"
-CHUNK_DIR = "./chunks"
-# folder for persistent vector databases, e.g. "vector_stores"
-VECDB_DIR = "vector_stores"
 # filepath of evaluation results folder, e.g. "./evaluate"
 EVAL_DIR = "./evaluate"
 # header in Streamlit evaluation UI
@@ -21,6 +15,8 @@ EVAL_APP_HEADER = "ChatPBL: evaluation"
 EVAL_APP_INFO = "./info/evaluation_explanation.txt"
 # CHAIN_VERBOSITY must be boolean. When set to True, the standalone question that is conveyed to LLM is shown
 CHAIN_VERBOSITY = False
+# Location of dotenv file
+ENVLOC = "path/to/dotenv/file"
 
 
 # ######### THE SETTINGS BELOW CAN BE USED FOR TESTING AND CUSTOMIZED TO YOUR PREFERENCE ##########
@@ -45,11 +41,11 @@ CHUNK_SIZE_CHILD = 200
 # CHUNK_K represents the number of chunks that is returned from the vector database as input for the LLM
 # Value must be integer (>=1)
 # NB: CHUNK_SIZE and CHUNK_K are related, make sure that CHUNK_K * CHUNK_SIZE < LLM window size
-CHUNK_K = 4
+CHUNK_K = 5
 # Only when RETRIEVER_TYPE is set to "parent":
 # CHUNK_K_CHILD represents the number of child chunks that is returned from the vector database.
 # Their corresponding parent chunks (number will be <= CHUNK_K_CHILD) are then used as input for the LLM
-CHUNK_K_CHILD = 4
+CHUNK_K_CHILD = 8
 
 # CHUNK_OVERLAP represents the overlap between 2 sequential text chunks, value must be integer (>=0 and < CHUNK_SIZE)
 CHUNK_OVERLAP = 200
@@ -72,6 +68,24 @@ EMBEDDINGS_PROVIDER = "azureopenai"
 #   "text-embedding-ada-002" (1536 dimensional, max 8191 tokens),
 #   "text-embedding-3-large" (3072 dimensional, max 8191 tokens)
 EMBEDDINGS_MODEL = "text-embedding-ada-002"
+
+# SEARCH_TYPE must be one of: "similarity", "similarity_score_threshold"
+SEARCH_TYPE = "similarity_score_threshold"
+
+# SCORE_THRESHOLD represents the similarity value that chunks must exceed to qualify for the context.
+# Value must be between 0.0 and 1.0
+# This value is only relevant when SEARCH_TYPE has been set to "similarity_score_threshold"
+# When embedding model text-embedding-ada-002 is used, a value of 0.8 is reasonable
+# When embedding model text-embedding-3-large is used, a value of 0.5 is reasonable
+SCORE_THRESHOLD = 0.8
+
+# AZURE_EMBEDDING_DEPLOYMENT_MAP represents a dictionary of Azure embedding model deployments
+# with key the model name and value the deployment name
+# Adjust for your own Azure model deployments
+AZURE_EMBEDDING_DEPLOYMENT_MAP = {
+    "text-embedding-ada-002": "pbl-openai-a-cd-ada",
+    "text-embedding-3-large": "pbl-openai-a-cd-3large"
+}
 
 # VECDB_TYPE must be one of: "chromadb",
 VECDB_TYPE = "chromadb"
@@ -99,7 +113,7 @@ MULTIQUERY = False
 RERANK = True
 # RERANK_PROVIDER represents the provider of the reranker model. Must be one of "flashrank_rerank",
 RERANK_PROVIDER = "flashrank_rerank"
-# RERANK_MODEL represents the reranking model, must be one of the models that have been manually downloaded
+# RERANK_MODEL represents the reranking model, must be one of the models that are available for download
 # from https://huggingface.co/prithivida/flashrank/tree/main
 # For more info, see also https://github.com/PrithivirajDamodaran/FlashRank
 RERANK_MODEL = "ms-marco-MultiBERT-L-12"
@@ -134,29 +148,54 @@ LLM_PROVIDER = "azureopenai"
 #   "gpt-4o", context window size = 128000 tokens
 LLM_MODEL = "gpt-35-turbo"
 
+# AZURE_LLM_DEPLOYMENT_MAP represents a dictionary of Azure LLM model deployments
+# with key the model name and value the deployment name\
+# Adjust for your own Azure model deployments
+AZURE_LLM_DEPLOYMENT_MAP = {
+    "gpt-35-turbo": "pbl-openai-a-cd-openai",
+    "gpt-4": "pbl-openai-a-cd-openai4",
+    "gpt-4o": "pbl-openai-a-cd-openai4o"
+}
+
+# AZURE_OPENAI_ENDPOINT represents the Azure OpenAI endpoint used for connecting to Azure OpenAI API
+# This setting is only relevant when EMBEDDINGS_PROVIDER = "azureopenai" or LLM_PROVIDER = "azureopenai"
+AZURE_OPENAI_ENDPOINT = "your_azure_openai_endpoint"
+
+# AZURE_OPENAI_API_VERSION represents the Azure OpenAI API version
+# This setting is only relevant when EMBEDDINGS_PROVIDER = "azureopenai" or LLM_PROVIDER = "azureopenai"
+AZURE_OPENAI_API_VERSION = "your_azure_openai_api_version"
+
+# Similar settings as above, but specifically for evaluation
+# EVALUATION_EMBEDDINGS_PROVIDER must be one of "openai", "azureopenai"
+EVALUATION_EMBEDDINGS_PROVIDER = "azureopenai"
+# - If EVALUATION_EMBEDDINGS_PROVIDER is "openai", EVALUATION_EMBEDDINGS_MODEL must be one of:
+#   "text-embedding-ada-002", "text-embedding-3-small" or "text-embedding-3-large"
+# - If EVALUATION_EMBEDDINGS_PROVIDER is "azureopenai", EVALUATION_EMBEDDINGS_MODEL must be one of the embedding
+#   models deployed, e.g. "text-embedding-ada-002" or "text-embedding-3-large"
+EVALUATION_EMBEDDINGS_MODEL = "text-embedding-ada-002"
+# EVALUATION_LLM_PROVIDER must be one of "openai", "azureopenai"
+EVALUATION_LLM_PROVIDER = "azureopenai"
+# - If EVALUATION_LLM_PROVIDER is "openai", EVALUATION_LLM_MODEL must be one of:
+#   "gpt-3.5-turbo", "gpt-3.5-turbo-16k", "gpt-4" or "gpt-4o"
+# - If EVALUATION_LLM_PROVIDER is "azureopenai", EVALUATION_LLM_MODEL must be one of the LLM models deployed, e.g.:
+#   "gpt-35-turbo", "gpt-4" or "gpt-4o"
+EVALUATION_LLM_MODEL = "gpt-4o"
+
 # Similar settings as above, but specifically for creation of document summaries
 SUMMARY_TEXT_SPLITTER_METHOD = "RecursiveCharacterTextSplitter"
 SUMMARY_CHUNK_SIZE = 6000
 SUMMARY_CHUNK_OVERLAP = 0
 SUMMARY_LLM_PROVIDER = "azureopenai"
+# !! With the langchain version in appl-docchat.yaml it is necessary to choose gpt-35-turbo 
+# if SUMMARY_LLM_PROVIDER = "azureopenai"
 SUMMARY_LLM_MODEL = "gpt-35-turbo"
 
-# settings for confidential documents
+# settings for confidential documents, using Ollama LLM and embedding model
 PRIVATE_LLM_PROVIDER = "ollama"
 PRIVATE_LLM_MODEL = "zephyr"
 PRIVATE_EMBEDDINGS_PROVIDER = "ollama"
 PRIVATE_EMBEDDINGS_MODEL = "nomic-embed-text"
 PRIVATE_SUMMARY_LLM_MODEL = "zephyr"
-
-# SEARCH_TYPE must be one of: "similarity", "similarity_score_threshold"
-SEARCH_TYPE = "similarity_score_threshold"
-
-# SCORE_THRESHOLD represents the similarity value that chunks must exceed to qualify for the context.
-# Value must be between 0.0 and 1.0
-# This value is only relevant when SEARCH_TYPE has been set to "similarity_score_threshold"
-# When embedding model text-embedding-ada-002 is used, a value of 0.8 is reasonable
-# When embedding model text-embedding-3-large is used, a value of 0.5 is reasonable
-SCORE_THRESHOLD = 0.8
 
 # CHAIN_NAME must be one of: "conversationalretrievalchain",
 CHAIN_NAME = "conversationalretrievalchain"
