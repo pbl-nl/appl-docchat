@@ -99,6 +99,46 @@ def generate_answer(
     return response["answer"], source_docs
 
 
+def write_settings_to_result_file(input_path: os.PathLike, confidential: bool, output_path: os.PathLike) -> None:
+    """
+    Stores relevant settings to the output file, for reproducability purposes
+
+    Parameters
+    ----------
+    output_path : os.PathLike
+        path of the output file
+    """
+    with open(output_path, "w") as file:
+        file.write(f"input path =  {input_path} \n")
+        file.write(f"confidential =  {confidential} \n")
+        file.write(f"settings.TEXT_SPLITTER_METHOD =  {settings.TEXT_SPLITTER_METHOD} \n")
+        file.write(f"settings.TEXT_SPLITTER_CHILD =  {settings.TEXT_SPLITTER_METHOD_CHILD} \n")
+        file.write(f"settings.CHUNK_SIZE =  {settings.CHUNK_SIZE} \n")
+        file.write(f"settings.CHUNK_SIZE_CHILD =  {settings.CHUNK_SIZE_CHILD} \n")
+        file.write(f"settings.CHUNK_K =  {settings.CHUNK_K} \n")
+        file.write(f"settings.CHUNK_K_CHILD =  {settings.CHUNK_K_CHILD} \n")
+        file.write(f"settings.CHUNK_OVERLAP =  {settings.CHUNK_OVERLAP} \n")
+        file.write(f"settings.CHUNK_OVERLAP_CHILD =  {settings.CHUNK_OVERLAP_CHILD} \n")
+        if not confidential:
+            file.write(f"settings.EMBEDDINGS_PROVIDER =  {settings.EMBEDDINGS_PROVIDER} \n")
+            file.write(f"settings.EMBEDDINGS_MODEL =  {settings.EMBEDDINGS_MODEL} \n")
+            file.write(f"settings.LLM_PROVIDER =  {settings.LLM_PROVIDER} \n")
+            file.write(f"settings.LLM_MODEL =  {settings.LLM_MODEL} \n")
+        else:
+            file.write(f"settings.PRIVATE_EMBEDDINGS_PROVIDER =  {settings.PRIVATE_EMBEDDINGS_PROVIDER} \n")
+            file.write(f"settings.PRIVATE_EMBEDDINGS_MODEL =  {settings.PRIVATE_EMBEDDINGS_MODEL} \n")
+            file.write(f"settings.PRIVATE_LLM_PROVIDER =  {settings.PRIVATE_LLM_PROVIDER} \n")
+            file.write(f"settings.PRIVATE_LLM_MODEL =  {settings.PRIVATE_LLM_MODEL} \n")
+        file.write(f"settings.SEARCH_TYPE =  {settings.SEARCH_TYPE} \n")
+        file.write(f"settings.SCORE_THRESHOLD =  {settings.SCORE_THRESHOLD} \n")
+        file.write(f"settings.RETRIEVER_TYPE =  {settings.RETRIEVER_TYPE} \n")
+        file.write(f"settings.RERANK =  {settings.RERANK} \n")
+        file.write(f"settings.RERANK_PROVIDER =  {settings.RERANK_PROVIDER} \n")
+        file.write(f"settings.RERANK_MODEL =  {settings.RERANK_MODEL} \n")
+        file.write(f"settings.CHUNKS_K_FOR_RERANK =  {settings.CHUNKS_K_FOR_RERANK} \n")
+        file.write(f"settings.RETRIEVER_PROMPT_TEMPLATE =  {settings.RETRIEVER_PROMPT_TEMPLATE} \n\n")
+
+
 def create_answers_for_folder(
     synthesis: str,
     review_files: List[str],
@@ -165,7 +205,7 @@ def create_answers_for_folder(
             ]
     # sort on question, then on document
     df_result = df_result.sort_values(by=["question_id", "filename"])
-    df_result.to_csv(output_path, sep="\t", index=False)
+    df_result.to_csv(output_path, sep="\t", index=False, mode="a")
 
 
 def synthesize_results(querier: Querier, results_path: str, output_path: str) -> None:
@@ -261,9 +301,9 @@ def main() -> None:
                       embeddings_model=embeddings_model)
 
     # ingest documents if documents in source folder path are not ingested yet
-    ingest_or_load_documents(
-        content_folder_name, content_folder_path, vecdb_folder_path
-    )
+    ingest_or_load_documents(content_folder_name=content_folder_name,
+                             content_folder_path=content_folder_path,
+                             vecdb_folder_path=vecdb_folder_path)
 
     # get review questions from file
     review_questions = get_review_questions(question_list_path)
@@ -274,14 +314,17 @@ def main() -> None:
             "A review result (result.tsv) file already exists, skipping the answer creation"
         )
     else:
+        write_settings_to_result_file(input_path=content_folder_path,
+                                      confidential=confidential,
+                                      output_path=output_path_review)
         create_answers_for_folder(
-            synthesis,
-            review_files,
-            review_questions,
-            content_folder_name,
-            querier,
-            vecdb_folder_path,
-            output_path_review,
+            synthesis=synthesis,
+            review_files=review_files,
+            review_questions=review_questions,
+            content_folder_name=content_folder_name,
+            querier=querier,
+            vecdb_folder_path=vecdb_folder_path,
+            output_path=output_path_review,
         )
         logger.info("Successfully reviewed the documents.")
 
