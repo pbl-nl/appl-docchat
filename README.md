@@ -75,8 +75,8 @@ The file summarize.py can be used to summarize every file individually in a docu
 Execution is done in the activated virtual environment with <code>python summarize.py</code>. The user will be prompted for the summarization method
 
 ### Ingesting and querying documents through a Streamlit User Interface
-The functionalities described above can also be used through a User Interface.<br>
-In the activated virtual environment, the UI can be started with <code>streamlit run streamlit_app.py</code><br>
+The functionalities described above can also be used through a GUI.<br>
+In the activated virtual environment, the GUI can be started with <code>streamlit run streamlit_app.py</code><br>
 When this command is used, a browser session will open automatically
 
 ### Querying multiple documents with multiple questions in batch
@@ -87,14 +87,19 @@ The file review.py uses the standard question-answer technique but allows you to
 Execution is done in the activated virtual environment with <code>python review.py</code>
 All the results, including the answers and the sources used to create the answers, are stored in a file result.csv which is also stored in the subfolder <B>review</B>
 
+### For developers: Monitoring the results of the chunking process through a Streamlit User Interface
+When parsing files, the raw text is chunked. To see and compare the results of different chunking methods, use the chunks analysis GUI.<br>
+In the activated virtual environment, the chunks analysis GUI can be started with <code>streamlit run streamlit_chunks.py</code><br>
+When this command is used, a browser session will open automatically
+
 ### For developers: Evaluation of Question Answer results
 The file evaluate.py can be used to evaluate the generated answers for a list of questions, provided that the file eval.json exists, containing 
 not only the list of questions but also the related list of desired answers (ground truth).<br>
 Evaluation is done at folder level (one or multiple folders) in the activated virtual environment with <code>python evaluate.py</code><br>
 
 ### For developers: Monitoring the evaluation results through a Streamlit User Interface
-All evaluation results can be viewed by using a dedicated User Interface.<br>
-In the activated virtual environment, this evaluation UI can be started with <code>streamlit run streamlit_evaluate.py</code><br>
+All evaluation results can be viewed by using a dedicated evaluation GUI.<br>
+In the activated virtual environment, this evaluation GUI can be started with <code>streamlit run streamlit_evaluate.py</code><br>
 When this command is used, a browser session will open automatically
 
 ## References

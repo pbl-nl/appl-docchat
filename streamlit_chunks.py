@@ -3,6 +3,7 @@ import streamlit as st
 from PIL import Image
 from loguru import logger
 from dotenv import load_dotenv
+from typing import List
 # local imports
 import settings
 import pandas as pd
@@ -15,7 +16,7 @@ def click_GO_button():
     st.session_state['is_GO_clicked'] = True
 
 
-def get_chunks(my_embeddings_model: str, folder_name_selected: str, vectorstore_folder_path: str):
+def get_chunks(my_embeddings_model: str, folder_name_selected: str, vectorstore_folder_path: str, prompt: str):
     # get embeddings
     my_embeddings = EmbeddingsCreator(embeddings_provider = "azureopenai",
                                       embeddings_model = my_embeddings_model).get_embeddings()
@@ -34,9 +35,22 @@ def get_chunks(my_embeddings_model: str, folder_name_selected: str, vectorstore_
         page = idx_metadata["page_number"]
         chunk = idx_metadata["chunk"]
         idx_document = collection['documents'][idx]
-        chunks.append((filename, page, chunk, f"page: {page}, chunk: {chunk}\n\n" + idx_document))
+        similarity = None
+        # if user enters a prompt
+        if prompt != "":
+            # convert chunk to numerical vector (! cannot use collection['embeddings'][idx] ??)
+            chunk_vector = my_embeddings.embed_documents([idx_document])[0]
+            # convert user prompt to numerical vector
+            prompt_vector = my_embeddings.embed_documents([prompt])[0]
+            # calculate all similarities between vector store chunks and prompt
+            similarity = ut.cosine_similarity(a=prompt_vector,
+                                              b=chunk_vector)
+        chunks.append((filename, page, chunk, idx_document, similarity))
 
-    chunks = sorted(chunks, key=lambda x: (x[0], x[1], x[2]))
+    if prompt != "":
+        chunks = sorted(chunks, key=lambda x: (-x[4], x[0], x[1], x[2]))
+    else:
+        chunks = sorted(chunks, key=lambda x: (x[0], x[1], x[2]))
 
     return collection_size, chunks
 
@@ -72,6 +86,8 @@ initialize_session_state()
 # allow user to set the path to the document folder
 folder_path_selected = st.sidebar.text_input(label="***ENTER THE DOCUMENT FOLDER PATH***",
                                              help="""Please enter the full path e.g. Y:/User/troosts/chatpbl/...""")
+user_query = st.sidebar.text_input(label="***ENTER YOUR PROMPT***",
+                                   help="""Enter prompt as used in review.py""")
 if folder_path_selected != "":
     load_dotenv(dotenv_path=os.path.join(settings.ENVLOC, ".env"))
     # define the selected folder name
@@ -101,29 +117,27 @@ if folder_path_selected != "":
             else:
                 chunk_k = vectorstore_settings[3]
                 chunk_overlap = vectorstore_settings[4]
-            # define a dataframe and add settings
+            
+            # Store settings in a dataframe
             df = pd.DataFrame(columns=[vectorstore_folder])
             df.loc[len(df)] = f"retriever_type = {retriever_type}"
             df.loc[len(df)] = f"embedding_model = {embedding_model}"
             df.loc[len(df)] = f"text_splitter = {text_splitter_method}"
             df.loc[len(df)] = f"chunk_k = {chunk_k}"
             df.loc[len(df)] = f"chunk_overlap = {chunk_overlap}"
-            # add chunks in vectorstore to dataframe
+            # get chunk info from vectorstore
             collection_size, chunks = get_chunks(my_embeddings_model=embedding_model,
                                                  folder_name_selected=folder_name_selected,
-                                                 vectorstore_folder_path=vectorstore_folder_path)
-            df.loc[len(df)] = ""
+                                                 vectorstore_folder_path=vectorstore_folder_path,
+                                                 prompt=user_query)
             df.loc[len(df)] = f"number of chunks: {collection_size}"
-            prv_file = ""
-            file_num = 0
-            for chunk in chunks:
-                if chunk[0] != prv_file:
-                    if file_num > 0:
-                        df.loc[len(df)] = ""
-                    prv_file = chunk[0]
-                    file_num += 1
-                    df.loc[len(df)] = f"filename: {chunk[0]}"
-                else:
-                    df.loc[len(df)] = chunk[3]
+            # show settings
             with col:
-                st.dataframe(data=df, height=1000, use_container_width=True, hide_index=True)
+                st.dataframe(data=df, use_container_width=True, hide_index=True)
+            
+            # show vector store contents
+            df_cont = pd.DataFrame(columns=["filename", "page", "chunk", "text", "similarity"])
+            for chunk in chunks:
+                df_cont.loc[len(df_cont)] = [chunk[0], chunk[1], chunk[2], chunk[3], chunk[4]]
+            with col:
+                st.dataframe(data=df_cont, height=600, use_container_width=True, hide_index=True)
