@@ -5,6 +5,9 @@ on:
     branches:
       - master
       - unit-testing
+  pull_request:
+    branches: 
+      - main
 
 permissions:
   contents: read
