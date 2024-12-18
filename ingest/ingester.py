@@ -111,8 +111,6 @@ class Ingester:
                 # in case of parent retriever, split the parent chunk texts again, into smaller child chunk texts
                 # and add parent chunk text as metadata to child chunk text
                 if self.retriever_type == "parent":
-                    # determine parent chunk embedding. It needs to be stored as a string in the vector database
-                    parent_chunk_embedding = ','.join(str(x) for x in embeddings.embed_documents([chunk_text])[0])
                     # determine child chunks
                     child_chunk_texts = splitter_child.split_text(chunk_text)
                     # determine child document to store in the vector database
@@ -125,7 +123,6 @@ class Ingester:
                             "parent_chunk_num": chunk_num,
                             "parent_chunk": chunk_text,
                             "parent_chunk_id": f"{metadata['filename']}_p{page_num}_c{chunk_num}",
-                            "parent_chunk_embedding": parent_chunk_embedding,
                             "source": f"p{page_num}-{chunk_num}",
                             **metadata,
                         }
@@ -134,7 +131,7 @@ class Ingester:
                             # metadata_combined = {"title": , "author": , "indicator_url": , "indicator_closed": ,
                             #                      "filename": , "Language": , "last_change_time": ,"page_number": ,
                             #                      "chunk": , "parent_chunk_num", "parent_chunk": , "parent_chunk_id",
-                            #                      "parent_chunk_embedding: , "source": }
+                            #                      "source": }
                             metadata=metadata_combined
                         )
                         docs.append(doc)
