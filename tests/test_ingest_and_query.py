@@ -23,7 +23,7 @@ class TestIngester(unittest.TestCase):
     def test_openai_ingest(self):
         """Test if the sample_function runs without raising any errors."""
         # define model type
-        embeddings_provider = "openai"
+        embeddings_provider = "azureopenai"
         embeddings_model = "text-embedding-ada-002"
 
 
@@ -48,9 +48,9 @@ class TestQuerier(unittest.TestCase):
     '''test the query of different providers'''
 
     def test_openai_query(self):
-        llm_provider = "openai"
+        llm_provider = "azureopenai"
         llm_model = "gpt-4"
-        embeddings_provider = "openai"
+        embeddings_provider = "azureopenai"
         embeddings_model = "text-embedding-ada-002"
         content_folder_path =  'C:/Users/krugerc/OneDrive - Planbureau voor de Leefomgeving/Bureaublad/GitReps/appl-docchat/docs/unit_test_openai'
         content_folder_name = os.path.basename(content_folder_path)
