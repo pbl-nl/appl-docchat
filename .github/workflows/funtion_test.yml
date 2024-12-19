@@ -19,14 +19,14 @@ jobs:
       uses: actions/cache@v2
       with:
         path: ~/.cache/pip
-        key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
+        key: ${{ runner.os }}-pip-${{ hashFiles('appl-docchat/requirements.txt') }}
         restore-keys: |
           ${{ runner.os }}-pip-
 
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
-        if [ -f appl-docchat/requirements.txt ]; then pip install -r appl-docchat/requirements.txt; fi
+        pip install -r appl-docchat/requirements.txt
         pip install nltk
         python -m nltk.downloader punkt
 
@@ -40,5 +40,6 @@ jobs:
 
     - name: Run tests
       run: |
+        cd appl-docchat
         mv settings_template.py settings.py
         python -m unittest discover tests
