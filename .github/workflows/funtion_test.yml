@@ -40,6 +40,5 @@ jobs:
 
     - name: Run tests
       run: |
-        cd appl-docchat
         mv settings_template.py settings.py
         pytest
