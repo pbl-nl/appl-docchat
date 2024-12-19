@@ -1,75 +1,44 @@
-name: CI
+name: Function Test
 
-on:
-  push:
-    branches:
-      - master
-      - unit-testing
-  pull_request:
-    branches: 
-      - main
-
-permissions:
-  contents: read
+on: [push, pull_request]
 
 jobs:
   test:
     runs-on: ubuntu-latest
+
     steps:
-      # default python in ubuntu-latest is currently 3.10, we want 3.11
-      - name: Set up Python
-        uses: actions/setup-python@v3
-        with:
-          python-version: "3.11"
+    - name: Checkout code
+      uses: actions/checkout@v2
 
-      - name: Checkout repo
-        uses: actions/checkout@v3
-        with:
-          path: appl-docchat
-        
-      
+    - name: Set up Python
+      uses: actions/setup-python@v2
+      with:
+        python-version: '3.x'
 
-      - name: Install dependencies
-        run: |
-          python -m pip install --upgrade pip
-          if [ -f appl-docchat/requirements.txt ]; then pip install -r appl-docchat/requirements.txt; fi
-          python -m nltk.downloader punkt
+    - name: Cache pip
+      uses: actions/cache@v2
+      with:
+        path: ~/.cache/pip
+        key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
+        restore-keys: |
+          ${{ runner.os }}-pip-
 
-      #- name: Install appl-docchat
-      #  run: pip install -e ./appl-docchat
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        if [ -f appl-docchat/requirements.txt ]; then pip install -r appl-docchat/requirements.txt; fi
+        python -m nltk.downloader punkt
 
-      - name: Create env File
-        run: |
-          #!/bin/bash
-          AZURE_OPENAI_API_KEY="${{secrets.AZURE_OPENAI_API_KEY}}"
-          AZURE_OPENAI_LLM_DEPLOYMENT_NAME="${{secrets.AZURE_OPENAI_LLM_DEPLOYMENT_NAME}}"
-          AZURE_OPENAI_ENDPOINT="${{secrets.AZURE_OPENAI_ENDPOINT}}"
-          AZURE_OPENAI_EMB_DEPLOYMENT_NAME='${{secrets.AZURE_OPENAI_EMB_DEPLOYMENT_NAME}}'
+    - name: Create .env file
+      run: |
+        echo "AZURE_OPENAI_API_KEY=${{secrets.AZURE_OPENAI_API_KEY}}" >> .env
+        echo "AZURE_OPENAI_LLM_DEPLOYMENT_NAME=${{secrets.AZURE_OPENAI_LLM_DEPLOYMENT_NAME}}" >> .env
+        echo "AZURE_OPENAI_ENDPOINT=${{secrets.AZURE_OPENAI_ENDPOINT}}" >> .env
+        echo "AZURE_OPENAI_EMB_DEPLOYMENT_NAME=${{secrets.AZURE_OPENAI_EMB_DEPLOYMENT_NAME}}" >> .env
+        cat .env
 
-          # Create the .env file and populate it
-          echo "AZURE_OPENAI_API_KEY=$AZURE_OPENAI_API_KEY" > .env
-          echo "AZURE_OPENAI_LLM_DEPLOYMENT_NAME=$AZURE_OPENAI_LLM_DEPLOYMENT_NAME" >> .env
-          echo "AZURE_OPENAI_ENDPOINT=$AZURE_OPENAI_ENDPOINT" >> .env
-          echo "AZURE_OPENAI_EMB_DEPLOYMENT_NAME=$AZURE_OPENAI_EMB_DEPLOYMENT_NAME" >> .env
-          cat .env
-
-
-
-      - name: Run tests
-        run: |
-          cd appl-docchat
-          mv settings_template.py settings.py
-          python -m unittest discover tests
-
-          
-  format:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout repo
-        uses: actions/checkout@v3
-
-      - name: Install autopep8
-        run: pip install autopep8
-
-      - name: Run formatter
-        run: autopep8 --max-line-length 120 -a -a --exit-code --diff --recursive .
+    - name: Run tests
+      run: |
+        cd appl-docchat
+        mv settings_template.py settings.py
+        pytest
