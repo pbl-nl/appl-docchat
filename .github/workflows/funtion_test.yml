@@ -41,4 +41,4 @@ jobs:
     - name: Run tests
       run: |
         mv settings_template.py settings.py
-        pytest
+        python -m unittest discover tests
