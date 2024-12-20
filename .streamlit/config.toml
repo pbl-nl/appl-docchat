@@ -3,7 +3,7 @@ base="light"
 primaryColor="#5a9a4a"
 backgroundColor="#FFFFFF"
 secondaryBackgroundColor="#929633"
-font="serif"
+font="sans serif"
 
 [browser]
 gatherUsageStats = false

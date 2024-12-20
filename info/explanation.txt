@@ -26,4 +26,4 @@ All this means that the words that you use in your prompt influence the values â
 This technique of vector similarity search also implies that this application is not very good in answering questions that requires knowledge of relationships between text chunks from different documents, or in answering 'meta' questions like: "What are the most important themes in the documents?"<br>
 
 #### Closing the application again
-This is a 2-step process: first go to the terminal that was used to launch the application and hit Ctrl+C (once or twice), then answer "Y" to the question that appears. Then go to the browser tab and close the tab.
+This is a 2-step process: first close the browser tab by hitting the EXIT button, then close the terminal that was used to launch the application

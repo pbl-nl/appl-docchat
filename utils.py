@@ -9,6 +9,10 @@ import pathlib
 import numpy as np
 from loguru import logger
 from langdetect import detect, LangDetectException
+import os
+import time
+import psutil
+import keyboard
 # local imports
 import settings
 
@@ -42,9 +46,9 @@ LANGUAGE_MAP = {
 
 
 def create_vectordb_folder(my_folder_path_selected: str) -> None:
-    """ 
+    """
     Creates subfolder for storage of vector databases if not existing
-    
+
     Parameters
     ----------
     my_folder_path_selected : str
@@ -56,7 +60,8 @@ def create_vectordb_folder(my_folder_path_selected: str) -> None:
 
 
 def create_summaries_folder(my_folder_path_selected: str) -> None:
-    """ Creates subfolder for storage of summaries if not existing
+    """
+    Creates subfolder for storage of summaries if not existing
 
     Parameters
     ----------
@@ -75,7 +80,8 @@ def create_vectordb_path(content_folder_path: str,
                          chunk_overlap: int = None,
                          chunk_size_child: int = None,
                          chunk_overlap_child: int = None) -> str:
-    """ Creates the content folder path and vector database folder path
+    """
+    Creates the content folder path and vector database folder path
 
     Parameters
     ----------
@@ -122,7 +128,7 @@ def create_vectordb_path(content_folder_path: str,
 
 def is_relevant_file(content_folder_path: str, document_selection: List[str], my_file: str) -> bool:
     """
-    decides whether or not a file is a relevant file
+    Decides whether or not a file is a relevant file
 
     Parameters
     ----------
@@ -156,7 +162,8 @@ def is_relevant_file(content_folder_path: str, document_selection: List[str], my
 
 
 def get_relevant_files_in_folder(content_folder_path: str, document_selection: List[str] = None) -> List[str]:
-    """ Gets a list of relevant files from a given content folder path
+    """
+    Gets a list of relevant files from a given content folder path
 
     Parameters
     ----------
@@ -174,10 +181,29 @@ def get_relevant_files_in_folder(content_folder_path: str, document_selection: L
 
 
 def exit_program() -> None:
-    """ Exits the Python process
     """
-    print("Exiting the program...")
+    Exits the Python process
+    """
+    logger.info("Exiting the program...")
     sys.exit(0)
+
+
+def exit_UI() -> None:
+    """
+    Exits the User Interface process.
+    First, the last tab in the browser is closed
+    Then the python process is stopped
+    From: https://discuss.streamlit.io/t/close-streamlit-app-with-button-click/35132
+    """
+    # Give a bit of delay for user experience
+    time.sleep(1)
+    # Close streamlit browser tab
+    keyboard.press_and_release('ctrl+w')
+    logger.info("Closing the application")
+    # Terminate streamlit python process
+    pid = os.getpid()
+    p = psutil.Process(pid)
+    p.terminate()
 
 
 def getattr_or_default(obj: Any,
