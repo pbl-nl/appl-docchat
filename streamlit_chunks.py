@@ -12,8 +12,12 @@ from ingest.embeddings_creator import EmbeddingsCreator
 from ingest.vectorstore_creator import VectorStoreCreator
 
 
-def click_GO_button():
+def click_go_button():
     st.session_state['is_GO_clicked'] = True
+
+
+def click_exit_button():
+    st.session_state['is_EXIT_clicked'] = True
 
 
 def get_chunks(my_embeddings_model: str, folder_name_selected: str, vectorstore_folder_path: str, prompt: str):
@@ -62,13 +66,15 @@ def initialize_page():
     st.header("Chunks analysis")
     logo_image = Image.open(settings.APP_LOGO)
     st.sidebar.image(logo_image, width=250)
-    load_dotenv()
+    load_dotenv(dotenv_path=os.path.join(settings.ENVLOC, ".env"))
     logger.info("Executed initialize_page()")
 
 
 def initialize_session_state():
     if 'is_GO_clicked' not in st.session_state:
         st.session_state['is_GO_clicked'] = False
+    if 'is_EXIT_clicked' not in st.session_state:
+        st.session_state['is_EXIT_clicked'] = False
 
 
 def set_page_config():
@@ -83,11 +89,16 @@ set_page_config()
 initialize_page()
 # initialize session state variables
 initialize_session_state()
+# Create button to exit the application. This button sets session_state['is_EXIT_clicked'] to True
+st.sidebar.button("EXIT", type="primary", on_click=click_exit_button)
 # allow user to set the path to the document folder
 folder_path_selected = st.sidebar.text_input(label="***ENTER THE DOCUMENT FOLDER PATH***",
                                              help="""Please enter the full path e.g. Y:/User/troosts/chatpbl/...""")
 user_query = st.sidebar.text_input(label="***ENTER YOUR PROMPT***",
                                    help="""Enter prompt as used in review.py""")
+if st.session_state['is_EXIT_clicked']:
+    ut.exit_UI()
+
 if folder_path_selected != "":
     load_dotenv(dotenv_path=os.path.join(settings.ENVLOC, ".env"))
     # define the selected folder name
@@ -98,7 +109,7 @@ if folder_path_selected != "":
     columns = st.columns(num_vectorstores)
 
     # Create button to confirm folder selection. This button sets session_state['is_GO_clicked'] to True
-    st.sidebar.button("GO", type="primary", on_click=click_GO_button)
+    st.sidebar.button("GO", type="primary", on_click=click_go_button)
 
     if st.session_state['is_GO_clicked']:
         first_vectorstore = True
