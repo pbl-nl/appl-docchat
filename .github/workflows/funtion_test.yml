@@ -45,9 +45,19 @@ jobs:
     - name: Setup settings.py
       run: |
         if [ -f "settings_template.py" ]; then
-          sed -i 's|ENVLOC = .*|ENVLOC = "${{ github.workspace }}"|' settings.py // Copy settings and replace ENVLOC with the path to the workspace
+          cp settings_template.py settings.py
         else
           echo "settings_template.py not found"
+          exit 1
+        fi
+
+      
+    - name: Update ENVLOC in settings.py
+      run: |
+        if [ -f "settings.py" ]; then
+          sed -i 's|ENVLOC = .*|ENVLOC = "${{ github.workspace }}"|' settings.py
+        else
+          echo "settings.py not found after copying"
           exit 1
         fi
 
