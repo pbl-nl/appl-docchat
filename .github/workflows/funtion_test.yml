@@ -24,6 +24,16 @@ jobs:
         python-version: ${{ matrix.python-version }}
         cache: 'pip'
 
+
+    - name: Debug Environment Variables
+      run: |
+        echo "AZURE_OPENAI_ENDPOINT Length=${#secrets.AZURE_OPENAI_ENDPOINT}"
+        echo "AZURE_ Length=${#AZURE_OPENAI_API_KEY}"
+      env:
+        AZURE_OPENAI_API_KEY: ${{ secrets.AZURE_OPENAI_API_KEY }}
+        AZURE_OPENAI_ENDPOINT: ${{ secrets.AZURE_OPENAI_ENDPOINT }}
+  
+
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
@@ -69,14 +79,6 @@ jobs:
           echo "tests/test_ingest_and_query.py not found"
           exit 1
         fi
-
-    - name: Debug Environment Variables
-      run: |
-        echo "AZURE_OPENAI_ENDPOINT=${{ secrets.AZURE_OPENAI_ENDPOINT }}"
-        echo "AZURE_ Length=${#AZURE_OPENAI_API_KEY}"
-      env:
-        AZURE_OPENAI_API_KEY: ${{ secrets.AZURE_OPENAI_API_KEY }}
-        AZURE_OPENAI_ENDPOINT: ${{ secrets.AZURE_OPENAI_ENDPOINT }}
 
     - name: Run tests
       run: python -m unittest discover tests
