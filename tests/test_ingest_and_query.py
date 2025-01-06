@@ -12,6 +12,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from ingest.ingester import Ingester
 from query.querier import Querier
 import utils as ut
+import settings
 # Add the root directory to the system path
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../../')))
 
@@ -19,6 +20,18 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../../'
 # Test case for the function
 class TestIngester(unittest.TestCase):
     '''test the ingestion of different modules'''
+
+    def test_debugging(self):
+        from dotenv import load_dotenv
+        load_dotenv(dotenv_path=os.path.join(settings.ENVLOC, ".env"))
+
+        endpoint = os.getenv("AZURE_OPENAI_ENDPOINT")
+        api_key = os.getenv("AZURE_OPENAI_API_KEY")
+
+        assert endpoint is not None, "AZURE_OPENAI_ENDPOINT is not set"
+        assert api_key is not None, "AZURE_OPENAI_API_KEY is not set"
+        print("Endpoint:", endpoint)
+        print("API Key Length:", len(api_key))
 
     def test_openai_ingest(self):
         """Test if the sample_function runs without raising any errors."""
