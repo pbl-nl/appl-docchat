@@ -61,6 +61,15 @@ jobs:
           exit 1
         fi
 
+    - name: Update content_folder_path in unit_test function
+      run: |
+        if [ -f "tests/test_ingest_and_query.py" ]; then
+          sed -i 's|content_folder_path = .*|content_folder_path = "${{ github.workspace }}/docs/unit_test_openai"|' tests/test_ingest_and_query.py
+        else
+          echo "tests/test_ingest_and_query.py not found"
+          exit 1
+        fi
+
     - name: Run tests
       run: python -m unittest discover tests
       env:
