@@ -27,7 +27,7 @@ jobs:
 
     - name: Debug Environment Variables
       run: |
-        echo "AZURE_OPENAI_ENDPOINT Length=${#secrets.AZURE_OPENAI_ENDPOINT}"
+        echo "AZURE_OPENAI_ENDPOINT Length=${#AZURE_OPENAI_ENDPOINT}"
         echo "AZURE_ Length=${#AZURE_OPENAI_API_KEY}"
       env:
         AZURE_OPENAI_API_KEY: ${{ secrets.AZURE_OPENAI_API_KEY }}
