@@ -55,3 +55,7 @@ jobs:
       run: python -m unittest discover tests
       env:
         PYTHONPATH: ${{ github.workspace }}
+        AZURE_OPENAI_API_KEY: ${{ secrets.AZURE_OPENAI_API_KEY }}
+        AZURE_OPENAI_LLM_DEPLOYMENT_NAME: ${{ secrets.AZURE_OPENAI_LLM_DEPLOYMENT_NAME }}
+        AZURE_OPENAI_ENDPOINT: ${{ secrets.AZURE_OPENAI_ENDPOINT }}
+        AZURE_OPENAI_EMB_DEPLOYMENT_NAME: ${{ secrets.AZURE_OPENAI_EMB_DEPLOYMENT_NAME }}
