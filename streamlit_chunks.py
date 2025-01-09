@@ -2,11 +2,10 @@ import os
 import streamlit as st
 from PIL import Image
 from loguru import logger
+import pandas as pd
 from dotenv import load_dotenv
-from typing import List
 # local imports
 import settings
-import pandas as pd
 import utils as ut
 from ingest.embeddings_creator import EmbeddingsCreator
 from ingest.vectorstore_creator import VectorStoreCreator
@@ -20,24 +19,24 @@ def click_exit_button():
     st.session_state['is_EXIT_clicked'] = True
 
 
-def get_chunks(my_embeddings_model: str, folder_name_selected: str, vectorstore_folder_path: str, prompt: str):
+def get_chunks(my_embeddings_model: str, my_folder_name_selected: str, my_vectorstore_folder_path: str, prompt: str):
     # get embeddings
-    my_embeddings = EmbeddingsCreator(embeddings_provider = "azureopenai",
-                                      embeddings_model = my_embeddings_model).get_embeddings()
+    my_embeddings = EmbeddingsCreator(embeddings_provider="azureopenai",
+                                      embeddings_model=my_embeddings_model).get_embeddings()
 
     # get vector store
-    vector_store = VectorStoreCreator(settings.VECDB_TYPE).get_vectorstore(embeddings=my_embeddings,
-                                                                           content_folder=folder_name_selected,
-                                                                           vecdb_folder=vectorstore_folder_path)
+    vector_store = VectorStoreCreator().get_vectorstore(embeddings=my_embeddings,
+                                                        content_folder=my_folder_name_selected,
+                                                        vecdb_folder=my_vectorstore_folder_path)
     # determine the files that are added or deleted
     collection = vector_store.get()  # dict_keys(['ids', 'embeddings', 'documents', 'metadatas'])
-    collection_size = len(collection['ids'])
-    chunks = []
-    for idx in range(collection_size):
+    my_collection_size = len(collection['ids'])
+    my_chunks = []
+    for idx in range(my_collection_size):
         idx_metadata = collection['metadatas'][idx]
         filename = idx_metadata["filename"]
         page = idx_metadata["page_number"]
-        chunk = idx_metadata["chunk"]
+        my_chunk = idx_metadata["chunk"]
         idx_document = collection['documents'][idx]
         similarity = None
         # if user enters a prompt
@@ -49,14 +48,15 @@ def get_chunks(my_embeddings_model: str, folder_name_selected: str, vectorstore_
             # calculate all similarities between vector store chunks and prompt
             similarity = ut.cosine_similarity(a=prompt_vector,
                                               b=chunk_vector)
-        chunks.append((filename, page, chunk, idx_document, similarity))
+        my_chunks.append((filename, page, my_chunk, idx_document, similarity))
 
     if prompt != "":
-        chunks = sorted(chunks, key=lambda x: (-x[4], x[0], x[1], x[2]))
+        my_chunks = sorted(my_chunks, key=lambda x: (-x[4], x[0], x[1], x[2]))
     else:
-        chunks = sorted(chunks, key=lambda x: (x[0], x[1], x[2]))
+        my_chunks = sorted(my_chunks, key=lambda x: (x[0], x[1], x[2]))
 
-    return collection_size, chunks
+    return my_collection_size, my_chunks
+
 
 @st.cache_data
 def initialize_page():
@@ -112,10 +112,9 @@ if folder_path_selected != "":
     st.sidebar.button("GO", type="primary", on_click=click_go_button)
 
     if st.session_state['is_GO_clicked']:
-        first_vectorstore = True
         # For each folder
         for i, col in enumerate(columns):
-            vectorstore_folder  = vectorstore_folders[i]
+            vectorstore_folder = vectorstore_folders[i]
             vectorstore_folder_path = os.path.join(folder_path_selected, "vector_stores", vectorstore_folder)
             #  extract the settings that were used to create the folder
             vectorstore_settings = vectorstore_folder.split("_")
@@ -128,7 +127,7 @@ if folder_path_selected != "":
             else:
                 chunk_k = vectorstore_settings[3]
                 chunk_overlap = vectorstore_settings[4]
-            
+
             # Store settings in a dataframe
             df = pd.DataFrame(columns=[vectorstore_folder])
             df.loc[len(df)] = f"retriever_type = {retriever_type}"
@@ -138,14 +137,14 @@ if folder_path_selected != "":
             df.loc[len(df)] = f"chunk_overlap = {chunk_overlap}"
             # get chunk info from vectorstore
             collection_size, chunks = get_chunks(my_embeddings_model=embedding_model,
-                                                 folder_name_selected=folder_name_selected,
-                                                 vectorstore_folder_path=vectorstore_folder_path,
+                                                 my_folder_name_selected=folder_name_selected,
+                                                 my_vectorstore_folder_path=vectorstore_folder_path,
                                                  prompt=user_query)
             df.loc[len(df)] = f"number of chunks: {collection_size}"
             # show settings
             with col:
                 st.dataframe(data=df, use_container_width=True, hide_index=True)
-            
+
             # show vector store contents
             df_cont = pd.DataFrame(columns=["filename", "page", "chunk", "text", "similarity"])
             for chunk in chunks:

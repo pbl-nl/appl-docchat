@@ -1,13 +1,19 @@
+"""
+Custom ParentDocumentRetriever using just the vectorstore, no file storage needed
+Parent chunks are added to the child chunks as metadata
+"""
+# imports
 from enum import Enum
 from typing import List
 import langchain.docstore.document as docstore
 from langchain_core.callbacks import CallbackManagerForRetrieverRun
 from langchain_core.documents import Document
-from langchain_core.pydantic_v1 import Field
 from langchain_core.retrievers import BaseRetriever
 from langchain_core.vectorstores import VectorStore
+from pydantic import Field
 # local imports
 import settings
+
 
 class SearchType(str, Enum):
     """

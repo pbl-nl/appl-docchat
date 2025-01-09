@@ -21,14 +21,13 @@ class Querier:
     When parameters are read from GUI, object is initiated with parameter settings listed
     """
     def __init__(self, llm_provider=None, llm_model=None, embeddings_provider=None, embeddings_model=None,
-                 vecdb_type=None, chain_name=None, chain_type=None, chain_verbosity=None, search_type=None,
+                 chain_name=None, chain_type=None, chain_verbosity=None, search_type=None,
                  score_threshold=None, chunk_k=None):
         load_dotenv(dotenv_path=os.path.join(settings.ENVLOC, ".env"))
         self.llm_provider = settings.LLM_PROVIDER if llm_provider is None else llm_provider
         self.llm_model = settings.LLM_MODEL if llm_model is None else llm_model
         self.embeddings_provider = settings.EMBEDDINGS_PROVIDER if embeddings_provider is None else embeddings_provider
         self.embeddings_model = settings.EMBEDDINGS_MODEL if embeddings_model is None else embeddings_model
-        self.vecdb_type = settings.VECDB_TYPE if vecdb_type is None else vecdb_type
         self.chain_name = settings.CHAIN_NAME if chain_name is None else chain_name
         self.chain_type = settings.CHAIN_TYPE if chain_type is None else chain_type
         self.chain_verbosity = settings.CHAIN_VERBOSITY if chain_verbosity is None else chain_verbosity
@@ -64,9 +63,9 @@ class Querier:
             _description_, by default None
         """
         # get vector store
-        self.vector_store = VectorStoreCreator(self.vecdb_type).get_vectorstore(embeddings=self.embeddings,
-                                                                                content_folder=content_folder,
-                                                                                vecdb_folder=vecdb_folder)
+        self.vector_store = VectorStoreCreator().get_vectorstore(embeddings=self.embeddings,
+                                                                 content_folder=content_folder,
+                                                                 vecdb_folder=vecdb_folder)
         logger.info(f"Loaded vector store from folder {vecdb_folder}")
 
         # get retriever with search_filter

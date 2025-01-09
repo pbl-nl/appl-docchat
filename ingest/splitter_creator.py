@@ -1,3 +1,12 @@
+"""
+Splitter class to import into other modules
+It implements the following splitters:
+RecursiveCharacterTextSplitter (default),
+NLTKTextSplitter
+On beforehand, the language of the doument is determined so that in case of NLTKTextSplitter,
+the language can be taken into account when tokenizing
+"""
+# imports
 import langchain.text_splitter as splitter
 # local imports
 import settings
@@ -17,6 +26,11 @@ class SplitterCreator():
         """
         Get the text splitter object
         """
+        text_splitter = splitter.RecursiveCharacterTextSplitter(
+            chunk_size=self.chunk_size,
+            separators=["\n\n", "\n", ".", "!", "?", ",", " ", ""],
+            chunk_overlap=self.chunk_overlap
+        )
         if self.text_splitter_method == "NLTKTextSplitter":
             text_splitter = splitter.NLTKTextSplitter(
                 separator="\n\n",
@@ -24,10 +38,5 @@ class SplitterCreator():
                 chunk_size=self.chunk_size,
                 chunk_overlap=self.chunk_overlap
             )
-        elif self.text_splitter_method == "RecursiveCharacterTextSplitter":
-            text_splitter = splitter.RecursiveCharacterTextSplitter(
-                chunk_size=self.chunk_size,
-                separators=["\n\n", "\n", ".", "!", "?", ",", " ", ""],
-                chunk_overlap=self.chunk_overlap
-            )
+
         return text_splitter
