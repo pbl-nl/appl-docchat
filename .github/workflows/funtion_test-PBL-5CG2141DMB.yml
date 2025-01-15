@@ -68,8 +68,8 @@ jobs:
       run: |
         if [ -f "settings.py" ]; then
           sed -i 's|ENVLOC = .*|ENVLOC = "${{ github.workspace }}"|' settings.py
-          sed -i 's|AZURE_OPENAI_ENDPOINT = ".*"|AZURE_OPENAI_ENDPOINT = ${{ secrets.AZURE_OPENAI_ENDPOINT }}|' settings.py
-          sed -i 's|AZURE_OPENAI_API_VERSION = ".*"|AZURE_OPENAI_API_VERSION = ${{ secrets.AZURE_OPENAI_API_VERSION }}|' settings.py
+          sed -i 's|AZURE_OPENAI_ENDPOINT = ".*"|AZURE_OPENAI_ENDPOINT = "${{ secrets.AZURE_OPENAI_ENDPOINT }}"|' settings.py
+          sed -i 's|AZURE_OPENAI_API_VERSION = ".*"|AZURE_OPENAI_API_VERSION = "${{ secrets.AZURE_OPENAI_API_VERSION }}"|' settings.py
         else
           echo "settings.py not found after copying"
           exit 1
