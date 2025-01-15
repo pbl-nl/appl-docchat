@@ -1,3 +1,12 @@
+"""
+This module represents a class with functionality to parse various kinds of files.
+Raw text is extracted from the documents and metadata added.
+PDF files are parsed with pymupdf, Word files are first converted to pdf files and then
+parsed. This is to be able to show the sources in the converted pdf in the Streamlit UI.
+
+Preparation for ingestion of text into vectorstore
+"""
+# imports
 from typing import Dict, List, Tuple
 import os
 import re
@@ -89,7 +98,7 @@ class FileParser:
         pdf_path = os.path.join(folder, "conversions", file + '.pdf')
         if not os.path.exists(os.path.join(folder, 'conversions')):
             os.mkdir(os.path.join(folder, 'conversions'))
-        convert(input_path=docx_path, output_path=pdf_path, keep_active=True)
+        convert(input_path=docx_path, output_path=pdf_path, keep_active=False)
 
         return pdf_path
 

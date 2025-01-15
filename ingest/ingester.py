@@ -4,14 +4,15 @@ Creates Ingester object
 Also parses files, chunks the files and stores the chunks in vector store
 When instantiating without parameters, attributes get values from settings.py
 """
+# imports
 import os
 import re
-from typing import Callable, Dict, List, Tuple, Any
+from typing import Callable, Dict, List, Tuple
+import time
 from loguru import logger
 import langchain.docstore.document as docstore
 from dotenv import load_dotenv
 import tiktoken
-import time
 # local imports
 import settings
 import utils as ut
@@ -28,7 +29,7 @@ class Ingester:
     """
     def __init__(self, collection_name: str, content_folder: str, vecdb_folder: str,
                  document_selection: List[str] = None, embeddings_provider: str = None, embeddings_model: str = None,
-                 retriever_type: str = None, vecdb_type: str = None, text_splitter_method: str = None,
+                 retriever_type: str = None, text_splitter_method: str = None,
                  text_splitter_method_child: str = None, chunk_size: int = None, chunk_size_child: int = None,
                  chunk_overlap: int = None, chunk_overlap_child: int = None) -> None:
         load_dotenv(dotenv_path=os.path.join(settings.ENVLOC, ".env"))
@@ -39,7 +40,6 @@ class Ingester:
         self.embeddings_provider = settings.EMBEDDINGS_PROVIDER if embeddings_provider is None else embeddings_provider
         self.embeddings_model = settings.EMBEDDINGS_MODEL if embeddings_model is None else embeddings_model
         self.retriever_type = settings.RETRIEVER_TYPE if retriever_type is None else retriever_type
-        self.vecdb_type = settings.VECDB_TYPE if vecdb_type is None else vecdb_type
         self.text_splitter_method = settings.TEXT_SPLITTER_METHOD \
             if text_splitter_method is None else text_splitter_method
         self.chunk_size = settings.CHUNK_SIZE if chunk_size is None else chunk_size
@@ -85,7 +85,6 @@ class Ingester:
 
     def texts_to_docs(self,
                       texts: List[Tuple[int, str]],
-                      embeddings: Any,
                       metadata: Dict[str, str]) -> List[docstore.Document]:
         """
         Split the text into chunks and return them as Documents.
@@ -111,8 +110,6 @@ class Ingester:
                 # in case of parent retriever, split the parent chunk texts again, into smaller child chunk texts
                 # and add parent chunk text as metadata to child chunk text
                 if self.retriever_type == "parent":
-                    # determine parent chunk embedding. It needs to be stored as a string in the vector database
-                    parent_chunk_embedding = ','.join(str(x) for x in embeddings.embed_documents([chunk_text])[0])
                     # determine child chunks
                     child_chunk_texts = splitter_child.split_text(chunk_text)
                     # determine child document to store in the vector database
@@ -125,7 +122,6 @@ class Ingester:
                             "parent_chunk_num": chunk_num,
                             "parent_chunk": chunk_text,
                             "parent_chunk_id": f"{metadata['filename']}_p{page_num}_c{chunk_num}",
-                            "parent_chunk_embedding": parent_chunk_embedding,
                             "source": f"p{page_num}-{chunk_num}",
                             **metadata,
                         }
@@ -134,7 +130,7 @@ class Ingester:
                             # metadata_combined = {"title": , "author": , "indicator_url": , "indicator_closed": ,
                             #                      "filename": , "Language": , "last_change_time": ,"page_number": ,
                             #                      "chunk": , "parent_chunk_num", "parent_chunk": , "parent_chunk_id",
-                            #                      "parent_chunk_embedding: , "source": }
+                            #                      "source": }
                             metadata=metadata_combined
                         )
                         docs.append(doc)
@@ -161,7 +157,7 @@ class Ingester:
 
         return docs
 
-    def clean_texts_to_docs(self, raw_texts, embeddings, metadata) -> List[docstore.Document]:
+    def clean_texts_to_docs(self, raw_texts, metadata) -> List[docstore.Document]:
         """"
         Combines the functions clean_text and text_to_docs
         """
@@ -173,9 +169,9 @@ class Ingester:
         cleaned_texts = self.clean_texts(raw_texts, cleaning_functions)
         # for cleaned_text in cleaned_texts:
         #     cleaned_chunks = self.split_text_into_chunks(cleaned_text, metadata)
-        docs = self.texts_to_docs(cleaned_texts, embeddings, metadata)
+        docs = self.texts_to_docs(texts=cleaned_texts,
+                                  metadata=metadata)
         return docs
-
 
     def count_ada_tokens(self, raw_texts: List[Tuple[int, str]]) -> int:
         """
@@ -188,7 +184,7 @@ class Ingester:
             int: The number of tokens.
         """
         total_tokens = 0
-        for num, text in raw_texts:
+        for _, text in raw_texts:
             # Load the tokenizer for the Ada model
             tokenizer = tiktoken.encoding_for_model("text-embedding-ada-002")
             # Encode the text and count tokens
@@ -215,9 +211,9 @@ class Ingester:
         # if the vector store already exists, get the set of ingested files from the vector store
         if os.path.exists(self.vecdb_folder):
             # get vector store
-            vector_store = VectorStoreCreator(self.vecdb_type).get_vectorstore(embeddings,
-                                                                               self.collection_name,
-                                                                               self.vecdb_folder)
+            vector_store = VectorStoreCreator().get_vectorstore(embeddings,
+                                                                self.collection_name,
+                                                                self.vecdb_folder)
             logger.info(f"Vector store already exists for specified settings and folder {self.content_folder}")
             # determine the files that are added or deleted
             collection = vector_store.get()  # dict_keys(['ids', 'embeddings', 'documents', 'metadatas'])
@@ -249,7 +245,9 @@ class Ingester:
                     if idx_metadata['filename'] in to_delete:
                         idx_id_to_delete.append(idx_id)
                         if idx_metadata['filename'].endswith(".docx"):
-                            os.remove(os.path.join(self.content_folder, "conversions", idx_metadata['filename'] + ".pdf"))
+                            os.remove(os.path.join(self.content_folder,
+                                                   "conversions",
+                                                   idx_metadata['filename'] + ".pdf"))
                 vector_store.delete(idx_id_to_delete)
                 logger.info("Deleted files from vectorstore")
 
@@ -259,9 +257,9 @@ class Ingester:
         else:
             logger.info(f"Vector store to be created for folder {self.content_folder}")
             # get chroma vector store
-            vector_store = VectorStoreCreator(self.vecdb_type).get_vectorstore(embeddings,
-                                                                               self.collection_name,
-                                                                               self.vecdb_folder)
+            vector_store = VectorStoreCreator().get_vectorstore(embeddings,
+                                                                self.collection_name,
+                                                                self.vecdb_folder)
             # all relevant files in the folder are to be ingested into the vector store
             to_add = list(relevant_files_in_folder_selected)
 
@@ -274,14 +272,16 @@ class Ingester:
             for file in to_add:
                 file_path = os.path.join(self.content_folder, file)
                 # extract raw text pages and metadata according to file type
+                logger.info(f"Parsing file {file}")
                 raw_texts, metadata = file_parser.parse_file(file_path)
-                documents = self.clean_texts_to_docs(raw_texts, embeddings, metadata)
+                documents = self.clean_texts_to_docs(raw_texts=raw_texts,
+                                                     metadata=metadata)
                 # count tokens
                 tokens_document = self.count_ada_tokens(raw_texts)
                 logger.info(f"Extracted {len(documents)} chunks (Tokens: {tokens_document}) from {file}")
-                if tokens_document > 10_000:
-                    logger.info("Pause for 20 seconds to avoid hitting rate limit")
-                    time.sleep(20)
+                if tokens_document > 40_000:
+                    logger.info("Pause for 10 seconds to avoid hitting rate limit")
+                    time.sleep(10)
                 vector_store.add_documents(
                     documents=documents,
                     embedding=embeddings,
