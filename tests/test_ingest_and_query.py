@@ -22,6 +22,27 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../../'
 class TestIngester(unittest.TestCase):
     '''test the ingestion of different modules'''
 
+    def test_debugging(self):
+        from dotenv import load_dotenv
+        load_dotenv(dotenv_path=os.path.join(settings.ENVLOC, ".env"))
+
+        endpoint = os.getenv("AZURE_OPENAI_ENDPOINT")
+        api_key = os.getenv("AZURE_OPENAI_API_KEY")
+
+        assert endpoint is not None, "AZURE_OPENAI_ENDPOINT is not set"
+        assert api_key is not None, "AZURE_OPENAI_API_KEY is not set"
+        print("Endpoint:", endpoint)
+        print("API Key Length:", len(api_key))
+
+    def test_internet_connection(self):
+        """Test if the internet connection is available."""
+        try:
+            response = requests.get("https://www.google.com", timeout=5)
+            self.assertEqual(response.status_code, 200)
+        except requests.ConnectionError:
+            self.fail("No internet connection available.")
+
+
     def test_openai_ingest(self):
         """Test if the sample_function runs without raising any errors."""
         # define model type
