@@ -49,6 +49,7 @@ jobs:
         echo "AZURE_OPENAI_LLM_DEPLOYMENT_NAME=${{ secrets.AZURE_OPENAI_LLM_DEPLOYMENT_NAME }}" >> .env
         echo "AZURE_OPENAI_ENDPOINT=${{ secrets.AZURE_OPENAI_ENDPOINT }}" >> .env
         echo "AZURE_OPENAI_EMB_DEPLOYMENT_NAME=${{ secrets.AZURE_OPENAI_EMB_DEPLOYMENT_NAME }}" >> .env
+        echo "AZURE_OPENAI_API_VERSION=${{ secrets.AZURE_OPENAI_API_VERSION }}" >> .env
 
     - name: Verify .env file exists
       run: test -f .env || exit 1
