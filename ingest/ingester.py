@@ -82,10 +82,49 @@ class Ingester:
             cleaned_texts.append((page_num, text))
 
         return cleaned_texts
+    
+    def table_to_docs(self, table_pages:List[Tuple[int,str]], metadata:Dict[str, str]):
+        # Prepare splitter for table text
+        def split_creator(text:str, language=''): # language is needed but not utilized since it is passed to the NLTKTextSplitter
+            splits = [split for split in text.split(separator)]
+            return splits
+
+        separator = "|\n"
+        splitter_table = SplitterCreator(self.text_splitter_method,
+                                        self.chunk_size,
+                                        0).get_splitter()
+        splitter_table.__setattr__('_tokenizer', split_creator) # Language related attribute is not used in this case
+
+        if hasattr(splitter_table, "_separator"): # we need to overload the separator attribute
+            splitter_table.__setattr__('_separator', separator) # for NLTKTextSplitter
+        else:
+            splitter_table.__setattr__('_separators', [separator]) # for RecursiveCharacterTextSplitter
+        
+        # Split the table text into chunks
+        table_docs: List[docstore.Document] = []
+        chunk_num = 0
+        for page_num, table in table_pages:
+            chunks = splitter_table.split_text(table)
+            for chunk_text in chunks: # this part can be updated for text_to_docs then we can remove five lines of code
+                metadata_combined = {
+                                "page_number": page_num,
+                                "chunk": chunk_num,
+                                "source": f"p{page_num}-{chunk_num}",
+                                "isTable": True,
+                                **metadata,
+                            }
+                doc = docstore.Document(
+                    page_content=chunk_text,
+                    metadata=metadata_combined
+                )
+                table_docs.append(doc)
+                chunk_num += 1
+        return table_docs
 
     def texts_to_docs(self,
                       texts: List[Tuple[int, str]],
-                      metadata: Dict[str, str]) -> List[docstore.Document]:
+                      metadata: Dict[str, str],
+                      tables: List[Tuple[int,str]]) -> List[docstore.Document]:
         """
         Split the text into chunks and return them as Documents.
         """
@@ -154,10 +193,13 @@ class Ingester:
                     docs.append(doc)
                 chunk_num += 1
                 prv_page_num = page_num
-
+        
+        if tables:
+            docs.extend(self.table_to_docs(tables, metadata))    
+        
         return docs
 
-    def clean_texts_to_docs(self, raw_texts, metadata) -> List[docstore.Document]:
+    def clean_texts_to_docs(self, raw_texts, metadata, tables) -> List[docstore.Document]:
         """"
         Combines the functions clean_text and text_to_docs
         """
@@ -170,7 +212,8 @@ class Ingester:
         # for cleaned_text in cleaned_texts:
         #     cleaned_chunks = self.split_text_into_chunks(cleaned_text, metadata)
         docs = self.texts_to_docs(texts=cleaned_texts,
-                                  metadata=metadata)
+                                  metadata=metadata,
+                                  tables=tables)
         return docs
 
     def count_ada_tokens(self, raw_texts: List[Tuple[int, str]]) -> int:
@@ -273,9 +316,10 @@ class Ingester:
                 file_path = os.path.join(self.content_folder, file)
                 # extract raw text pages and metadata according to file type
                 logger.info(f"Parsing file {file}")
-                raw_texts, metadata = file_parser.parse_file(file_path)
+                raw_texts, metadata, tables = file_parser.parse_file(file_path)
                 documents = self.clean_texts_to_docs(raw_texts=raw_texts,
-                                                     metadata=metadata)
+                                                     metadata=metadata,
+                                                     tables=tables)
                 # count tokens
                 tokens_document = self.count_ada_tokens(raw_texts)
                 logger.info(f"Extracted {len(documents)} chunks (Tokens: {tokens_document}) from {file}")
