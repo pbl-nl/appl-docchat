@@ -1,3 +1,4 @@
+# imports
 import os
 from typing import List, Tuple
 import asyncio
@@ -15,7 +16,6 @@ from ingest.ingester import Ingester
 from query.querier import Querier
 import settings
 import utils as ut
-from ingest.embeddings_creator import EmbeddingsCreator
 
 print(sys.platform)
 if sys.platform.startswith("win"):
@@ -109,7 +109,7 @@ def generate_answer(querier: Querier,
 def get_ragas_results(answers: List[str],
                       sources: List[str],
                       eval_questions: List[str],
-                      eval_groundtruths: List[str]) -> evaluation.Result:
+                      eval_groundtruths: List[str]) -> evaluation.EvaluationResult:
     """
     runs the ragas evaluations
 
@@ -126,7 +126,7 @@ def get_ragas_results(answers: List[str],
 
     Returns
     -------
-    evaluation.Result
+    evaluation.EvaluationResult
         the result that the ragas package produces, in the form of a number of performance metrics per question
     """
     # create list of dictionaries with the examples consisting of questions and ground_truth, answer, source_documents
@@ -183,7 +183,7 @@ def store_aggregated_results(timestamp: str,
                              admin_columns: List[str],
                              evaluation_folder: str,
                              eval_file: str,
-                             result: evaluation.Result) -> None:
+                             result: evaluation.EvaluationResult) -> None:
     """
     writes aggregated ragas results to file, including some admin columns and all the settings
     one line per folder
@@ -198,7 +198,7 @@ def store_aggregated_results(timestamp: str,
         name of content folder (without path)
     eval_file : str
         name of the evaluation file
-    result : evaluation.Result
+    result : evaluation.EvaluationResult
         the resulting ragas performance metrics
     """
     # administrative data
@@ -232,7 +232,7 @@ def store_detailed_results(timestamp: str,
                            eval_file: str,
                            eval_questions: List[str],
                            eval_question_files: List[str],
-                           result: evaluation.Result) -> None:
+                           result: evaluation.EvaluationResult) -> None:
     """
     writes detailed ragas results to file, including some admin columns and all the questions, answers,
     ground truths and sources used. One line per question
@@ -252,7 +252,7 @@ def store_detailed_results(timestamp: str,
         list of questions from the json file that was read
     eval_question_files : List[str]
         list of files corresponding to the list of questions
-    result : evaluation.Result
+    result : evaluation.EvaluationResult
         the resulting ragas performance metrics
     """
     # administrative data
@@ -308,9 +308,9 @@ def main(chunk_size: int = None, chunk_overlap: int = None, chunk_k: int = None)
     chunk_k : int, optional
         the maximum number of chunks to return from the retriever, by default None
     """
-    confidential = False
     # get relevant models
-    llm_provider, llm_model, embeddings_provider, embeddings_model = ut.get_relevant_models(confidential)
+    llm_provider, llm_model, embeddings_provider, embeddings_model = ut.get_relevant_models(summary=False,
+                                                                                            private=False)
     # Create instance of Querier
     querier = Querier(llm_provider=llm_provider,
                       llm_model=llm_model,
@@ -324,16 +324,19 @@ def main(chunk_size: int = None, chunk_overlap: int = None, chunk_k: int = None)
     with open(os.path.join(settings.EVAL_DIR, eval_file), mode='r', encoding='utf8') as evalfile:
         eval_file_json = json.load(evalfile)
 
-    folder_list = eval_file_json.keys()
-    for evaluation_folder in folder_list:
+    folder_path_list = eval_file_json.keys()
+    for folder_path in folder_path_list:
+        evaluation_folder = os.path.basename(folder_path)
         # get associated source folder path and vectordb path
-        content_folder_path, vectordb_folder_path = ut.create_vectordb_path(content_folder_name=evaluation_folder,
-                                                                            chunk_size=chunk_size,
-                                                                            chunk_overlap=chunk_overlap)
+        vectordb_folder_path = ut.create_vectordb_path(content_folder_path=folder_path,
+                                                       embeddings_provider=embeddings_provider,
+                                                       embeddings_model=embeddings_model,
+                                                       chunk_size=chunk_size,
+                                                       chunk_overlap=chunk_overlap)
 
         # ingest documents if documents in source folder path are not ingested yet
         ingest_or_load_documents(evaluation_folder=evaluation_folder,
-                                 content_folder_path=content_folder_path,
+                                 content_folder_path=folder_path,
                                  vectordb_folder_path=vectordb_folder_path)
 
         # Get question types, questions and ground_truth from json file

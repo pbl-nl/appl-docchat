@@ -1,5 +1,15 @@
+"""
+LLM class to import into other modules
+An LLM model object is created by the get_llm method depending on the settings
+Possible options:
+- ChatOpenAI -> when LLM_PROVIDER is set to "openai"
+- AzureChatOpenAI -> when LLM_PROVIDER is set to "azureopenai"
+- HuggingFaceHub -> when LLM_PROVIDER is set to "huggingface"
+- Ollama -> when LLM_PROVIDER is set to "ollama"
+
+"""
+# imports
 from loguru import logger
-# LLM modules
 from langchain_community.llms.huggingface_hub import HuggingFaceHub
 from langchain_community.llms.ollama import Ollama
 from langchain_openai import ChatOpenAI, AzureChatOpenAI
@@ -23,11 +33,12 @@ class LLMCreator():
                  azure_openai_endpoint: str = None, azure_openai_api_version: str = None) -> None:
         self.llm_provider = settings.LLM_PROVIDER if llm_provider is None else llm_provider
         self.llm_model = settings.LLM_MODEL if llm_model is None else llm_model
-        self.azure_llm_deployment_name = settings.AZURE_LLM_DEPLOYMENT_MAP[self.llm_model]
-        self.azure_openai_endpoint = settings.AZURE_OPENAI_ENDPOINT \
-            if azure_openai_endpoint is None else azure_openai_endpoint
-        self.azure_openai_api_version = settings.AZURE_OPENAI_API_VERSION \
-            if azure_openai_api_version is None else azure_openai_api_version
+        if self.llm_provider == "azureopenai":
+            self.azure_llm_deployment_name = settings.AZURE_LLM_DEPLOYMENT_MAP[self.llm_model]
+            self.azure_openai_endpoint = settings.AZURE_OPENAI_ENDPOINT \
+                if azure_openai_endpoint is None else azure_openai_endpoint
+            self.azure_openai_api_version = settings.AZURE_OPENAI_API_VERSION \
+                if azure_openai_api_version is None else azure_openai_api_version
 
     def get_llm(self):
         """

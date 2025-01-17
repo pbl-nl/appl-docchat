@@ -6,11 +6,11 @@ APP_LOGO = "./images/b30.png"
 # filepath of text file with content for application explanation in Streamlit UI
 APP_INFO = "./info/explanation.txt"
 # header in Streamlit UI
-APP_HEADER = "ChatPBL"
+APP_HEADER = "CHATPBL"
 # filepath of evaluation results folder, e.g. "./evaluate"
 EVAL_DIR = "./evaluate"
 # header in Streamlit evaluation UI
-EVAL_APP_HEADER = "ChatPBL: evaluation"
+EVAL_APP_HEADER = "CHATPBL evaluation"
 # filepath of text file with content for evaluation explanation in evaluation UI
 EVAL_APP_INFO = "./info/evaluation_explanation.txt"
 # CHAIN_VERBOSITY must be boolean. When set to True, the standalone question that is conveyed to LLM is shown
@@ -22,37 +22,17 @@ ENVLOC = "path/to/dotenv/file"
 # ######### THE SETTINGS BELOW CAN BE USED FOR TESTING AND CUSTOMIZED TO YOUR PREFERENCE ##########
 
 # TEXT_SPLITTER_METHOD represents the way in which raw text chunks are created, must be one of:
-# "RecursiveCharacterTextSplitter" (split text to fixed size chunks) or
-# "NLTKTextSplitter" (keep full sentences even if chunk size is exceeded)
+# "RecursiveCharacterTextSplitter" (default): split text to fixed size chunks
+# "NLTKTextSplitter": keep full sentences even if chunk size is exceeded
 TEXT_SPLITTER_METHOD = "NLTKTextSplitter"
-# Only when RETRIEVER_TYPE is set to "parent":
-# TEXT_SPLITTER_METHOD_CHILD represents the way in which raw text chunks for the "child" chunks are created.
-# Must be one of:
-# "RecursiveCharacterTextSplitter" (split text to fixed size chunks) or
-# "NLTKTextSplitter" (keep full sentences even if chunk size is exceeded)
-TEXT_SPLITTER_METHOD_CHILD = "NLTKTextSplitter"
-
 # CHUNK_SIZE represents the maximum allowed size of text chunks, value must be integer
 CHUNK_SIZE = 1000
-# Only when RETRIEVER_TYPE is set to "parent":
-# CHUNK_SIZE_CHILD represents the maximum allowed size of "child" chunks, value must be integer
-CHUNK_SIZE_CHILD = 200
-
 # CHUNK_K represents the number of chunks that is returned from the vector database as input for the LLM
 # Value must be integer (>=1)
 # NB: CHUNK_SIZE and CHUNK_K are related, make sure that CHUNK_K * CHUNK_SIZE < LLM window size
 CHUNK_K = 5
-# Only when RETRIEVER_TYPE is set to "parent":
-# CHUNK_K_CHILD represents the number of child chunks that is returned from the vector database.
-# Their corresponding parent chunks (number will be <= CHUNK_K_CHILD) are then used as input for the LLM
-CHUNK_K_CHILD = 8
-
 # CHUNK_OVERLAP represents the overlap between 2 sequential text chunks, value must be integer (>=0 and < CHUNK_SIZE)
 CHUNK_OVERLAP = 200
-# Only when RETRIEVER_TYPE is set to "parent":
-# CHUNK_OVERLAP_CHILD represents the overlap between 2 sequential child chunks,
-# value must be integer (>=0 and < CHUNK_SIZE_CHILD)
-CHUNK_OVERLAP_CHILD = 0
 
 # EMBEDDINGS_PROVIDER must be one of: "openai", "huggingface", "ollama", "azureopenai"
 EMBEDDINGS_PROVIDER = "azureopenai"
@@ -87,9 +67,6 @@ AZURE_EMBEDDING_DEPLOYMENT_MAP = {
     "text-embedding-3-large": "pbl-openai-a-cd-3large"
 }
 
-# VECDB_TYPE must be one of: "chromadb",
-VECDB_TYPE = "chromadb"
-
 # RETRIEVER_TYPE represents the type of retriever that is used to extract chunks from the vectorstore
 # Value must be one of:
 # - "vectorstore": in case a purely semantic search is done in the vectorstore (dense vectors)
@@ -101,7 +78,22 @@ VECDB_TYPE = "chromadb"
 # CHUNK_K_CHILD and CHUNK_OVERLAP_CHILD
 RETRIEVER_TYPE = "vectorstore"
 
-# Only applicable if RETRIEVER_TYPE has been set to "hybrid"
+# Only when RETRIEVER_TYPE is set to "parent":
+# TEXT_SPLITTER_METHOD_CHILD represents the way in which raw text chunks for the "child" chunks are created.
+# Must be one of:
+# "RecursiveCharacterTextSplitter": split text to fixed size chunks
+# "NLTKTextSplitter": keep full sentences even if chunk size is exceeded
+TEXT_SPLITTER_METHOD_CHILD = "NLTKTextSplitter"
+# CHUNK_SIZE_CHILD represents the maximum allowed size of "child" chunks, value must be integer
+CHUNK_SIZE_CHILD = 200
+# CHUNK_K_CHILD represents the number of child chunks that is returned from the vector database.
+# Their corresponding parent chunks (number will be <= CHUNK_K_CHILD) are then used as input for the LLM
+CHUNK_K_CHILD = 8
+# CHUNK_OVERLAP_CHILD represents the overlap between 2 sequential child chunks,
+# value must be integer (>=0 and < CHUNK_SIZE_CHILD)
+CHUNK_OVERLAP_CHILD = 0
+
+# Only when RETRIEVER_TYPE is se to "hybrid"
 # First element represents the weight for BM25 retriever, second element the weight for vectorstore retriever
 RETRIEVER_WEIGHTS = [0.7, 0.3]
 
@@ -146,7 +138,7 @@ LLM_PROVIDER = "azureopenai"
 #   "gpt-35-turbo", context window size = 4097 tokens
 #   "gpt-4", context window size = 8192 tokens
 #   "gpt-4o", context window size = 128000 tokens
-LLM_MODEL = "gpt-35-turbo"
+LLM_MODEL = "gpt-4o"
 
 # AZURE_LLM_DEPLOYMENT_MAP represents a dictionary of Azure LLM model deployments
 # with key the model name and value the deployment name\
@@ -185,9 +177,9 @@ EVALUATION_LLM_MODEL = "gpt-4o"
 SUMMARY_TEXT_SPLITTER_METHOD = "RecursiveCharacterTextSplitter"
 SUMMARY_CHUNK_SIZE = 6000
 SUMMARY_CHUNK_OVERLAP = 0
+SUMMARY_EMBEDDINGS_PROVIDER = "azureopenai"
+SUMMARY_EMBEDDINGS_MODEL = "text-embedding-ada-002"
 SUMMARY_LLM_PROVIDER = "azureopenai"
-# !! With the langchain version in appl-docchat.yaml it is necessary to choose gpt-35-turbo 
-# if SUMMARY_LLM_PROVIDER = "azureopenai"
 SUMMARY_LLM_MODEL = "gpt-35-turbo"
 
 # settings for confidential documents, using Ollama LLM and embedding model

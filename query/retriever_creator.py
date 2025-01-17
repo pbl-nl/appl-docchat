@@ -1,3 +1,9 @@
+"""
+Retriever class to import into other modules
+Implementations: vectorstore retriever, ensemble retriever of vectorstore and BM25, custom parent document retriever,
+compression retriever combining flashrank reranker with any of the above mentioned retrievers,
+multiqueryretriever using multiple versions of the same query with one of the abovementioned retrievers
+"""
 # imports
 from typing import List
 from loguru import logger
@@ -117,31 +123,34 @@ class RetrieverCreator():
         # filter, if set
         if search_filter is not None:
             search_kwargs["filter"] = search_filter
-        if self.retriever_type == "vectorstore":
-            base_retriever = self.get_vectorstore_retriever(search_filter)
-        elif self.retriever_type == "hybrid":
+
+        base_retriever = self.get_vectorstore_retriever(search_filter)
+        if self.retriever_type == "hybrid":
             base_retriever = self.get_ensemble_retriever(search_filter)
         elif self.retriever_type == "parent":
             base_retriever = self.get_parent_document_retriever(search_filter)
 
+        compressor = None
         if self.rerank_provider == "flashrank_rerank":
             # compressor = FlashrankRerank(top_n=self.chunk_k, model=self.rerank_model)
-            # ! For Windows systems, force the cache dir of Ranker class to be "flashrank_models" (otherwise
-            # you will run into error as cache dir is tried to be set to //tmp)
-            # Step 1: Define a wrapper for Ranker’s __init__ method to enforce custom cache_dir
-            original_init = Ranker.__init__
+            my_client = Ranker(model_name=self.rerank_model, cache_dir="flashrank_models")
+            compressor = FlashrankRerank(client=my_client, top_n=self.chunk_k)
+            # # ! For Windows systems, force the cache dir of Ranker class to be "flashrank_models" (otherwise
+            # # you will run into error as cache dir is tried to be set to //tmp)
+            # # Step 1: Define a wrapper for Ranker’s __init__ method to enforce custom cache_dir
+            # original_init = Ranker.__init__
 
-            def custom_init(self, model_name, *args, **kwargs):
-                # Set the cache directory to your desired path
-                kwargs['cache_dir'] = 'flashrank_models'
-                # Call the original __init__ method with the modified cache_dir
-                original_init(self, model_name, *args, **kwargs)
+            # def custom_init(self, model_name, *args, **kwargs):
+            #     # Set the cache directory to your desired path
+            #     kwargs['cache_dir'] = 'flashrank_models'
+            #     # Call the original __init__ method with the modified cache_dir
+            #     original_init(self, model_name, *args, **kwargs)
 
-            # Step 2: Monkey-patch Ranker.__init__ with the custom init function
-            Ranker.__init__ = custom_init
-            compressor = FlashrankRerank(client=Ranker, top_n=self.chunk_k, model=self.rerank_model)
+            # # Step 2: Monkey-patch Ranker.__init__ with the custom init function
+            # Ranker.__init__ = custom_init
+            # compressor = FlashrankRerank(client=Ranker, top_n=self.chunk_k, model=self.rerank_model)
 
-            Ranker.__init__ = original_init
+            # Ranker.__init__ = original_init
 
         retriever = ContextualCompressionRetriever(base_retriever=base_retriever,
                                                    base_compressor=compressor)

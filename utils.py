@@ -1,16 +1,15 @@
 """
 The utils module contains general functionality that can be used at various places in the application
 """
+# imports
 from typing import Any, Dict, List, Tuple
 import os
 import sys
+import time
 import datetime as dt
-import pathlib
 import numpy as np
 from loguru import logger
 from langdetect import detect, LangDetectException
-import os
-import time
 import psutil
 import keyboard
 # local imports
@@ -74,6 +73,7 @@ def create_summaries_folder(my_folder_path_selected: str) -> None:
 
 def create_vectordb_path(content_folder_path: str,
                          retriever_type: str = None,
+                         embeddings_provider: str = None,
                          embeddings_model: str = None,
                          text_splitter_method: str = None,
                          chunk_size: int = None,
@@ -81,7 +81,7 @@ def create_vectordb_path(content_folder_path: str,
                          chunk_size_child: int = None,
                          chunk_overlap_child: int = None) -> str:
     """
-    Creates the content folder path and vector database folder path
+    Creates the full path for the vectorstore
 
     Parameters
     ----------
@@ -89,8 +89,10 @@ def create_vectordb_path(content_folder_path: str,
         name of the content folder (including the path)
     retriever_type : str, optional
         name of the retriever type, by default None
+    embeddings_provider : str, optional
+        name of the embeddings provider, by default None
     embeddings_model : str, optional
-        name of the embeddings_model, by default None
+        name of the embeddings model, by default None
     text_splitter_method : str, optional
         name of the text splitter method, by default None
     chunk_size : int, optional
@@ -105,9 +107,10 @@ def create_vectordb_path(content_folder_path: str,
     Returns
     -------
     str
-        vector database folder path
+        vectorstore folder path
     """
     retriever_type = settings.RETRIEVER_TYPE if retriever_type is None else retriever_type
+    embeddings_provider = settings.EMBEDDINGS_PROVIDER if embeddings_provider is None else embeddings_provider
     embeddings_model = settings.EMBEDDINGS_MODEL if embeddings_model is None else embeddings_model
     text_splitter_method = settings.TEXT_SPLITTER_METHOD if text_splitter_method is None else text_splitter_method
     chunk_size = str(settings.CHUNK_SIZE) if chunk_size is None else str(chunk_size)
@@ -115,9 +118,9 @@ def create_vectordb_path(content_folder_path: str,
     chunk_size_child = str(settings.CHUNK_SIZE_CHILD) if chunk_size_child is None else str(chunk_size_child)
     chunk_overlap_child = str(settings.CHUNK_OVERLAP_CHILD) \
         if chunk_overlap_child is None else str(chunk_overlap_child)
-    # vectordb_name is created from retriever_type, embeddings_model, text_splitter_method and
+    # vectordb_name is created from retriever_type, embeddings_provider, embeddings_model, text_splitter_method,
     # parent and child chunk_size and chunk_overlap
-    vectordb_name = retriever_type + "_" + embeddings_model + "_" + \
+    vectordb_name = retriever_type + "_" + embeddings_provider + "_" + embeddings_model + "_" + \
         text_splitter_method + "_" + chunk_size + "_" + chunk_overlap + "_" + chunk_size_child + "_" + \
         chunk_overlap_child
 
@@ -144,19 +147,16 @@ def is_relevant_file(content_folder_path: str, document_selection: List[str], my
     bool
         True if file is relevant, otherwise False
     """
+    relevant = False
     if ((document_selection is None) or (document_selection == ["All"])):
         relevant = ((os.path.isfile(os.path.join(content_folder_path, my_file))) and
-                    (os.path.splitext(my_file)[1] in VALID_EXTENSIONS))
+                    (os.path.splitext(my_file)[1] in VALID_EXTENSIONS) and
+                    (not my_file.startswith("~")))
     else:
         relevant = ((os.path.isfile(os.path.join(content_folder_path, my_file))) and
-                (my_file in document_selection) and
-                (os.path.splitext(my_file)[1] in VALID_EXTENSIONS))
-
-    if not relevant:
-        if os.path.isfile(os.path.join(content_folder_path, my_file)):
-            logger.info(f"Skipping ingestion of {my_file} because it has extension {os.path.splitext(my_file)[1]}")
-        else:
-            logger.info(f"Skipping ingestion of {my_file} because it is a folder")
+                    (os.path.splitext(my_file)[1] in VALID_EXTENSIONS) and
+                    (not my_file.startswith("~")) and
+                    (my_file in document_selection))
 
     return relevant
 
@@ -177,7 +177,16 @@ def get_relevant_files_in_folder(content_folder_path: str, document_selection: L
     List[str]
         list of files, without path
     """
-    return [f for f in os.listdir(content_folder_path) if is_relevant_file(content_folder_path, document_selection, f)]
+    all_files = os.listdir(content_folder_path)
+    relevant_files = []
+    for file in all_files:
+        if is_relevant_file(content_folder_path=content_folder_path,
+                            document_selection=document_selection,
+                            my_file=file):
+            logger.info(f"file {file} is found relevant for ingestion")
+            relevant_files.append(file)
+
+    return relevant_files
 
 
 def exit_program() -> None:
@@ -188,7 +197,7 @@ def exit_program() -> None:
     sys.exit(0)
 
 
-def exit_UI() -> None:
+def exit_ui() -> None:
     """
     Exits the User Interface process.
     First, the last tab in the browser is closed
@@ -343,10 +352,30 @@ def detect_language(text: str, number_of_characters: int = 1000) -> str:
             return 'unknown'
 
 
-def get_relevant_models(private: bool) -> Tuple[str, str, str, str]:
+def get_relevant_models(summary: bool, private: bool) -> Tuple[str, str, str, str]:
+    """
+    Gets the appropriate embeddings provider and model and llm provider and model
+    based on whether a summary is wanted and/or whether the documents involved are private
+
+    Parameters
+    ----------
+    summary : bool
+        indicator for summary as purpose
+    private : bool
+        indicator for private document
+
+    Returns
+    -------
+    Tuple[str, str, str, str]
+        tuple of embedding provider, embedding model, llm provider and llm model
+    """
     if private:
         return settings.PRIVATE_LLM_PROVIDER, settings.PRIVATE_LLM_MODEL, \
                settings.PRIVATE_EMBEDDINGS_PROVIDER, settings.PRIVATE_EMBEDDINGS_MODEL
     else:
-        return settings.LLM_PROVIDER, settings.LLM_MODEL, \
-               settings.EMBEDDINGS_PROVIDER, settings.EMBEDDINGS_MODEL
+        if summary:
+            return settings.SUMMARY_LLM_PROVIDER, settings.SUMMARY_LLM_MODEL, \
+                   settings.SUMMARY_EMBEDDINGS_PROVIDER, settings.SUMMARY_EMBEDDINGS_MODEL
+        else:
+            return settings.LLM_PROVIDER, settings.LLM_MODEL, \
+                   settings.EMBEDDINGS_PROVIDER, settings.EMBEDDINGS_MODEL

@@ -108,7 +108,7 @@ def write_settings_to_result_file(input_path: os.PathLike, confidential: bool, o
     output_path : os.PathLike
         path of the output file
     """
-    with open(output_path, "w") as file:
+    with open(file=output_path, mode="w", encoding="utf8") as file:
         file.write(f"input path =  {input_path} \n")
         file.write(f"confidential =  {confidential} \n")
         file.write(f"settings.TEXT_SPLITTER_METHOD =  {settings.TEXT_SPLITTER_METHOD} \n")
@@ -268,9 +268,11 @@ def main() -> None:
     confidential_yn = input("Are there any confidential documents in the folder? (y/n) ")
     confidential = confidential_yn in ["y", "Y"]
     # get relevant models
-    llm_provider, llm_model, embeddings_provider, embeddings_model = ut.get_relevant_models(confidential)
+    llm_provider, llm_model, embeddings_provider, embeddings_model = ut.get_relevant_models(summary=False,
+                                                                                            private=confidential)
     # get associated content folder path and vecdb path
     vecdb_folder_path = ut.create_vectordb_path(content_folder_path=content_folder_path,
+                                                embeddings_provider=embeddings_provider,
                                                 embeddings_model=embeddings_model)
     # if content folder path does not exist, stop
     if not os.path.exists(content_folder_path):

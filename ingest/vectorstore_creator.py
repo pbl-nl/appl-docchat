@@ -2,7 +2,7 @@
 VectorStore class to be used in other modules
 """
 # imports
-from langchain_community.vectorstores.chroma import Chroma
+from langchain_chroma import Chroma
 
 
 class VectorStoreCreator():
