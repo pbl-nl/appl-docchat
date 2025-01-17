@@ -144,19 +144,16 @@ def is_relevant_file(content_folder_path: str, document_selection: List[str], my
     bool
         True if file is relevant, otherwise False
     """
+    relevant = False
     if ((document_selection is None) or (document_selection == ["All"])):
         relevant = ((os.path.isfile(os.path.join(content_folder_path, my_file))) and
-                    (os.path.splitext(my_file)[1] in VALID_EXTENSIONS))
+                    (os.path.splitext(my_file)[1] in VALID_EXTENSIONS) and
+                    (not my_file.startswith("~")))
     else:
         relevant = ((os.path.isfile(os.path.join(content_folder_path, my_file))) and
-                (my_file in document_selection) and
-                (os.path.splitext(my_file)[1] in VALID_EXTENSIONS))
-
-    if not relevant:
-        if os.path.isfile(os.path.join(content_folder_path, my_file)):
-            logger.info(f"Skipping ingestion of {my_file} because it has extension {os.path.splitext(my_file)[1]}")
-        else:
-            logger.info(f"Skipping ingestion of {my_file} because it is a folder")
+                    (os.path.splitext(my_file)[1] in VALID_EXTENSIONS) and
+                    (not my_file.startswith("~")) and
+                    (my_file in document_selection))
 
     return relevant
 
