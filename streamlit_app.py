@@ -85,15 +85,26 @@ def create_and_show_summary(my_summary_type: str,
     logger.info(f"Finished create_and_show_summary() with summarization method {summarization_method}")
 
 
-def display_chat_history() -> None:
+def display_chat_history(folder_path_selected) -> None:
     """
-    Shows the complete chat history
+    Shows the complete chat history with source documents displayed after each assistant response.
+
+    Parameters
+    ----------
+    folder_path_selected : str
+        path of selected document folder
     """
-    for message in st.session_state['messages']:
-        if message["role"] != "system":
-            with st.chat_message(message["role"]):
+    for i, message in enumerate(st.session_state['messages']):
+        if message["role"] == "user":
+            with st.chat_message("user"):
                 st.markdown(message["content"])
-    logger.info("Executed display_chat_history()")
+        elif message["role"] == "assistant":
+            with st.chat_message("assistant"):
+                st.markdown(message["content"])
+            # Show source documents right after the assistant's response
+            if "sources" in message and message["sources"]:
+                display_sources(sources=message["sources"], my_folder_path_selected=folder_path_selected, question_number=i)
+
 
 
 @st.cache_data
@@ -193,13 +204,75 @@ def check_vectordb(my_querier: Querier,
     st.session_state['folder_selected'] = my_folder_name_selected
     logger.info("Executed check_vectordb")
 
+def display_sources(sources: List[str], my_folder_path_selected: str, question_number: int) -> None:
+    """
+    Displays the source documents used for the answer
+
+    Parameters
+    ----------
+    sources : List[str]
+        list of source documents
+    my_folder_path_selected : str
+        path of selected document folder
+    question_number : int
+        number of the question asked by the user to reduce the number of images created
+        (in later versions it can be used to check if the images are already created and stored)
+    """
+    if len(sources) > 0:
+        with st.expander("Paragraphs used for answer"):
+            # group sources by filename and page number
+            # in order to show the same page with multiple highlights only once
+            grouped_sources = {}
+            for doc in sources:
+                key = (doc.metadata['filename'], doc.metadata['page_number'])
+                if key not in grouped_sources:
+                    grouped_sources[key] = []
+                grouped_sources[key].append(doc)
+
+            for i, (_, documents) in enumerate(grouped_sources.items()):
+                filename = documents[0].metadata['filename']
+                if filename.endswith(".docx"):
+                    docpath = os.path.join(my_folder_path_selected, "conversions", filename + ".pdf")
+                else:
+                    docpath = os.path.join(my_folder_path_selected, filename)
+                pagenr = documents[0].metadata['page_number']
+                if (filename.endswith(".pdf")) or (filename.endswith(".docx")):
+                    exp_textcol, _, exp_imgcol = st.columns([0.3, 0.1, 0.6])
+                else:
+                    exp_textcol, _ = st.columns([0.9, 0.1])
+                with exp_textcol:
+                    # add 1 to metadata page_number because that starts at 0
+                    st.write(f"**file: {filename}, page {pagenr + 1}**")
+                    for document in documents:
+                        st.write(f"{document.page_content}")
+                if (filename.endswith(".pdf")) or (filename.endswith(".docx")):
+                    with exp_imgcol:
+                        doc = fitz.open(docpath)
+                        page = doc.load_page(pagenr)
+                        # highlight all occurrences of the search string in the page
+                        # there might be multiple occurrences of the same page with different chunks
+                        for document in documents:
+                            for rect in page.search_for(document.page_content):
+                                page.add_highlight_annot(rect)
+                        # save image of page with highlighted text, zoom factor 2 in each dimension
+                        zoom_x = 2
+                        zoom_y = 2
+                        mat = fitz.Matrix(zoom_x, zoom_y)
+                        pix = page.get_pixmap(matrix=mat)
+                        # store image as a PNG
+                        # question_number//2 + 1 is used to reduce the number of images created
+                        imgfile = f"{docpath}-q{question_number//2 + 1}-ch{i}.png"
+                        pix.save(imgfile)
+                        st.image(imgfile)
+                st.divider()
 
 def handle_query(my_folder_path_selected: str,
                  my_querier: Querier,
                  my_prompt: str,
                  my_document_selection: List[str],
                  my_folder_name_selected: str,
-                 my_vecdb_folder_path_selected: str) -> None:
+                 my_vecdb_folder_path_selected: str,
+                 question_number: int) -> None:
     """
     creates an answer to the user's prompt by invoking the defined chain
 
@@ -217,6 +290,8 @@ def handle_query(my_folder_path_selected: str,
         selected document folder
     my_vecdb_folder_path_selected : str
         vector database associated with selected document folder
+    question_number : int
+        number of the question asked by the user
     """
     # Display user message in chat message container
     with st.chat_message("user"):
@@ -238,46 +313,12 @@ def handle_query(my_folder_path_selected: str,
     # Display the response in chat message container
     with st.chat_message("assistant"):
         st.markdown(response["answer"])
-    # Add the response to chat history
-    st.session_state['messages'].append({"role": "assistant", "content": response["answer"]})
+    # Add the response to chat history and also the source documents used for the answer
+    st.session_state['messages'].append({"role": "assistant", "content": response["answer"], "sources": response["source_documents"]})
 
     # show sources or the answer
-    if len(response["source_documents"]) > 0:
-        # print(response)
-        with st.expander("Paragraphs used for answer"):
-            for i, document in enumerate(response["source_documents"]):
-                filename = document.metadata['filename']
-                if filename.endswith(".docx"):
-                    docpath = os.path.join(my_folder_path_selected, "conversions", filename + ".pdf")
-                else:
-                    docpath = os.path.join(my_folder_path_selected, filename)
-                pagenr = document.metadata['page_number']
-                content = document.page_content
-                if (filename.endswith(".pdf")) or (filename.endswith(".docx")):
-                    exp_textcol, _, exp_imgcol = st.columns([0.3, 0.1, 0.6])
-                else:
-                    exp_textcol, _ = st.columns([0.9, 0.1])
-                with exp_textcol:
-                    # add 1 to metadata page_number because that starts at 0
-                    st.write(f"**file: {filename}, page {pagenr + 1}**")
-                    st.write(f"{document.page_content}")
-                if (filename.endswith(".pdf")) or (filename.endswith(".docx")):
-                    with exp_imgcol:
-                        doc = fitz.open(docpath)
-                        page = doc.load_page(pagenr)
-                        rects = page.search_for(content)
-                        for rect in rects:
-                            page.add_highlight_annot(rect)
-                        # save image of page with highlighted text, zoom factor 2 in each dimension
-                        zoom_x = 2
-                        zoom_y = 2
-                        mat = fitz.Matrix(zoom_x, zoom_y)
-                        pix = page.get_pixmap(matrix=mat)
-                        # store image as a PNG
-                        imgfile = f"{docpath}-ch{i}.png"
-                        pix.save(imgfile)
-                        st.image(imgfile)
-                st.divider()
+    if response["source_documents"]:
+        display_sources(sources=response["source_documents"], my_folder_path_selected=my_folder_path_selected, question_number=question_number)
     else:
         logger.info("No source documents found relating to the question")
     logger.info("Executed handle_query(querier, prompt)")
@@ -461,7 +502,8 @@ if folder_path_selected != "":
                 querier.clear_history()
                 logger.info("Clear Conversation button clicked")
             # display chat messages from history
-            display_chat_history()
+            # path is needed to show source documents after the assistant's response
+            display_chat_history(folder_path_selected)
             # react to user input if a question has been asked
             prompt = st.chat_input("Your question")
             if prompt:
@@ -470,6 +512,7 @@ if folder_path_selected != "":
                              my_prompt=prompt,
                              my_document_selection=document_selection,
                              my_folder_name_selected=folder_name_selected,
-                             my_vecdb_folder_path_selected=vecdb_folder_path)
+                             my_vecdb_folder_path_selected=vecdb_folder_path,
+                             question_number=len(st.session_state['messages']))
         else:
             st.write("Please choose one or more documents")
