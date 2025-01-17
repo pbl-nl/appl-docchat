@@ -155,12 +155,12 @@ sympy==1.13.1
 tenacity==9.0.0
 threadpoolctl==3.5.0
 tiktoken==0.8.0
-tokenizers==0.21.0
+tokenizers==0.20.3
 toml==0.10.2
 torch==2.5.1
 tornado==6.4.2
 tqdm==4.67.1
-transformers==4.48.0
+transformers==4.46.3
 typer==0.15.1
 typing_extensions==4.12.2
 typing-inspect==0.9.0

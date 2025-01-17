@@ -337,6 +337,6 @@ class FileParser:
         """
         # convert docx to pdf
         path_to_pdf = self.convert_docx_to_pdf(file_path)
-        pages, metadata = self.parse_pymupdf(path_to_pdf)
+        pages, metadata, _ = self.parse_pymupdf(path_to_pdf)
 
         return pages, metadata
