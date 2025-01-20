@@ -1,6 +1,6 @@
 import os
 from langchain.chains.summarize import load_summarize_chain
-from langchain_community.document_loaders import PyPDFLoader
+from langchain_community.document_loaders import PyMuPDFLoader
 from dotenv import load_dotenv
 from langchain_core.prompts import PromptTemplate
 # local imports
@@ -44,7 +44,7 @@ class Summarizer:
         partial_map_reduce_prompt = f"Write a concise summary of the following in the {my_language} language: "
         partial_refine_prompt = f"Given the new context, refine the original summary in the {my_language} language. \
         If the context isn't useful, return the original summary."
-        
+
         if self.chain_type == "map_reduce":
             map_reduce_prompt = PromptTemplate(template=partial_map_reduce_prompt + pr.SUMMARY_PROMPT_TEMPLATE,
                                                input_variables=["text"])
@@ -92,7 +92,7 @@ class Summarizer:
                                         chunk_size=self.chunk_size,
                                         chunk_overlap=self.chunk_overlap).get_splitter(language)
 
-        loader = PyPDFLoader(os.path.join(self.content_folder_path, file))
+        loader = PyMuPDFLoader(os.path.join(self.content_folder_path, file))
         docs = loader.load_and_split(text_splitter=text_splitter)
         chain = self.make_chain(language)
         summary = chain.invoke(docs)["output_text"]

@@ -41,6 +41,7 @@ jobs:
         pip install nltk
         pip install --upgrade pydantic
         python -m nltk.downloader punkt
+        python -m nltk.downloader punkt_tab
 
     - name: Create .env file
       run: |

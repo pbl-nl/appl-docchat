@@ -132,25 +132,8 @@ class RetrieverCreator():
 
         compressor = None
         if self.rerank_provider == "flashrank_rerank":
-            # compressor = FlashrankRerank(top_n=self.chunk_k, model=self.rerank_model)
             my_client = Ranker(model_name=self.rerank_model, cache_dir="flashrank_models")
             compressor = FlashrankRerank(client=my_client, top_n=self.chunk_k)
-            # # ! For Windows systems, force the cache dir of Ranker class to be "flashrank_models" (otherwise
-            # # you will run into error as cache dir is tried to be set to //tmp)
-            # # Step 1: Define a wrapper for Ranker’s __init__ method to enforce custom cache_dir
-            # original_init = Ranker.__init__
-
-            # def custom_init(self, model_name, *args, **kwargs):
-            #     # Set the cache directory to your desired path
-            #     kwargs['cache_dir'] = 'flashrank_models'
-            #     # Call the original __init__ method with the modified cache_dir
-            #     original_init(self, model_name, *args, **kwargs)
-
-            # # Step 2: Monkey-patch Ranker.__init__ with the custom init function
-            # Ranker.__init__ = custom_init
-            # compressor = FlashrankRerank(client=Ranker, top_n=self.chunk_k, model=self.rerank_model)
-
-            # Ranker.__init__ = original_init
 
         retriever = ContextualCompressionRetriever(base_retriever=base_retriever,
                                                    base_compressor=compressor)
