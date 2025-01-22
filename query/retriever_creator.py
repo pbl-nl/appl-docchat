@@ -1,3 +1,9 @@
+"""
+Retriever class to import into other modules
+Implementations: vectorstore retriever, ensemble retriever of vectorstore and BM25, custom parent document retriever,
+compression retriever combining flashrank reranker with any of the above mentioned retrievers,
+multiqueryretriever using multiple versions of the same query with one of the abovementioned retrievers
+"""
 # imports
 from typing import List
 from loguru import logger
