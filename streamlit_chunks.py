@@ -19,9 +19,13 @@ def click_exit_button():
     st.session_state['is_EXIT_clicked'] = True
 
 
-def get_chunks(my_embeddings_model: str, my_folder_name_selected: str, my_vectorstore_folder_path: str, prompt: str):
+def get_chunks(my_embeddings_provider: str,
+               my_embeddings_model: str,
+               my_folder_name_selected: str,
+               my_vectorstore_folder_path: str,
+               prompt: str):
     # get embeddings
-    my_embeddings = EmbeddingsCreator(embeddings_provider="azureopenai",
+    my_embeddings = EmbeddingsCreator(embeddings_provider=my_embeddings_provider,
                                       embeddings_model=my_embeddings_model).get_embeddings()
 
     # get vector store
@@ -97,7 +101,7 @@ folder_path_selected = st.sidebar.text_input(label="***ENTER THE DOCUMENT FOLDER
 user_query = st.sidebar.text_input(label="***ENTER YOUR PROMPT***",
                                    help="""Enter prompt as used in review.py""")
 if st.session_state['is_EXIT_clicked']:
-    ut.exit_UI()
+    ut.exit_ui()
 
 if folder_path_selected != "":
     load_dotenv(dotenv_path=os.path.join(settings.ENVLOC, ".env"))
@@ -119,24 +123,26 @@ if folder_path_selected != "":
             #  extract the settings that were used to create the folder
             vectorstore_settings = vectorstore_folder.split("_")
             retriever_type = vectorstore_settings[0]
-            embedding_model = vectorstore_settings[1]
-            text_splitter_method = vectorstore_settings[2]
+            embedding_provider = vectorstore_settings[1]
+            embedding_model = vectorstore_settings[2]
+            text_splitter_method = vectorstore_settings[3]
             if retriever_type == "parent":
-                chunk_k = vectorstore_settings[5]
-                chunk_overlap = vectorstore_settings[6]
+                chunk_size = vectorstore_settings[6]
+                chunk_overlap = vectorstore_settings[7]
             else:
-                chunk_k = vectorstore_settings[3]
-                chunk_overlap = vectorstore_settings[4]
+                chunk_size = vectorstore_settings[4]
+                chunk_overlap = vectorstore_settings[5]
 
             # Store settings in a dataframe
             df = pd.DataFrame(columns=[vectorstore_folder])
             df.loc[len(df)] = f"retriever_type = {retriever_type}"
             df.loc[len(df)] = f"embedding_model = {embedding_model}"
             df.loc[len(df)] = f"text_splitter = {text_splitter_method}"
-            df.loc[len(df)] = f"chunk_k = {chunk_k}"
+            df.loc[len(df)] = f"chunk_size = {chunk_size}"
             df.loc[len(df)] = f"chunk_overlap = {chunk_overlap}"
             # get chunk info from vectorstore
-            collection_size, chunks = get_chunks(my_embeddings_model=embedding_model,
+            collection_size, chunks = get_chunks(my_embeddings_provider=embedding_provider,
+                                                 my_embeddings_model=embedding_model,
                                                  my_folder_name_selected=folder_name_selected,
                                                  my_vectorstore_folder_path=vectorstore_folder_path,
                                                  prompt=user_query)

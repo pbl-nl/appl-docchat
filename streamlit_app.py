@@ -1,3 +1,6 @@
+"""
+Streamlit User Interface for chatting with documents
+"""
 from typing import List
 import os
 import fitz
@@ -42,21 +45,24 @@ def create_and_show_summary(my_summary_type: str,
     my_selected_documents : List[str]
         list of selected documents
     """
-    if my_summary_type == "Short":
-        summarization_method = "map_reduce"
-    elif my_summary_type == "Long":
+    summarization_method = "map_reduce"
+    if my_summary_type == "Long":
         summarization_method = "refine"
 
     logger.info(f"Starting create_and_show_summary() with summarization method {summarization_method}")
     # create subfolder for storage of summaries if not existing
     ut.create_summaries_folder(my_folder_path_selected)
+    # get relevant models
+    confidential = False  # temporary
+    my_llm_provider, my_llm_model, _, _ = ut.get_relevant_models(summary=True,
+                                                                 private=confidential)
     summarizer = Summarizer(content_folder_path=my_folder_path_selected,
                             summarization_method=summarization_method,
                             text_splitter_method=settings.SUMMARY_TEXT_SPLITTER_METHOD,
                             chunk_size=settings.SUMMARY_CHUNK_SIZE,
                             chunk_overlap=settings.SUMMARY_CHUNK_OVERLAP,
-                            llm_provider=settings.SUMMARY_LLM_PROVIDER,
-                            llm_model=settings.SUMMARY_LLM_MODEL)
+                            llm_provider=my_llm_provider,
+                            llm_model=my_llm_model)
 
     # for each selected file in content folder
     with st.expander(label=f"{my_summary_type} summary", expanded=True):
@@ -85,7 +91,7 @@ def create_and_show_summary(my_summary_type: str,
     logger.info(f"Finished create_and_show_summary() with summarization method {summarization_method}")
 
 
-def display_chat_history(folder_path_selected) -> None:
+def display_chat_history(my_folder_path_selected) -> None:
     """
     Shows the complete chat history with source documents displayed after each assistant response.
 
@@ -103,8 +109,9 @@ def display_chat_history(folder_path_selected) -> None:
                 st.markdown(message["content"])
             # Show source documents right after the assistant's response
             if "sources" in message and message["sources"]:
-                display_sources(sources=message["sources"], my_folder_path_selected=folder_path_selected, question_number=i)
-
+                display_sources(sources=message["sources"],
+                                my_folder_path_selected=my_folder_path_selected,
+                                question_number=i)
 
 
 @st.cache_data
@@ -204,6 +211,7 @@ def check_vectordb(my_querier: Querier,
     st.session_state['folder_selected'] = my_folder_name_selected
     logger.info("Executed check_vectordb")
 
+
 def display_sources(sources: List[str], my_folder_path_selected: str, question_number: int) -> None:
     """
     Displays the source documents used for the answer
@@ -241,9 +249,9 @@ def display_sources(sources: List[str], my_folder_path_selected: str, question_n
                 else:
                     exp_textcol, _ = st.columns([0.9, 0.1])
                 with exp_textcol:
-                    # add 1 to metadata page_number because that starts at 0
-                    st.write(f"**file: {filename}, page {pagenr + 1}**")
                     for document in documents:
+                        # add 1 to metadata page_number because that starts at 0
+                        st.write(f"**file: {filename}, page {pagenr + 1}**")
                         st.write(f"{document.page_content}")
                 if (filename.endswith(".pdf")) or (filename.endswith(".docx")):
                     with exp_imgcol:
@@ -265,6 +273,7 @@ def display_sources(sources: List[str], my_folder_path_selected: str, question_n
                         pix.save(imgfile)
                         st.image(imgfile)
                 st.divider()
+
 
 def handle_query(my_folder_path_selected: str,
                  my_querier: Querier,
@@ -314,11 +323,15 @@ def handle_query(my_folder_path_selected: str,
     with st.chat_message("assistant"):
         st.markdown(response["answer"])
     # Add the response to chat history and also the source documents used for the answer
-    st.session_state['messages'].append({"role": "assistant", "content": response["answer"], "sources": response["source_documents"]})
+    st.session_state['messages'].append({"role": "assistant",
+                                         "content": response["answer"],
+                                         "sources": response["source_documents"]})
 
-    # show sources or the answer
+    # show sources for the answer
     if response["source_documents"]:
-        display_sources(sources=response["source_documents"], my_folder_path_selected=my_folder_path_selected, question_number=question_number)
+        display_sources(sources=response["source_documents"],
+                        my_folder_path_selected=my_folder_path_selected,
+                        question_number=question_number)
     else:
         logger.info("No source documents found relating to the question")
     logger.info("Executed handle_query(querier, prompt)")
@@ -345,8 +358,6 @@ def initialize_page() -> None:
         ''',
         unsafe_allow_html=True
     )
-    logo_image = Image.open(settings.APP_LOGO)
-    st.sidebar.image(logo_image, width=250)
     _, col2, _ = st.columns([0.4, 0.2, 0.4])
     with col2:
         st.header(settings.APP_HEADER)
@@ -360,6 +371,16 @@ def initialize_page() -> None:
 
 
 @st.cache_data
+def initialize_logo() -> None:
+    """
+    Initializes the main page with a page header and app info
+    """
+    logo_image = Image.open(settings.APP_LOGO)
+    st.sidebar.image(logo_image, width=250)
+    logger.info("Executed initialize_logo()")
+
+
+@st.cache_data
 def initialize_session_state() -> None:
     """
     Initializes the session state variables for control
@@ -368,6 +389,8 @@ def initialize_session_state() -> None:
         st.session_state['is_GO_clicked'] = False
     if 'is_EXIT_clicked' not in st.session_state:
         st.session_state['is_EXIT_clicked'] = False
+    if 'is_summary_clicked' not in st.session_state:
+        st.session_state['is_summary_clicked'] = ""
     if 'folder_selected' not in st.session_state:
         st.session_state['folder_selected'] = ""
     if 'documents_selected' not in st.session_state:
@@ -429,13 +452,15 @@ set_page_config()
 initialize_page()
 # Create button to exit the application. This button sets session_state['is_EXIT_clicked'] to True
 st.sidebar.button("EXIT", type="primary", on_click=click_exit_button)
+# initialize logo, executed only once per session
+initialize_logo()
 # initialize session state variables
 initialize_session_state()
 # allow user to set the path to the document folder
 folder_path_selected = st.sidebar.text_input(label="***ENTER THE DOCUMENT FOLDER PATH***",
                                              help="""Please enter the full path e.g. Y:/User/troosts/chatpbl/...""")
 if st.session_state['is_EXIT_clicked']:
-    ut.exit_UI()
+    ut.exit_ui()
 if folder_path_selected != "":
     # get folder name with docs
     folder_name_selected = os.path.basename(folder_path_selected)
@@ -446,33 +471,55 @@ if folder_path_selected != "":
     # confidential = st.sidebar.checkbox(label="confidential", help="check in case of private documents")
     confidential = False
     # get relevant models
-    llm_provider, llm_model, embeddings_provider, embeddings_model = ut.get_relevant_models(confidential)
+    llm_provider, llm_model, embeddings_provider, embeddings_model = ut.get_relevant_models(summary=False,
+                                                                                            private=confidential)
     # creation of Querier object, executed only once per session
     querier = initialize_querier(my_llm_provider=llm_provider,
                                  my_llm_model=llm_model,
                                  my_embeddings_provider=embeddings_provider,
                                  my_embeddings_model=embeddings_model)
 
-    # clear querier history if a switch in confidentiality is made
-    if confidential != st.session_state['confidential']:
+    # If a different folder or (set of) document(s) is chosen,
+    # clear querier history and
+    # set the go button session state 'is_go_clicked' to False
+    if ((folder_name_selected != st.session_state['folder_selected']) or
+       (document_selection != st.session_state['documents_selected'])):
         querier.clear_history()
-    st.session_state['confidential'] = confidential
-
-    # clear querier history if a different folder or (set of) document(s) is chosen
-    if (folder_name_selected != st.session_state['folder_selected']) or \
-       (document_selection != st.session_state['documents_selected']):
-        querier.clear_history()
+        st.session_state['is_GO_clicked'] = False
     st.session_state['folder_selected'] = folder_name_selected
     st.session_state['documents_selected'] = document_selection
 
-    # create button to confirm folder selection. This button sets session_state['is_GO_clicked'] to True
-    st.sidebar.button("GO", type="primary", on_click=click_go_button)
+    # clear querier history if a switch in confidentiality is made
+    if confidential != st.session_state['confidential']:
+        querier.clear_history()
+        st.session_state['is_GO_clicked'] = False
+    st.session_state['confidential'] = confidential
+
+    # create radio button group for summarization
+    summary_type = st.sidebar.radio(label="Start with summary?",
+                                    options=["No", "Short", "Long"],
+                                    captions=["", "Quicker and shorter", "Slower but more extensive"],
+                                    index=0)
+    # when a different summary choice is made, set the go button session state 'is_go_clicked' to False
+    if summary_type != st.session_state['is_summary_clicked']:
+        st.session_state['is_GO_clicked'] = False
+    st.session_state['is_summary_clicked'] = summary_type
+
+    # create button to confirm folder selection. This button sets session_state['is_GO_clicked'] to True when clicked
+    st.sidebar.button(label="GO", type="primary", on_click=click_go_button,
+                      help="show the prompt bar at the bottom of the screen to take questions")
+
     # only start a conversation when a folder is selected and selection is confirmed with "GO" button
     if st.session_state['is_GO_clicked']:
         logger.info("GO button is clicked")
         if len(document_selection) > 0:
+            # get relevant models
+            _, _, embeddings_provider, embeddings_model = ut.get_relevant_models(summary=False,
+                                                                                 private=confidential)
+
             # determine name of associated vector database
             vecdb_folder_path = ut.create_vectordb_path(content_folder_path=folder_path_selected,
+                                                        embeddings_provider=embeddings_provider,
                                                         embeddings_model=embeddings_model)
             # create or update vector database if necessary
             check_vectordb(my_querier=querier,
@@ -482,10 +529,6 @@ if folder_path_selected != "":
                            my_vecdb_folder_path_selected=vecdb_folder_path,
                            my_embeddings_provider=embeddings_provider,
                            my_embeddings_model=embeddings_model)
-            summary_type = st.sidebar.radio(label="Start with summary?",
-                                            options=["No", "Short", "Long"],
-                                            captions=["", "Quicker and shorter", "Slower but more extensive"],
-                                            index=0)
             # if one of the options is chosen
             if summary_type in ["Short", "Long"]:
                 # show the summary at the top of the screen
@@ -500,6 +543,7 @@ if folder_path_selected != "":
                 # NB: session state of "is_GO_clicked" and "folder_selected" remain unchanged
                 st.session_state['messages'] = []
                 querier.clear_history()
+                st.session_state['is_GO_clicked'] = False
                 logger.info("Clear Conversation button clicked")
             # display chat messages from history
             # path is needed to show source documents after the assistant's response

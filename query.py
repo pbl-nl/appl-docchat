@@ -1,3 +1,4 @@
+# imports
 import os
 from loguru import logger
 # local imports
@@ -14,7 +15,8 @@ def main():
     confidential_yn = input("Are there any confidential documents in the folder? (y/n) ")
     confidential = confidential_yn in ["y", "Y"]
     # get relevant models
-    llm_provider, llm_model, embeddings_provider, embeddings_model = ut.get_relevant_models(confidential)
+    llm_provider, llm_model, embeddings_provider, embeddings_model = ut.get_relevant_models(summary=False,
+                                                                                            private=confidential)
     # create instance of Querier once
     querier = Querier(llm_provider=llm_provider,
                       llm_model=llm_model,
@@ -23,6 +25,7 @@ def main():
 
     # get associated vectordb path
     vecdb_folder_path = ut.create_vectordb_path(content_folder_path=content_folder_path,
+                                                embeddings_provider=embeddings_provider,
                                                 embeddings_model=embeddings_model)
 
     # if vector store folder does not exist, stop

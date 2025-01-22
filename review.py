@@ -108,7 +108,7 @@ def write_settings_to_result_file(input_path: os.PathLike, confidential: bool, o
     output_path : os.PathLike
         path of the output file
     """
-    with open(output_path, "w") as file:
+    with open(file=output_path, mode="w", encoding="utf8") as file:
         file.write(f"input path =  {input_path} \n")
         file.write(f"confidential =  {confidential} \n")
         file.write(f"settings.TEXT_SPLITTER_METHOD =  {settings.TEXT_SPLITTER_METHOD} \n")
@@ -137,6 +137,13 @@ def write_settings_to_result_file(input_path: os.PathLike, confidential: bool, o
         file.write(f"settings.RERANK_MODEL =  {settings.RERANK_MODEL} \n")
         file.write(f"settings.CHUNKS_K_FOR_RERANK =  {settings.CHUNKS_K_FOR_RERANK} \n")
         file.write(f"settings.RETRIEVER_PROMPT_TEMPLATE =  {settings.RETRIEVER_PROMPT_TEMPLATE} \n\n")
+
+
+def read_size_of_settings_file(output_path: os.PathLike) -> int:
+    with open(file=output_path, mode="r", encoding="utf8") as file:
+        lines = len(file.readlines())
+
+    return lines
 
 
 def create_answers_for_folder(
@@ -208,7 +215,7 @@ def create_answers_for_folder(
     df_result.to_csv(output_path, sep="\t", index=False, mode="a")
 
 
-def synthesize_results(querier: Querier, results_path: str, output_path: str) -> None:
+def synthesize_results(querier: Querier, results_path: str, output_path: str, skiplines: int) -> None:
     """
     Phase 2 of the review: synthesizes, per question, the results from phase 1
 
@@ -223,7 +230,9 @@ def synthesize_results(querier: Querier, results_path: str, output_path: str) ->
         path of the output file
     """
     # load questions and answers
-    answers_df = pd.read_csv(results_path, delimiter="\t")
+    answers_df = pd.read_csv(filepath_or_buffer=results_path,
+                             skiprows=skiplines,
+                             delimiter="\t")
     # loop over questions
     result = {}
     for question_num in answers_df["question_id"].unique():
@@ -246,7 +255,7 @@ def synthesize_results(querier: Querier, results_path: str, output_path: str) ->
         synthesis = querier.llm.invoke(synthesis_prompt)
         result[question] = synthesis.content
     # write results
-    with open(file=output_path, mode="w", newline="", encoding="utf8") as file:
+    with open(file=output_path, mode="a", newline="", encoding="utf8") as file:
         # create a writer object specifying TAB as delimiter
         tsv_writer = csv.writer(file, delimiter="\t")
         # write the header
@@ -268,9 +277,11 @@ def main() -> None:
     confidential_yn = input("Are there any confidential documents in the folder? (y/n) ")
     confidential = confidential_yn in ["y", "Y"]
     # get relevant models
-    llm_provider, llm_model, embeddings_provider, embeddings_model = ut.get_relevant_models(confidential)
+    llm_provider, llm_model, embeddings_provider, embeddings_model = ut.get_relevant_models(summary=False,
+                                                                                            private=confidential)
     # get associated content folder path and vecdb path
     vecdb_folder_path = ut.create_vectordb_path(content_folder_path=content_folder_path,
+                                                embeddings_provider=embeddings_provider,
                                                 embeddings_model=embeddings_model)
     # if content folder path does not exist, stop
     if not os.path.exists(content_folder_path):
@@ -309,38 +320,47 @@ def main() -> None:
     review_questions = get_review_questions(question_list_path)
     # check if there is already a result, if so skip creation of answers
     output_path_review = os.path.join(content_folder_path, "review", "result.tsv")
-    if os.path.exists(output_path_review):
-        logger.info(
-            "A review result (result.tsv) file already exists, skipping the answer creation"
-        )
-    else:
-        write_settings_to_result_file(input_path=content_folder_path,
-                                      confidential=confidential,
-                                      output_path=output_path_review)
-        create_answers_for_folder(
-            synthesis=synthesis,
-            review_files=review_files,
-            review_questions=review_questions,
-            content_folder_name=content_folder_name,
-            querier=querier,
-            vecdb_folder_path=vecdb_folder_path,
-            output_path=output_path_review,
-        )
-        logger.info("Successfully reviewed the documents.")
+    # if os.path.exists(output_path_review):
+    #     logger.info(
+    #         "A review result (result.tsv) file already exists, skipping the answer creation"
+    #     )
+    # else:
+    write_settings_to_result_file(input_path=content_folder_path,
+                                  confidential=confidential,
+                                  output_path=output_path_review)
+    numlines = read_size_of_settings_file(output_path=output_path_review)
+
+    create_answers_for_folder(
+        synthesis=synthesis,
+        review_files=review_files,
+        review_questions=review_questions,
+        content_folder_name=content_folder_name,
+        querier=querier,
+        vecdb_folder_path=vecdb_folder_path,
+        output_path=output_path_review
+    )
+    logger.info("Successfully reviewed the documents.")
 
     if synthesis.lower() == "y":
         # check if synthesis already exists, if not create one
         output_path_synthesis = os.path.join(
             content_folder_path, "review", "synthesis.tsv"
         )
-        if os.path.exists(output_path_synthesis):
-            logger.info(
-                "A synthesis result file (synthesis.tsv) already exists, skipping the answer creation"
-            )
-        else:
-            # second phase: synthesize the results
-            synthesize_results(querier, output_path_review, output_path_synthesis)
-            logger.info("Successfully synthesized results.")
+        write_settings_to_result_file(input_path=content_folder_path,
+                                      confidential=confidential,
+                                      output_path=output_path_synthesis)
+
+        # if os.path.exists(output_path_synthesis):
+        #     logger.info(
+        #         "A synthesis result file (synthesis.tsv) already exists, skipping the answer creation"
+        #     )
+        # else:
+        # second phase: synthesize the results
+        synthesize_results(querier=querier,
+                           results_path=output_path_review,
+                           output_path=output_path_synthesis,
+                           skiplines=numlines)
+        logger.info("Successfully synthesized results.")
 
 
 if __name__ == "__main__":
