@@ -48,11 +48,12 @@ NB: The chosen name of the environment folder is here venv. It can be changed to
 The file settings_template.py contains all parameters that can be used and needs to be copied to settings.py. In settings.py, fill in the parameter values you want to use for your use case. 
 Examples and restrictions for parameter values are given in the comment lines
 
-### nltk.tokenize.punkt module
-When the NLTKTextSplitter is used for chunking the documents, it is necessary to download the punkt module of NLTK.<br>
+### NLTK
+When the NLTKTextSplitter is used for chunking the documents, it is necessary to download the punkt and punkt_tab module of NLTK.<br>
 This can be done in the activated environment by starting a Python interactive session: type <code>python</code>.<br>
 Once in the Python session, type <code>import nltk</code> + Enter<br>
 Then <code>nltk.download('punkt')</code> + Enter
+And finally, <code>nltk.download('punkt_tab')</code> + Enter
 
 ### flashrank reranker
 This repo allows reranking the retrieved documents from the vector store, by using the FlashRank reranker
