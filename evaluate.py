@@ -1,3 +1,16 @@
+"""
+Module for evaluation
+
+Expected is a json file in subdir settings.EVAL_DIR
+The json file should consist of the following:
+A key representing the full path where the content folder can be found
+A value consisting of a list of dictionaries with the following keys:
+- "file" (optional): the filename of the document to evaluate
+- "question_type": indicating whether the question is an initial question or a follow-up question of the previous one
+- "question": the question to be asked to the document
+- "ground_truth": the annotated answer to the question
+"""
+# imports
 import os
 from typing import List, Tuple
 import asyncio
@@ -15,7 +28,6 @@ from ingest.ingester import Ingester
 from query.querier import Querier
 import settings
 import utils as ut
-from ingest.embeddings_creator import EmbeddingsCreator
 
 print(sys.platform)
 if sys.platform.startswith("win"):
@@ -109,7 +121,7 @@ def generate_answer(querier: Querier,
 def get_ragas_results(answers: List[str],
                       sources: List[str],
                       eval_questions: List[str],
-                      eval_groundtruths: List[str]) -> evaluation.Result:
+                      eval_groundtruths: List[str]) -> pd.DataFrame:
     """
     runs the ragas evaluations
 
@@ -126,8 +138,9 @@ def get_ragas_results(answers: List[str],
 
     Returns
     -------
-    evaluation.Result
-        the result that the ragas package produces, in the form of a number of performance metrics per question
+    pd.DataFrame
+        the result that the ragas package produces, in the form of a Pandas dataframe with a number of performance
+        metrics per question
     """
     # create list of dictionaries with the examples consisting of questions and ground_truth, answer, source_documents
     examples = [{"query": eval_question, "ground_truth": eval_groundtruths[i]}
@@ -157,33 +170,31 @@ def get_ragas_results(answers: List[str],
         emb_deployment = settings.AZURE_EMBEDDING_DEPLOYMENT_MAP[emb_model]
         llm_deployment = settings.AZURE_LLM_DEPLOYMENT_MAP[llm_model]
         result = evaluation.evaluate(dataset,
-            embeddings=AzureOpenAIEmbeddings(model=emb_model,
-                                             api_version=settings.AZURE_OPENAI_API_VERSION,
-                                             api_key=os.environ["AZURE_OPENAI_API_KEY"],
-                                             azure_deployment=emb_deployment,
-                                             azure_endpoint=settings.AZURE_OPENAI_ENDPOINT),
-            llm=AzureChatOpenAI(model=llm_model,
-                                azure_deployment=llm_deployment,
-                                api_version=settings.AZURE_OPENAI_API_VERSION,
-                                azure_endpoint=settings.AZURE_OPENAI_ENDPOINT,
-                                temperature=0)
-            )
+                                     embeddings=AzureOpenAIEmbeddings(model=emb_model,
+                                                                      api_version=settings.AZURE_OPENAI_API_VERSION,
+                                                                      api_key=os.environ["AZURE_OPENAI_API_KEY"],
+                                                                      azure_deployment=emb_deployment,
+                                                                      azure_endpoint=settings.AZURE_OPENAI_ENDPOINT),
+                                     llm=AzureChatOpenAI(model=llm_model,
+                                                         azure_deployment=llm_deployment,
+                                                         api_version=settings.AZURE_OPENAI_API_VERSION,
+                                                         azure_endpoint=settings.AZURE_OPENAI_ENDPOINT,
+                                                         temperature=0))
     else:
         result = evaluation.evaluate(dataset,
-            embeddings=OpenAIEmbeddings(model=emb_model,
-                                        api_key=os.environ["OPENAI_API_KEY"]),
-            llm=ChatOpenAI(model=llm_model,
-                           temperature=0)
-            )
+                                     embeddings=OpenAIEmbeddings(model=emb_model,
+                                                                 api_key=os.environ["OPENAI_API_KEY"]),
+                                     llm=ChatOpenAI(model=llm_model,
+                                                    temperature=0))
 
-    return result
+    return result.to_pandas()
 
 
 def store_aggregated_results(timestamp: str,
                              admin_columns: List[str],
                              evaluation_folder: str,
                              eval_file: str,
-                             result: evaluation.Result) -> None:
+                             result: pd.DataFrame) -> None:
     """
     writes aggregated ragas results to file, including some admin columns and all the settings
     one line per folder
@@ -198,20 +209,16 @@ def store_aggregated_results(timestamp: str,
         name of content folder (without path)
     eval_file : str
         name of the evaluation file
-    result : evaluation.Result
-        the resulting ragas performance metrics
+    result : pd.DataFrame
+        dataframe with ragas performance metrics 
     """
     # administrative data
     admin_data = zip([evaluation_folder], [timestamp], [eval_file])
     df_admin = pd.DataFrame(data=list(admin_data), columns=admin_columns)
 
     # evaluation results
-    agg_columns = list(result.keys())
-    agg_data = list(result.values())
-    df_agg_result = pd.DataFrame(data=[agg_data], columns=agg_columns)
-
     # No ragas_score available in ragas package version 1.0.9
-    df_agg_result = df_agg_result.loc[:, ["answer_relevancy", "context_precision", "faithfulness", "context_recall"]]
+    df_agg_result = result.loc[:, ["answer_relevancy", "context_precision", "faithfulness", "context_recall"]]
 
     # gather settings
     settings_dict = ut.get_settings_as_dictionary("settings.py")
@@ -232,11 +239,10 @@ def store_detailed_results(timestamp: str,
                            eval_file: str,
                            eval_questions: List[str],
                            eval_question_files: List[str],
-                           result: evaluation.Result) -> None:
+                           result: pd.DataFrame) -> None:
     """
     writes detailed ragas results to file, including some admin columns and all the questions, answers,
-    ground truths and sources used. One line per question
-
+    ground truths and sources used. One line per question.
 
     Parameters
     ----------
@@ -252,8 +258,8 @@ def store_detailed_results(timestamp: str,
         list of questions from the json file that was read
     eval_question_files : List[str]
         list of files corresponding to the list of questions
-    result : evaluation.Result
-        the resulting ragas performance metrics
+    result : pd.DataFrame
+        Pandas dataframe with ragas performance metrics
     """
     # administrative data
     folder_data = [evaluation_folder for _ in range(len(eval_questions))]
@@ -263,11 +269,8 @@ def store_detailed_results(timestamp: str,
     admin_data = list(zip(folder_data, timestamp_data, eval_file_data, eval_question_files))
     df_admin = pd.DataFrame(data=admin_data, columns=admin_columns)
 
-    # evaluation results
-    df_result = result.to_pandas().loc[:, ["question", "ground_truth", "answer", "contexts", "answer_relevancy",
-                                           "context_precision", "faithfulness", "context_recall"]]
-    # combined
-    df = pd.concat([df_admin, df_result], axis=1)
+    # combined evaluation results
+    df = pd.concat([df_admin, result], axis=1)
     # add result to existing evaluation file (if that exists) and store to disk
     store_evaluation_result(df, evaluation_folder, "detail")
 
@@ -308,9 +311,9 @@ def main(chunk_size: int = None, chunk_overlap: int = None, chunk_k: int = None)
     chunk_k : int, optional
         the maximum number of chunks to return from the retriever, by default None
     """
-    confidential = False
     # get relevant models
-    llm_provider, llm_model, embeddings_provider, embeddings_model = ut.get_relevant_models(confidential)
+    llm_provider, llm_model, embeddings_provider, embeddings_model = ut.get_relevant_models(summary=False,
+                                                                                            private=False)
     # Create instance of Querier
     querier = Querier(llm_provider=llm_provider,
                       llm_model=llm_model,
@@ -324,21 +327,24 @@ def main(chunk_size: int = None, chunk_overlap: int = None, chunk_k: int = None)
     with open(os.path.join(settings.EVAL_DIR, eval_file), mode='r', encoding='utf8') as evalfile:
         eval_file_json = json.load(evalfile)
 
-    folder_list = eval_file_json.keys()
-    for evaluation_folder in folder_list:
+    folder_path_list = eval_file_json.keys()
+    for folder_path in folder_path_list:
+        evaluation_folder = os.path.basename(folder_path)
         # get associated source folder path and vectordb path
-        content_folder_path, vectordb_folder_path = ut.create_vectordb_path(content_folder_name=evaluation_folder,
-                                                                            chunk_size=chunk_size,
-                                                                            chunk_overlap=chunk_overlap)
+        vectordb_folder_path = ut.create_vectordb_path(content_folder_path=folder_path,
+                                                       embeddings_provider=embeddings_provider,
+                                                       embeddings_model=embeddings_model,
+                                                       chunk_size=chunk_size,
+                                                       chunk_overlap=chunk_overlap)
 
         # ingest documents if documents in source folder path are not ingested yet
         ingest_or_load_documents(evaluation_folder=evaluation_folder,
-                                 content_folder_path=content_folder_path,
+                                 content_folder_path=folder_path,
                                  vectordb_folder_path=vectordb_folder_path)
 
         # Get question types, questions and ground_truth from json file
         eval_questions, eval_question_files, eval_question_types, eval_groundtruths = \
-            get_eval_questions(evaluation_folder=evaluation_folder,
+            get_eval_questions(evaluation_folder=folder_path,
                                eval_file=eval_file)
 
         # Iterate over the questions and generate the answers

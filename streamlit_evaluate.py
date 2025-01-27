@@ -66,7 +66,6 @@ def compose_dataframes_from_all_eval_files(eval_folders: List[str]) -> Tuple[pd.
     found_eval_folder = False
     if eval_folders == ["All"]:
         eval_folders = folderlist_creator(include_all=False)
-        print(eval_folders)
     for eval_folder in eval_folders:
         eval_agg_file_name = os.path.join(settings.EVAL_DIR, "results", eval_folder + "_agg.tsv")
         eval_file_name = os.path.join(settings.EVAL_DIR, "results", eval_folder + ".tsv")
@@ -87,6 +86,7 @@ def compose_dataframes_from_all_eval_files(eval_folders: List[str]) -> Tuple[pd.
     relevant_setting_columns = [setting_column for setting_column in settings_columns if setting_column not in
                                 ["EMBEDDINGS_PROVIDER", "VECDBTYPE", "RERANK_PROVIDER", "LLM_PROVIDER",
                                  "SUMMARY_TEXT_SPLITTER_METHOD", "SUMMARY_CHUNK_SIZE", "SUMMARY_CHUNK_OVERLAP",
+                                 "SUMMARY_EMBEDDINGS_PROVIDER", "SUMMARY_EMBEDDINGS_MODEL",
                                  "SUMMARY_LLM_PROVIDER", "SUMMARY_LLM_MODEL", "PRIVATE_LLM_PROVIDER",
                                  "PRIVATE_LLM_MODEL", "PRIVATE_EMBEDDINGS_PROVIDER", "PRIVATE_SUMMARY_LLM_MODEL",
                                  "CHAIN_NAME", "CHAIN_TYPE", "AZURE_OPENAI_ENDPOINT", "AZURE_OPENAI_API_VERSION",
@@ -99,7 +99,9 @@ def compose_dataframes_from_all_eval_files(eval_folders: List[str]) -> Tuple[pd.
 
     # force order of columns for detailed results
     admin_columns_det = ["folder", "timestamp", "eval_file", "file"]
-    df_det = df_det.loc[:, admin_columns_det + ["question", "ground_truth", "answer", "contexts"] + result_columns]
+    df_det = df_det.loc[:, admin_columns_det +
+                        ["user_input", "reference", "response", "retrieved_contexts"]
+                        + result_columns]
 
     return df_agg, df_det
 
@@ -141,7 +143,6 @@ initialize_page()
 evaluation_folders_available = folderlist_creator()
 # chosen folder and associated vector database
 folder_names_selected = folder_selector(evaluation_folders_available)
-print(folder_names_selected)
 
 df_eval_agg, df_eval_det = compose_dataframes_from_all_eval_files(folder_names_selected)
 
