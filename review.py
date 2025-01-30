@@ -4,6 +4,7 @@ import csv
 import pandas as pd
 from loguru import logger
 from langchain_core.prompts import PromptTemplate
+from datetime import datetime
 # local imports
 from ingest.ingester import Ingester
 from query.querier import Querier
@@ -65,6 +66,7 @@ def get_review_questions(question_list_path: str) -> List[Tuple[int, str, str]]:
                 review_questions.append((cntline, elements[0], elements[1]))
             cntline += 1
 
+
     return review_questions
 
 
@@ -98,8 +100,21 @@ def generate_answer(
 
     return response["answer"], source_docs
 
+def write_synthesis_prompt(output_path: os.PathLike) -> None:
+    """
+    Writes the synthesis prompt to the output file
 
-def write_settings_to_result_file(input_path: os.PathLike, confidential: bool, output_path: os.PathLike) -> None:
+    Parameters
+    ----------
+    output_path : os.PathLike
+        path of the output file
+    """
+    with open(file=output_path, mode="a", encoding="utf8") as file:
+        file.write("SYNTHESIS PROMPT TEMPLATE: \n")
+        file.write(f"{pr.SYNTHESIZE_PROMPT_TEMPLATE} \n\n")
+
+
+def write_settings(input_path: os.PathLike, confidential: bool, output_path: os.PathLike) -> None:
     """
     Stores relevant settings to the output file, for reproducability purposes
 
@@ -139,11 +154,11 @@ def write_settings_to_result_file(input_path: os.PathLike, confidential: bool, o
         file.write(f"settings.RETRIEVER_PROMPT_TEMPLATE =  {settings.RETRIEVER_PROMPT_TEMPLATE} \n\n")
 
 
-def read_size_of_settings_file(output_path: os.PathLike) -> int:
-    with open(file=output_path, mode="r", encoding="utf8") as file:
-        lines = len(file.readlines())
+# def read_size_of_settings_file(output_path: os.PathLike) -> int:
+#     with open(file=output_path, mode="r", encoding="utf8") as file:
+#         lines = len(file.readlines())
 
-    return lines
+#     return lines
 
 
 def create_answers_for_folder(
@@ -215,7 +230,7 @@ def create_answers_for_folder(
     df_result.to_csv(output_path, sep="\t", index=False, mode="a")
 
 
-def synthesize_results(querier: Querier, results_path: str, output_path: str, skiplines: int) -> None:
+def synthesize_results(querier: Querier, results_path: str, output_path: str) -> None:
     """
     Phase 2 of the review: synthesizes, per question, the results from phase 1
 
@@ -231,7 +246,6 @@ def synthesize_results(querier: Querier, results_path: str, output_path: str, sk
     """
     # load questions and answers
     answers_df = pd.read_csv(filepath_or_buffer=results_path,
-                             skiprows=skiplines,
                              delimiter="\t")
     # loop over questions
     result = {}
@@ -311,6 +325,11 @@ def main() -> None:
                       embeddings_provider=embeddings_provider,
                       embeddings_model=embeddings_model)
 
+    # create output folder with timestamp
+    timestamp = datetime.now().strftime("%Y_%m_%d_%Hhour_%Mmin_%Ssec")
+    os.mkdir(os.path.join(content_folder_path, f"review/{timestamp}"))
+    # copy the questions and synthethis file to the output folder
+    os.system(f"cp {question_list_path} {content_folder_path}/review/{timestamp}/questions.txt")
     # ingest documents if documents in source folder path are not ingested yet
     ingest_or_load_documents(content_folder_name=content_folder_name,
                              content_folder_path=content_folder_path,
@@ -318,48 +337,47 @@ def main() -> None:
 
     # get review questions from file
     review_questions = get_review_questions(question_list_path)
-    # check if there is already a result, if so skip creation of answers
-    output_path_review = os.path.join(content_folder_path, "review", "result.tsv")
-    # if os.path.exists(output_path_review):
-    #     logger.info(
-    #         "A review result (result.tsv) file already exists, skipping the answer creation"
-    #     )
-    # else:
-    write_settings_to_result_file(input_path=content_folder_path,
-                                  confidential=confidential,
-                                  output_path=output_path_review)
-    numlines = read_size_of_settings_file(output_path=output_path_review)
 
-    create_answers_for_folder(
-        synthesis=synthesis,
-        review_files=review_files,
-        review_questions=review_questions,
-        content_folder_name=content_folder_name,
-        querier=querier,
-        vecdb_folder_path=vecdb_folder_path,
-        output_path=output_path_review
+    # write out settins 
+    output_path_settings = os.path.join(
+        content_folder_path, f"review/{timestamp}", "settings.txt"
     )
-    logger.info("Successfully reviewed the documents.")
+    output_path_synthesis = os.path.join(
+        content_folder_path, f"review/{timestamp}", "synthesis_template.txt"
+    )
+    write_settings(input_path=content_folder_path,
+                                  confidential=confidential,
+                                  output_path=output_path_settings)
+    
+    # check if there is already a result, if so skip creation of answers
+    output_path_review = os.path.join(
+        content_folder_path, f"review/{timestamp}", "answers.tsv"
+    )
+    if not os.path.exists(output_path_review):
+        create_answers_for_folder(
+            synthesis=synthesis,
+            review_files=review_files,
+            review_questions=review_questions,
+            content_folder_name=content_folder_name,
+            querier=querier,
+            vecdb_folder_path=vecdb_folder_path,
+            output_path=output_path_review
+        )
+        logger.info("Successfully reviewed the documents.")
+    else:
+        logger.info("Results already exist, skipping creation of answers.")
 
     if synthesis.lower() == "y":
+        write_synthesis_prompt(output_path=output_path_synthesis)
         # check if synthesis already exists, if not create one
         output_path_synthesis = os.path.join(
-            content_folder_path, "review", "synthesis.tsv"
+            content_folder_path, f"review/{timestamp}", "synthesis.tsv"
         )
-        write_settings_to_result_file(input_path=content_folder_path,
-                                      confidential=confidential,
-                                      output_path=output_path_synthesis)
 
-        # if os.path.exists(output_path_synthesis):
-        #     logger.info(
-        #         "A synthesis result file (synthesis.tsv) already exists, skipping the answer creation"
-        #     )
-        # else:
         # second phase: synthesize the results
         synthesize_results(querier=querier,
                            results_path=output_path_review,
-                           output_path=output_path_synthesis,
-                           skiplines=numlines)
+                           output_path=output_path_synthesis)
         logger.info("Successfully synthesized results.")
 
 
