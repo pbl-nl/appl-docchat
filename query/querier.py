@@ -46,6 +46,31 @@ class Querier:
         self.embeddings = EmbeddingsCreator(self.embeddings_provider,
                                             self.embeddings_model).get_embeddings()
 
+    def get_qa_template(self,
+                        retriever_prompt_template_setting: str) -> str:
+        """
+        get the appropriate RAG prompt for querying
+
+        Parameters
+        ----------
+        retriever_prompt_template_setting : str
+            retriever prompt template setting
+
+        Returns
+        -------
+        str
+            template string
+        """
+        current_template = pr.OPENAI_RAG_TEMPLATE
+        if retriever_prompt_template_setting == "openai_rag_concise":
+            current_template = pr.OPENAI_RAG_CONCISE_TEMPLATE
+        elif retriever_prompt_template_setting == "openai_rag_language":
+            current_template = pr.OPENAI_RAG_LANGUAGE_TEMPLATE
+        elif retriever_prompt_template_setting == "yesno":
+            current_template = pr.YES_NO_TEMPLATE
+
+        return current_template
+
     def make_chain(self,
                    content_folder: str,
                    vecdb_folder: str,
@@ -72,14 +97,7 @@ class Querier:
         retriever = RetrieverCreator(vectorstore=self.vector_store).get_retriever(search_filter=search_filter)
 
         # get appropriate RAG prompt for querying
-        if settings.RETRIEVER_PROMPT_TEMPLATE == "openai_rag":
-            current_template = pr.OPENAI_RAG_TEMPLATE
-        elif settings.RETRIEVER_PROMPT_TEMPLATE == "openai_rag_concise":
-            current_template = pr.OPENAI_RAG_CONCISE_TEMPLATE
-        elif settings.RETRIEVER_PROMPT_TEMPLATE == "openai_rag_language":
-            current_template = pr.OPENAI_RAG_LANGUAGE_TEMPLATE
-        elif settings.RETRIEVER_PROMPT_TEMPLATE == "yesno":
-            current_template = pr.YES_NO_TEMPLATE
+        current_template = self.get_qa_template(settings.RETRIEVER_PROMPT_TEMPLATE)
         prompt = PromptTemplate.from_template(template=current_template)
 
         # get chain
