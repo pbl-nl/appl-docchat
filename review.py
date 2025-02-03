@@ -1,10 +1,16 @@
+"""
+The review module focuses on comparison of documents.
+The module is split in two phases:
+1. Creation of answers for each question and each document sequentially
+2. Synthesis of the answers for each question
+"""
 from typing import List, Tuple
 import os
 import csv
+from datetime import datetime
 import pandas as pd
 from loguru import logger
 from langchain_core.prompts import PromptTemplate
-from datetime import datetime
 # local imports
 from ingest.ingester import Ingester
 from query.querier import Querier
@@ -127,6 +133,22 @@ def generate_answer(
 
     return response["answer"], source_docs
 
+
+def write_qa_prompt(myquerier: Querier, output_path: os.PathLike) -> None:
+    """
+    Writes the question-answer prompt to the output file
+
+    Parameters
+    ----------
+    output_path : os.PathLike
+        path of the output file
+    """
+    qa_prompt_template = myquerier.get_qa_template(settings.RETRIEVER_PROMPT_TEMPLATE)
+    with open(file=output_path, mode="a", encoding="utf8") as file:
+        file.write("QA PROMPT TEMPLATE: \n")
+        file.write(f"{qa_prompt_template} \n\n")
+
+
 def write_synthesis_prompt(output_path: os.PathLike) -> None:
     """
     Writes the synthesis prompt to the output file
@@ -179,13 +201,6 @@ def write_settings(input_path: os.PathLike, confidential: bool, output_path: os.
         file.write(f"settings.RERANK_MODEL =  {settings.RERANK_MODEL} \n")
         file.write(f"settings.CHUNKS_K_FOR_RERANK =  {settings.CHUNKS_K_FOR_RERANK} \n")
         file.write(f"settings.RETRIEVER_PROMPT_TEMPLATE =  {settings.RETRIEVER_PROMPT_TEMPLATE} \n\n")
-
-
-# def read_size_of_settings_file(output_path: os.PathLike) -> int:
-#     with open(file=output_path, mode="r", encoding="utf8") as file:
-#         lines = len(file.readlines())
-
-#     return lines
 
 
 def create_answers_for_folder(
@@ -398,9 +413,15 @@ def main() -> None:
         content_folder_path, f"review/{timestamp}", "synthesis.tsv"
     )
     write_settings(input_path=content_folder_path,
-                                  confidential=confidential,
-                                  output_path=output_path_settings)
-    
+                   confidential=confidential,
+                   output_path=output_path_settings)
+    # write question-answer template to file
+    output_path_qa = os.path.join(
+        content_folder_path, f"review/{timestamp}", "qa_template.txt"
+    )
+    write_qa_prompt(myquerier=querier,
+                    output_path=output_path_qa)
+
     # check if there is already a result, if so skip creation of answers
     output_path_review = os.path.join(
         content_folder_path, f"review/{timestamp}", "answers.tsv"
