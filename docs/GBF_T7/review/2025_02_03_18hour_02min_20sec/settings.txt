@@ -1,0 +1,23 @@
+input path =  X:\user\krugerc\GitReps\appl-docchat\docs\GBF_T7 
+confidential =  False 
+settings.TEXT_SPLITTER_METHOD =  NLTKTextSplitter 
+settings.TEXT_SPLITTER_CHILD =  NLTKTextSplitter 
+settings.CHUNK_SIZE =  6000 
+settings.CHUNK_SIZE_CHILD =  1000 
+settings.CHUNK_K =  5 
+settings.CHUNK_K_CHILD =  8 
+settings.CHUNK_OVERLAP =  200 
+settings.CHUNK_OVERLAP_CHILD =  0 
+settings.EMBEDDINGS_PROVIDER =  azureopenai 
+settings.EMBEDDINGS_MODEL =  text-embedding-ada-002 
+settings.LLM_PROVIDER =  azureopenai 
+settings.LLM_MODEL =  gpt-4o 
+settings.SEARCH_TYPE =  similarity_score_threshold 
+settings.SCORE_THRESHOLD =  0.4 
+settings.RETRIEVER_TYPE =  vectorstore 
+settings.RERANK =  True 
+settings.RERANK_PROVIDER =  flashrank_rerank 
+settings.RERANK_MODEL =  ms-marco-MultiBERT-L-12 
+settings.CHUNKS_K_FOR_RERANK =  20 
+settings.RETRIEVER_PROMPT_TEMPLATE =  openai_rag 
+

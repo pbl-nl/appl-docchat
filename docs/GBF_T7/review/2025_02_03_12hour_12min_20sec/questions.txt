@@ -1,0 +1,2 @@
+Question Type	Question
+Initial	What kind of pollution does the country describe in the text? Describe all the pollution types that are found in the text. Example pollution types are excess nutrients, pesticides, hazardous chemicals, fertilizer, industrial waster water, micro-plastic, plastic, nitrogen, municipal solid waste, underwater noise pollution. If any other pollution types are mentioned, also include them.

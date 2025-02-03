@@ -1,0 +1,2 @@
+Synthesis_Prompts
+For the question: \n {question} \n Please synthesize/summarize the text below. Hereby cluster which papers have things in common and in which way  the clusters differ. Finally, summarize the clusters. The countries can be in several clusters, have at least three clusters of no target, a target that is not specified, and a specified target. \n\n Answer: {answer_string}
