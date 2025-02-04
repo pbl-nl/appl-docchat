@@ -71,8 +71,36 @@ def get_review_questions(question_list_path: str) -> List[Tuple[int, str, str]]:
             if cntline > 0:
                 review_questions.append((cntline, elements[0], elements[1]))
             cntline += 1
+    return review_questions
+
+def get_synthesis_questions(question_list_path: str) -> List[Tuple[int, str, str]]:
+    """
+    Convert the file with questions into a list of questions
+
+    Parameters
+    ----------
+    question_list_path : str
+        the full path of the location containing the file with questions
+
+    Returns
+    -------
+    List[Tuple[int, str, str]]
+        list of tuples containing the question id, question type and question
+    """
+    # Get questions from question list file
+    with open(file=question_list_path, mode="r", encoding="utf8") as review_file:
+        review_questions = []
+        # read each line
+        cntline = 0
+        for line in review_file:
+            elements = line.strip().split("\t")
+            # Ignore header, add question to list
+            if cntline > 0:
+                review_questions.append((cntline, elements[0]))
+            cntline += 1
 
     return review_questions
+
 
 
 def generate_answer(
@@ -239,12 +267,29 @@ def create_answers_for_folder(
                 final_answer,
                 sources,
             ]
-    # sort on question, then on document
+    # First clean up the newlines in the text columns
+    def clean_newlines(text):
+        if isinstance(text, str):
+            return text.replace('\n', ' ')
+        return text
+
+    # Apply to columns that contain text with newlines
+    text_columns = ['question', 'answer', 'sources']
+    for col in text_columns:
+        df_result[col] = df_result[col].apply(clean_newlines)
+
+    # Then save to TSV
     df_result = df_result.sort_values(by=["question_id", "filename"])
-    df_result.to_csv(output_path, sep="\t", index=False, mode="a")
+    df_result.to_csv(output_path, 
+                    sep='\t',
+                    index=False,
+                    mode='a',
+                    quoting=csv.QUOTE_ALL,
+                    encoding='utf-8-sig',
+                    escapechar='\\')
 
 
-def synthesize_results(querier: Querier, results_path: str, output_path: str) -> None:
+def synthesize_results(querier: Querier, results_path: str, output_path: str, synthesis_prompts: List[Tuple[int, str]]) -> None:
     """
     Phase 2 of the review: synthesizes, per question, the results from phase 1
 
@@ -274,10 +319,11 @@ def synthesize_results(querier: Querier, results_path: str, output_path: str) ->
         answer_string = "\n\n\n\n New Paper:\n".join(answer_list)
         question = df_specific_questions["question"].iloc[0]
         # synthesize results: load prompt for synthesis
-        synthesize_prompt_template = PromptTemplate.from_template(
-            template=pr.SYNTHESIZE_PROMPT_TEMPLATE
-        )
-        synthesis_prompt = synthesize_prompt_template.format(
+        synthesize_prompt_template = synthesis_prompts[question_num-1][1]
+        # synthesize_prompt_template = PromptTemplate.from_template(
+        #     template=pr.SYNTHESIZE_PROMPT_TEMPLATE
+        # )
+        synthesis_prompt = str(synthesize_prompt_template).format(
             question=question, answer_string=answer_string
         )
         synthesis = querier.llm.invoke(synthesis_prompt)
@@ -290,6 +336,9 @@ def synthesize_results(querier: Querier, results_path: str, output_path: str) ->
         tsv_writer.writerow(["question", "answer"])
         # write data
         for key, value in result.items():
+            # remove tabs and new lines
+            key = key.replace("\n", " ").replace("\t", " ")
+            value = value.replace("\n", " ").replace("\t", " ")
             tsv_writer.writerow([key, value])
 
 
@@ -320,6 +369,7 @@ def main() -> None:
 
     # get path of file with list of questions
     question_list_path = os.path.join(content_folder_path, "review", "questions.txt")
+    synthesis_list_path = os.path.join(content_folder_path, "review", "synthetsize_prompt.txt")
 
     # if question list path does not exist, stop
     if not os.path.exists(question_list_path):
@@ -351,10 +401,16 @@ def main() -> None:
 
     # get review questions from file
     review_questions = get_review_questions(question_list_path)
-
-    # write settings to file
+    synthesis_prompts = get_synthesis_questions(synthesis_list_path)
+    # write out settins 
     output_path_settings = os.path.join(
         content_folder_path, f"review/{timestamp}", "settings.txt"
+    )
+    output_path_synthesis_prompt = os.path.join(
+        content_folder_path, f"review/{timestamp}", "synthesis_template.txt"
+    )
+    output_path_synthesis = os.path.join(
+        content_folder_path, f"review/{timestamp}", "synthesis.tsv"
     )
     write_settings(input_path=content_folder_path,
                    confidential=confidential,
@@ -370,34 +426,24 @@ def main() -> None:
     output_path_review = os.path.join(
         content_folder_path, f"review/{timestamp}", "answers.tsv"
     )
-    if not os.path.exists(output_path_review):
-        create_answers_for_folder(
-            synthesis=synthesis,
-            review_files=review_files,
-            review_questions=review_questions,
-            content_folder_name=content_folder_name,
-            querier=querier,
-            vecdb_folder_path=vecdb_folder_path,
-            output_path=output_path_review
-        )
-        logger.info("Successfully reviewed the documents.")
-    else:
-        logger.info("Results already exist, skipping creation of answers.")
+    create_answers_for_folder(
+        synthesis=synthesis,
+        review_files=review_files,
+        review_questions=review_questions,
+        content_folder_name=content_folder_name,
+        querier=querier,
+        vecdb_folder_path=vecdb_folder_path,
+        output_path=output_path_review
+    )
+    logger.info("Successfully reviewed the documents.")
 
     if synthesis.lower() == "y":
-        # write synthesis template to file
-        output_path_synthesis = os.path.join(
-            content_folder_path, f"review/{timestamp}", "synthesis_template.txt"
-        )
-        write_synthesis_prompt(output_path=output_path_synthesis)
-        # check if synthesis already exists, if not create one
-        output_path_synthesis = os.path.join(
-            content_folder_path, f"review/{timestamp}", "synthesis.tsv"
-        )
+        write_synthesis_prompt(output_path=output_path_synthesis_prompt)
         # second phase: synthesize the results
         synthesize_results(querier=querier,
                            results_path=output_path_review,
-                           output_path=output_path_synthesis)
+                           output_path=output_path_synthesis,
+                           synthesis_prompts=synthesis_prompts)
         logger.info("Successfully synthesized results.")
 
 
