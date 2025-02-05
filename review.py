@@ -374,7 +374,7 @@ def main() -> None:
 
     # get path of file with list of questions
     question_list_path = os.path.join(content_folder_path, "review", "questions.txt")
-    synthesis_list_path = os.path.join(content_folder_path, "review", "synthetsize_prompt.txt")
+    synthesis_list_path = os.path.join(content_folder_path, "review", "synthesize_prompt.txt")
 
     # if question list path does not exist, stop
     if not os.path.exists(question_list_path):
