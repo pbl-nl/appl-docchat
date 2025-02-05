@@ -10,7 +10,6 @@ import csv
 from datetime import datetime
 import pandas as pd
 from loguru import logger
-from langchain_core.prompts import PromptTemplate
 # local imports
 from ingest.ingester import Ingester
 from query.querier import Querier
@@ -73,6 +72,7 @@ def get_review_questions(question_list_path: str) -> List[Tuple[int, str, str]]:
             cntline += 1
     return review_questions
 
+
 def get_synthesis_questions(question_list_path: str) -> List[Tuple[int, str, str]]:
     """
     Convert the file with questions into a list of questions
@@ -100,7 +100,6 @@ def get_synthesis_questions(question_list_path: str) -> List[Tuple[int, str, str
             cntline += 1
 
     return review_questions
-
 
 
 def generate_answer(
@@ -267,6 +266,7 @@ def create_answers_for_folder(
                 final_answer,
                 sources,
             ]
+
     # First clean up the newlines in the text columns
     def clean_newlines(text):
         if isinstance(text, str):
@@ -280,16 +280,19 @@ def create_answers_for_folder(
 
     # Then save to TSV
     df_result = df_result.sort_values(by=["question_id", "filename"])
-    df_result.to_csv(output_path, 
-                    sep='\t',
-                    index=False,
-                    mode='a',
-                    quoting=csv.QUOTE_ALL,
-                    encoding='utf-8-sig',
-                    escapechar='\\')
+    df_result.to_csv(output_path,
+                     sep='\t',
+                     index=False,
+                     mode='a',
+                     quoting=csv.QUOTE_ALL,
+                     encoding='utf-8-sig',
+                     escapechar='\\')
 
 
-def synthesize_results(querier: Querier, results_path: str, output_path: str, synthesis_prompts: List[Tuple[int, str]]) -> None:
+def synthesize_results(querier: Querier,
+                       results_path: str,
+                       output_path: str,
+                       synthesis_prompts: List[Tuple[int, str]]) -> None:
     """
     Phase 2 of the review: synthesizes, per question, the results from phase 1
 
@@ -302,6 +305,8 @@ def synthesize_results(querier: Querier, results_path: str, output_path: str, sy
         path of the file resulting from phase 1
     output_path : os.PathLike
         path of the output file
+    synthesis_prompts: List[Tuple[int, str]]
+        list of tuples containing question id and synthesis prompt
     """
     # load questions and answers
     answers_df = pd.read_csv(filepath_or_buffer=results_path,
@@ -402,7 +407,7 @@ def main() -> None:
     # get review questions from file
     review_questions = get_review_questions(question_list_path)
     synthesis_prompts = get_synthesis_questions(synthesis_list_path)
-    # write out settins 
+    # write out settings
     output_path_settings = os.path.join(
         content_folder_path, f"review/{timestamp}", "settings.txt"
     )
