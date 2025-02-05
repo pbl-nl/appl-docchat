@@ -52,10 +52,10 @@ Examples and restrictions for parameter values are given in the comment lines
 When the NLTKTextSplitter is used for chunking the documents, it is necessary to download the punkt and punkt_tab module of NLTK.<br>
 This can be done in the activated environment by starting a Python interactive session: type <code>python</code>.<br>
 Once in the Python session, type <code>import nltk</code> + Enter<br>
-Then <code>nltk.download('punkt')</code> + Enter
+Then <code>nltk.download('punkt')</code> + Enter<br>
 And finally, <code>nltk.download('punkt_tab')</code> + Enter
 
-### flashrank reranker
+### FlashRank reranker
 This repo allows reranking the retrieved documents from the vector store, by using the FlashRank reranker
 The very first use will download and unzip the required model as indicated in settings.py from HuggingFace platform
 For more information on the Flashrank reranker, see https://github.com/PrithivirajDamodaran/FlashRank
