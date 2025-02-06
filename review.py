@@ -341,9 +341,6 @@ def synthesize_results(querier: Querier,
         tsv_writer.writerow(["question", "answer"])
         # write data
         for key, value in result.items():
-            # remove tabs and new lines
-            key = key.replace("\n", " ").replace("\t", " ")
-            value = value.replace("\n", " ").replace("\t", " ")
             tsv_writer.writerow([key, value])
 
 
