@@ -320,14 +320,11 @@ def synthesize_results(querier: Querier,
             answers_df["question_id"] == question_num
         ].copy()
         # make sure that the LLM understands a new paper starts
-        answer_list = [question for question in df_specific_questions["answer"]]
+        answer_list = [answer for answer in df_specific_questions["answer"]]
         answer_string = "\n\n\n\n New Paper:\n".join(answer_list)
         question = df_specific_questions["question"].iloc[0]
         # synthesize results: load prompt for synthesis
         synthesize_prompt_template = synthesis_prompts[question_num-1][1]
-        # synthesize_prompt_template = PromptTemplate.from_template(
-        #     template=pr.SYNTHESIZE_PROMPT_TEMPLATE
-        # )
         synthesis_prompt = str(synthesize_prompt_template).format(
             question=question, answer_string=answer_string
         )
