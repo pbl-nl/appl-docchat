@@ -558,20 +558,24 @@ def read_description():
 
 def find_setting_description(content: str, setting_name: str) -> str:
     """
-    Find all commented lines that appear before a setting variable.
+    Find all consecutive commented lines that appear immediately before a setting variable
+    and combine them into a single line.
 
     Args:
         content (str): The content of settings.py
-        setting_name (str): The name of the setting to find (e.g., 'TEXT_SPLITTER_METHOD')
+        setting_name (str): The name of the setting to find
 
     Returns:
-        str: Combined commented lines before the setting
+        str: Combined consecutive commented lines before the setting, without the setting line
     """
-    pattern = rf"(#.*\n)+{setting_name}\s*=\s*['\"].*?['\"]"
+    pattern = rf"(?:\n|^)((?:#[^\n]*\n)+)(?={setting_name.strip()}\s*=)"
     match = re.search(pattern, content)
     if match:
-        # Remove any leading/trailing whitespace and return the matched string
-        return match.group().strip()
+        comments = match.group(1).rstrip()
+        # Filter out any separator comments (those with only # and special characters)
+        relevant_comments = [line for line in comments.split('\n') 
+                             if not re.match(r'^#[\s*#]*$', line.strip())]
+        return ' '.join(line.strip() for line in relevant_comments)
     return ""
 
 
@@ -606,7 +610,7 @@ def get_settings_descriptions():
         description = find_setting_description(content, setting)
         # Convert setting name to display format (e.g., TEXT_SPLITTER_METHOD -> Text Splitter Method)
         # display_name = ' '.join(setting.split('_')).title()
-        descriptions[setting] = description
+        descriptions[setting] = "<br>".join(desc.replace("# ", "").lstrip("# ") for desc in description.split("# "))[4:]
 
     return descriptions
 
