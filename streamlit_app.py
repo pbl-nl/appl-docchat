@@ -169,7 +169,14 @@ def check_vectordb(my_querier: Querier,
                    my_documents_selected: List[str],
                    my_vecdb_folder_path_selected: str,
                    my_embeddings_provider: str,
-                   my_embeddings_model: str) -> None:
+                   my_embeddings_model: str,
+                   my_text_splitter_method: str,
+                   my_retriever_type: str,
+                   my_chunk_size: int,
+                   my_chunk_overlap: int,
+                   my_text_splitter_method_child: str,
+                   my_chunk_size_child: int,
+                   my_chunk_overlap_child: int) -> None:
     """
     checks if the vector database exists for the selected document folder, with the given settings
     If not, it creates the vector database
@@ -202,7 +209,14 @@ def check_vectordb(my_querier: Querier,
                             document_selection=my_documents_selected,
                             vecdb_folder=my_vecdb_folder_path_selected,
                             embeddings_provider=my_embeddings_provider,
-                            embeddings_model=my_embeddings_model)
+                            embeddings_model=my_embeddings_model,
+                            text_splitter_method=my_text_splitter_method,
+                            retriever_type=my_retriever_type,
+                            chunk_size=my_chunk_size,
+                            chunk_overlap=my_chunk_overlap,
+                            text_splitter_method_child=my_text_splitter_method_child,
+                            chunk_size_child=my_chunk_size_child,
+                            chunk_overlap_child=my_chunk_overlap_child)
         ingester.ingest()
 
     # create a new chain based on the new source folder
@@ -343,6 +357,7 @@ def handle_query(my_folder_path_selected: str,
     # to retain chat history in case of a change in settings
     st.session_state['chat_history'] = my_querier.chat_history.copy()
 
+
 @st.cache_data
 def initialize_page() -> None:
     """
@@ -370,7 +385,6 @@ def initialize_page() -> None:
             z-index: 999999 !important;
             margin: 0 !important;
         }
-        
         </style>
         ''',
         unsafe_allow_html=True
@@ -514,6 +528,7 @@ def get_provider_models() -> Dict[str, Dict[str, List[str]]]:
         }
     }
 
+
 def initialize_settings_state():
     """Initialize session state for settings if not already present"""
     if 'settings' not in st.session_state:
@@ -524,14 +539,20 @@ def initialize_settings_state():
             'RETRIEVER_TYPE': settings.RETRIEVER_TYPE,
             'RERANK': settings.RERANK,
             'LLM_PROVIDER': settings.LLM_PROVIDER,
-            'LLM_MODEL': settings.LLM_MODEL
+            'LLM_MODEL': settings.LLM_MODEL,
+            'CHUNK_SIZE': settings.CHUNK_SIZE,
+            'CHUNK_OVERLAP': settings.CHUNK_OVERLAP,
+            'TEXT_SPLITTER_METHOD_CHILD': settings.TEXT_SPLITTER_METHOD_CHILD,
+            'CHUNK_SIZE_CHILD': settings.CHUNK_SIZE_CHILD,
+            'CHUNK_OVERLAP_CHILD': settings.CHUNK_OVERLAP_CHILD
         }
+
 
 def render_settings_tab():
     """Render the settings tab content"""
 
     st.header("RAG Settings")
-    
+
     # Text Splitter Method
     st.subheader("Text Processing")
     text_splitter_options = ["RecursiveCharacterTextSplitter", "NLTKTextSplitter"]
@@ -540,6 +561,22 @@ def render_settings_tab():
         options=text_splitter_options,
         index=text_splitter_options.index(st.session_state.settings['TEXT_SPLITTER_METHOD']),
         key='splitter'
+    )
+
+    chunk_size = st.number_input(
+        "Chunk Size",
+        min_value=1,
+        max_value=1000,
+        value=st.session_state.settings['CHUNK_SIZE'],
+        key='chunk_size'
+    )
+
+    chunk_overlap = st.number_input(
+        "Chunk Overlap",
+        min_value=0,
+        max_value=chunk_size-1,
+        value=st.session_state.settings['CHUNK_OVERLAP'],
+        key='chunk_overlap'
     )
 
     # Embeddings Configuration
@@ -555,12 +592,12 @@ def render_settings_tab():
     # Get available models for selected provider
     provider_models = get_provider_models()
     available_embedding_models = provider_models['embeddings'][selected_embeddings_provider]
-    
+
     # Default to first available model if current isn't available for selected provider
     current_emb_model = st.session_state.settings['EMBEDDINGS_MODEL']
     if current_emb_model not in available_embedding_models:
         current_emb_model = available_embedding_models[0]
-    
+
     selected_embedding_model = st.selectbox(
         "Embeddings Model",
         options=available_embedding_models,
@@ -577,6 +614,31 @@ def render_settings_tab():
         index=retriever_types.index(st.session_state.settings['RETRIEVER_TYPE']),
         key='retriever'
     )
+
+    if selected_retriever == "parent":
+        text_splitter_options_child = ["RecursiveCharacterTextSplitter", "NLTKTextSplitter"]
+        selected_splitter_child = st.selectbox(
+            "Child Text Splitter Method",
+            options=text_splitter_options_child,
+            index=text_splitter_options_child.index(st.session_state.settings['TEXT_SPLITTER_METHOD_CHILD']),
+            key='splitter_child'
+        )
+
+        chunk_size_child = st.number_input(
+            "Child Chunk Size",
+            min_value=1,
+            max_value=chunk_size,
+            value=st.session_state.settings['CHUNK_SIZE_CHILD'],
+            key='chunk_size_child'
+        )
+
+        chunk_overlap_child = st.number_input(
+            "Child Chunk Overlap",
+            min_value=0,
+            max_value=chunk_size_child-1,
+            value=st.session_state.settings['CHUNK_OVERLAP_CHILD'],
+            key='chunk_overlap_child'
+        )
 
     rerank_enabled = st.checkbox(
         "Enable Reranking",
@@ -596,12 +658,12 @@ def render_settings_tab():
 
     # Get available models for selected provider
     available_llm_models = provider_models['llm'][selected_llm_provider]
-    
+
     # Default to first available model if current isn't available for selected provider
     current_llm_model = st.session_state.settings['LLM_MODEL']
     if current_llm_model not in available_llm_models:
         current_llm_model = available_llm_models[0]
-    
+
     selected_llm_model = st.selectbox(
         "LLM Model",
         options=available_llm_models,
@@ -610,7 +672,7 @@ def render_settings_tab():
     )
 
     # Save Settings Button
-    if st.button("Save Settings", type="primary"): 
+    if st.button("Save Settings", type="primary"):
         # Update settings in session state
         if not st.session_state['confidential']:
             st.session_state.settings.update({
@@ -620,7 +682,15 @@ def render_settings_tab():
                 'RETRIEVER_TYPE': selected_retriever,
                 'RERANK': rerank_enabled,
                 'LLM_PROVIDER': selected_llm_provider,
-                'LLM_MODEL': selected_llm_model
+                'LLM_MODEL': selected_llm_model,
+                'CHUNK_SIZE': chunk_size,
+                'CHUNK_OVERLAP': chunk_overlap,
+                'TEXT_SPLITTER_METHOD_CHILD': selected_splitter_child if selected_retriever == "parent"
+                else st.session_state.settings.get('TEXT_SPLITTER_METHOD_CHILD', None),
+                'CHUNK_SIZE_CHILD': chunk_size_child if selected_retriever == "parent"
+                else st.session_state.settings.get('CHUNK_SIZE_CHILD', None),
+                'CHUNK_OVERLAP_CHILD': chunk_overlap_child if selected_retriever == "parent"
+                else st.session_state.settings.get('CHUNK_OVERLAP_CHILD', None)
             })
             # Update the settings module
             settings.TEXT_SPLITTER_METHOD = selected_splitter
@@ -630,14 +700,15 @@ def render_settings_tab():
             settings.RERANK = rerank_enabled
             settings.LLM_PROVIDER = selected_llm_provider
             settings.LLM_MODEL = selected_llm_model
-            
+
             st.success("Settings saved successfully!")
-            
+
             # Log current settings
             st.write("Current Settings:")
             st.json(st.session_state.settings)
         else:
             st.error("Confidential mode is enabled. Settings cannot be changed.")
+
 
 def render_chat_tab():
     # initialize page, executed only once per session
@@ -650,7 +721,7 @@ def render_chat_tab():
     initialize_session_state()
     # allow user to set the path to the document folder
     folder_path_selected = st.sidebar.text_input(label="***ENTER THE DOCUMENT FOLDER PATH***",
-                                                help="""Please enter the full path e.g. Y:/User/troosts/chatpbl/...""")
+                                                 help="""Please enter the full path e.g. Y:/User/troosts/chatpbl/...""")
     if st.session_state['is_EXIT_clicked']:
         ut.exit_ui()
     if folder_path_selected != "":
@@ -664,25 +735,33 @@ def render_chat_tab():
         confidential = False
         # get relevant models
         if confidential:
-            llm_provider, llm_model, embeddings_provider, embeddings_model = ut.get_relevant_models(summary=False,
-                                                                                                private=confidential)
+            llm_provider, llm_model, embeddings_provider, embeddings_model = \
+                ut.get_relevant_models(summary=False,
+                                       private=confidential)
         else:
             llm_provider = st.session_state.settings['LLM_PROVIDER']
             llm_model = st.session_state.settings['LLM_MODEL']
             embeddings_provider = st.session_state.settings['EMBEDDINGS_PROVIDER']
             embeddings_model = st.session_state.settings['EMBEDDINGS_MODEL']
+            retriever_type = st.session_state.settings['RETRIEVER_TYPE']
+            text_splitter_method = st.session_state.settings['TEXT_SPLITTER_METHOD']
+            chunk_size = st.session_state.settings['CHUNK_SIZE']
+            chunk_overlap = st.session_state.settings['CHUNK_OVERLAP']
+            text_splitter_method_child = st.session_state.settings['TEXT_SPLITTER_METHOD_CHILD']
+            chunk_size_child = st.session_state.settings['CHUNK_SIZE_CHILD']
+            chunk_overlap_child = st.session_state.settings['CHUNK_OVERLAP_CHILD']
 
         # creation of Querier object, executed only once per session
         querier = initialize_querier(my_llm_provider=llm_provider,
-                                    my_llm_model=llm_model,
-                                    my_embeddings_provider=embeddings_provider,
-                                    my_embeddings_model=embeddings_model)
-        
+                                     my_llm_model=llm_model,
+                                     my_embeddings_provider=embeddings_provider,
+                                     my_embeddings_model=embeddings_model)
+
         # If a different folder or (set of) document(s) is chosen,
         # clear querier history and
         # set the go button session state 'is_go_clicked' to False
         if ((folder_name_selected != st.session_state['folder_selected']) or
-        (document_selection != st.session_state['documents_selected'])):
+           (document_selection != st.session_state['documents_selected'])):
             querier.clear_history()
             st.session_state['chat_history'] = []
             st.session_state['is_GO_clicked'] = False
@@ -708,30 +787,44 @@ def render_chat_tab():
             st.session_state['is_GO_clicked'] = False
         st.session_state['is_summary_clicked'] = summary_type
 
-        # create button to confirm folder selection. This button sets session_state['is_GO_clicked'] to True when clicked
+        # create button to confirm folder selection.This button sets session_state['is_GO_clicked'] to True when clicked
         st.sidebar.button(label="GO", type="primary", on_click=click_go_button,
-                        help="show the prompt bar at the bottom of the screen to take questions")
+                          help="show the prompt bar at the bottom of the screen to take questions")
 
         # only start a conversation when a folder is selected and selection is confirmed with "GO" button
         if st.session_state['is_GO_clicked']:
             logger.info("GO button is clicked")
             if len(document_selection) > 0:
                 # get relevant models
-                _, _, embeddings_provider, embeddings_model = ut.get_relevant_models(summary=False,
-                                                                                    private=confidential)
+                # _, _, embeddings_provider, embeddings_model = ut.get_relevant_models(summary=False,
+                #                                                                      private=confidential)
 
                 # determine name of associated vector database
                 vecdb_folder_path = ut.create_vectordb_path(content_folder_path=folder_path_selected,
                                                             embeddings_provider=embeddings_provider,
-                                                            embeddings_model=embeddings_model)
+                                                            embeddings_model=embeddings_model,
+                                                            retriever_type=retriever_type,
+                                                            text_splitter_method=text_splitter_method,
+                                                            chunk_size=chunk_size,
+                                                            chunk_overlap=chunk_overlap,
+                                                            text_splitter_method_child=text_splitter_method_child,
+                                                            chunk_size_child=chunk_size_child,
+                                                            chunk_overlap_child=chunk_overlap_child)
                 # create or update vector database if necessary
                 check_vectordb(my_querier=querier,
-                            my_folder_name_selected=folder_name_selected,
-                            my_folder_path_selected=folder_path_selected,
-                            my_documents_selected=document_selection,
-                            my_vecdb_folder_path_selected=vecdb_folder_path,
-                            my_embeddings_provider=embeddings_provider,
-                            my_embeddings_model=embeddings_model)
+                               my_folder_name_selected=folder_name_selected,
+                               my_folder_path_selected=folder_path_selected,
+                               my_documents_selected=document_selection,
+                               my_vecdb_folder_path_selected=vecdb_folder_path,
+                               my_embeddings_provider=embeddings_provider,
+                               my_embeddings_model=embeddings_model,
+                               my_text_splitter_method=text_splitter_method,
+                               my_retriever_type=retriever_type,
+                               my_chunk_overlap=chunk_overlap,
+                               my_chunk_size=chunk_size,
+                               my_chunk_overlap_child=chunk_overlap_child,
+                               my_chunk_size_child=chunk_size_child,
+                               my_text_splitter_method_child=text_splitter_method_child)
                 # if one of the options is chosen
                 if summary_type in ["Short", "Long"]:
                     # show the summary at the top of the screen
@@ -756,16 +849,14 @@ def render_chat_tab():
                 prompt = st.chat_input("Your question", key="chat_input")
                 if prompt:
                     handle_query(my_folder_path_selected=folder_path_selected,
-                                my_querier=querier,
-                                my_prompt=prompt,
-                                my_document_selection=document_selection,
-                                my_folder_name_selected=folder_name_selected,
-                                my_vecdb_folder_path_selected=vecdb_folder_path,
-                                question_number=len(st.session_state['messages']))
+                                 my_querier=querier,
+                                 my_prompt=prompt,
+                                 my_document_selection=document_selection,
+                                 my_folder_name_selected=folder_name_selected,
+                                 my_vecdb_folder_path_selected=vecdb_folder_path,
+                                 question_number=len(st.session_state['messages']))
             else:
                 st.write("Please choose one or more documents")
-
-
 
 
 # ### MAIN PROGRAM ####
