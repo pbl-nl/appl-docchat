@@ -7,6 +7,7 @@ import fitz
 import streamlit as st
 from PIL import Image
 from loguru import logger
+import re
 # local imports
 from ingest.ingester import Ingester
 from query.querier import Querier
@@ -548,46 +549,132 @@ def initialize_settings_state():
         }
 
 
+def read_description():
+    """Read the description from the file and return it"""
+    with open(file="settings.py", mode="r", encoding="utf8") as f:
+        description = f.read()
+    return description
+
+
+def find_setting_description(content: str, setting_name: str) -> str:
+    """
+    Find all commented lines that appear before a setting variable.
+
+    Args:
+        content (str): The content of settings.py
+        setting_name (str): The name of the setting to find (e.g., 'TEXT_SPLITTER_METHOD')
+
+    Returns:
+        str: Combined commented lines before the setting
+    """
+    pattern = rf"(#.*\n)+{setting_name}\s*=\s*['\"].*?['\"]"
+    match = re.search(pattern, content)
+    if match:
+        # Remove any leading/trailing whitespace and return the matched string
+        return match.group().strip()
+    return ""
+
+
+def get_settings_descriptions():
+    """
+    Read settings.py and extract descriptions for all settings.
+    Returns a dictionary with setting names as keys and their descriptions as values.
+    """
+    content = read_description()
+
+    # List of settings to find descriptions for
+    settings = [
+        "TEXT_SPLITTER_METHOD",
+        "CHUNK_SIZE",
+        "CHUNK_OVERLAP",
+        "EMBEDDINGS_PROVIDER",
+        "EMBEDDINGS_MODEL",
+        "RETRIEVER_TYPE",
+        "TEXT_SPLITTER_METHOD_CHILD",
+        "CHUNK_SIZE_CHILD",
+        "CHUNK_OVERLAP_CHILD",
+        "RERANK",
+        "LLM_PROVIDER",
+        "LLM_MODEL"
+    ]
+
+    # Dictionary to store setting descriptions
+    descriptions = {}
+
+    # Get description for each setting
+    for setting in settings:
+        description = find_setting_description(content, setting)
+        # Convert setting name to display format (e.g., TEXT_SPLITTER_METHOD -> Text Splitter Method)
+        # display_name = ' '.join(setting.split('_')).title()
+        descriptions[setting] = description
+
+    return descriptions
+
+
 def render_settings_tab():
     """Render the settings tab content"""
-
     st.header("RAG Settings")
+
+    # Get descriptions from settings.py
+    descriptions = get_settings_descriptions()
 
     # Text Splitter Method
     st.subheader("Text Processing")
-    text_splitter_options = ["RecursiveCharacterTextSplitter", "NLTKTextSplitter"]
-    selected_splitter = st.selectbox(
-        "Text Splitter Method",
-        options=text_splitter_options,
-        index=text_splitter_options.index(st.session_state.settings['TEXT_SPLITTER_METHOD']),
-        key='splitter'
-    )
 
-    chunk_size = st.number_input(
-        "Chunk Size",
-        min_value=1,
-        max_value=1000,
-        value=st.session_state.settings['CHUNK_SIZE'],
-        key='chunk_size'
-    )
+    col1, col2 = st.columns([0.4, 0.6])
+    with col1:
+        text_splitter_options = ["RecursiveCharacterTextSplitter", "NLTKTextSplitter"]
+        selected_splitter = st.selectbox(
+            "Text Splitter Method",
+            options=text_splitter_options,
+            index=text_splitter_options.index(st.session_state.settings['TEXT_SPLITTER_METHOD']),
+            key='splitter'
+        )
+    with col2:
+        st.markdown("*Description:*")
+        st.markdown(f"<p style='font-size:10px;'>{descriptions["TEXT_SPLITTER_METHOD"]}</p>", unsafe_allow_html=True)
 
-    chunk_overlap = st.number_input(
-        "Chunk Overlap",
-        min_value=0,
-        max_value=chunk_size-1,
-        value=st.session_state.settings['CHUNK_OVERLAP'],
-        key='chunk_overlap'
-    )
+    col1, col2 = st.columns([0.4, 0.6])
+    with col1:
+        chunk_size = st.number_input(
+            "Chunk Size",
+            min_value=1,
+            max_value=1000,
+            value=st.session_state.settings['CHUNK_SIZE'],
+            key='chunk_size'
+        )
+    with col2:
+        st.markdown("*Description:*")
+        st.markdown(f"<p style='font-size:10px;'>{descriptions["CHUNK_SIZE"]}</p>", unsafe_allow_html=True)
+
+    col1, col2 = st.columns([0.4, 0.6])
+    with col1:
+        chunk_overlap = st.number_input(
+            "Chunk Overlap",
+            min_value=0,
+            max_value=chunk_size-1,
+            value=st.session_state.settings['CHUNK_OVERLAP'],
+            key='chunk_overlap'
+        )
+    with col2:
+        st.markdown("*Description:*")
+        st.markdown(f"<p style='font-size:10px;'>{descriptions["CHUNK_OVERLAP"]}</p>", unsafe_allow_html=True)
 
     # Embeddings Configuration
     st.subheader("Embeddings Configuration")
-    embeddings_providers = ["openai", "huggingface", "ollama", "azureopenai"]
-    selected_embeddings_provider = st.selectbox(
-        "Embeddings Provider",
-        options=embeddings_providers,
-        index=embeddings_providers.index(st.session_state.settings['EMBEDDINGS_PROVIDER']),
-        key='emb_provider'
-    )
+
+    col1, col2 = st.columns([0.4, 0.6])
+    with col1:
+        embeddings_providers = ["openai", "huggingface", "ollama", "azureopenai"]
+        selected_embeddings_provider = st.selectbox(
+            "Embeddings Provider",
+            options=embeddings_providers,
+            index=embeddings_providers.index(st.session_state.settings['EMBEDDINGS_PROVIDER']),
+            key='emb_provider'
+        )
+    with col2:
+        st.markdown("*Description:*")
+        st.markdown(f"<p style='font-size:10px;'>{descriptions["EMBEDDINGS_PROVIDER"]}</p>", unsafe_allow_html=True)
 
     # Get available models for selected provider
     provider_models = get_provider_models()
@@ -598,63 +685,100 @@ def render_settings_tab():
     if current_emb_model not in available_embedding_models:
         current_emb_model = available_embedding_models[0]
 
-    selected_embedding_model = st.selectbox(
-        "Embeddings Model",
-        options=available_embedding_models,
-        index=available_embedding_models.index(current_emb_model),
-        key='emb_model'
-    )
+    col1, col2 = st.columns([0.4, 0.6])
+    with col1:
+        selected_embedding_model = st.selectbox(
+            "Embeddings Model",
+            options=available_embedding_models,
+            index=available_embedding_models.index(current_emb_model),
+            key='emb_model'
+        )
+    with col2:
+        st.markdown("*Description:*")
+        st.markdown(f"<p style='font-size:10px;'>{descriptions["EMBEDDINGS_MODEL"]}</p>", unsafe_allow_html=True)
 
     # Retriever Configuration
     st.subheader("Retriever Configuration")
-    retriever_types = ["vectorstore", "hybrid", "parent"]
-    selected_retriever = st.selectbox(
-        "Retriever Type",
-        options=retriever_types,
-        index=retriever_types.index(st.session_state.settings['RETRIEVER_TYPE']),
-        key='retriever'
-    )
+
+    col1, col2 = st.columns([0.4, 0.6])
+    with col1:
+        retriever_types = ["vectorstore", "hybrid", "parent"]
+        selected_retriever = st.selectbox(
+            "Retriever Type",
+            options=retriever_types,
+            index=retriever_types.index(st.session_state.settings['RETRIEVER_TYPE']),
+            key='retriever'
+        )
+    with col2:
+        st.markdown("*Description:*")
+        st.markdown(f"<p style='font-size:10px;'>{descriptions["RETRIEVER_TYPE"]}</p>", unsafe_allow_html=True)
 
     if selected_retriever == "parent":
-        text_splitter_options_child = ["RecursiveCharacterTextSplitter", "NLTKTextSplitter"]
-        selected_splitter_child = st.selectbox(
-            "Child Text Splitter Method",
-            options=text_splitter_options_child,
-            index=text_splitter_options_child.index(st.session_state.settings['TEXT_SPLITTER_METHOD_CHILD']),
-            key='splitter_child'
-        )
+        col1, col2 = st.columns([0.4, 0.6])
+        with col1:
+            text_splitter_options_child = ["RecursiveCharacterTextSplitter", "NLTKTextSplitter"]
+            selected_splitter_child = st.selectbox(
+                "Child Text Splitter Method",
+                options=text_splitter_options_child,
+                index=text_splitter_options_child.index(st.session_state.settings['TEXT_SPLITTER_METHOD_CHILD']),
+                key='splitter_child'
+            )
+        with col2:
+            st.markdown("*Description:*")
+            st.markdown(f"<p style='font-size:10px;'>{descriptions["TEXT_SPLITTER_METHOD_CHILD"]}</p>",
+                        unsafe_allow_html=True)
 
-        chunk_size_child = st.number_input(
-            "Child Chunk Size",
-            min_value=1,
-            max_value=chunk_size,
-            value=st.session_state.settings['CHUNK_SIZE_CHILD'],
-            key='chunk_size_child'
-        )
+        col1, col2 = st.columns([0.4, 0.6])
+        with col1:
+            chunk_size_child = st.number_input(
+                "Child Chunk Size",
+                min_value=1,
+                max_value=chunk_size,
+                value=st.session_state.settings['CHUNK_SIZE_CHILD'],
+                key='chunk_size_child'
+            )
+        with col2:
+            st.markdown("*Description:*")
+            st.markdown(f"<p style='font-size:10px;'>{descriptions["CHUNK_SIZE_CHILD"]}</p>", unsafe_allow_html=True)
 
-        chunk_overlap_child = st.number_input(
-            "Child Chunk Overlap",
-            min_value=0,
-            max_value=chunk_size_child-1,
-            value=st.session_state.settings['CHUNK_OVERLAP_CHILD'],
-            key='chunk_overlap_child'
+        col1, col2 = st.columns([0.4, 0.6])
+        with col1:
+            chunk_overlap_child = st.number_input(
+                "Child Chunk Overlap",
+                min_value=0,
+                max_value=chunk_size_child-1,
+                value=st.session_state.settings['CHUNK_OVERLAP_CHILD'],
+                key='chunk_overlap_child'
+            )
+        with col2:
+            st.markdown("*Description:*")
+            st.markdown(f"<p style='font-size:10px;'>{descriptions["CHUNK_OVERLAP_CHILD"]}</p>", unsafe_allow_html=True)
+    col1, col2 = st.columns([0.4, 0.6])
+    with col1:
+        rerank_enabled = st.checkbox(
+            "Enable Reranking",
+            value=st.session_state.settings['RERANK'],
+            key='rerank'
         )
-
-    rerank_enabled = st.checkbox(
-        "Enable Reranking",
-        value=st.session_state.settings['RERANK'],
-        key='rerank'
-    )
+    with col2:
+        st.markdown("*Description:*")
+        st.markdown(f"<p style='font-size:10px;'>{descriptions["RERANK"]}</p>", unsafe_allow_html=True)
 
     # LLM Configuration
     st.subheader("Language Model Configuration")
     llm_providers = ["openai", "huggingface", "ollama", "azureopenai"]
-    selected_llm_provider = st.selectbox(
-        "LLM Provider",
-        options=llm_providers,
-        index=llm_providers.index(st.session_state.settings['LLM_PROVIDER']),
-        key='llm_provider'
-    )
+
+    col1, col2 = st.columns([0.4, 0.6])
+    with col1:
+        selected_llm_provider = st.selectbox(
+            "LLM Provider",
+            options=llm_providers,
+            index=llm_providers.index(st.session_state.settings['LLM_PROVIDER']),
+            key='llm_provider'
+        )
+    with col2:
+        st.markdown("*Description:*")
+        st.markdown(f"<p style='font-size:10px;'>{descriptions["LLM_PROVIDER"]}</p>", unsafe_allow_html=True)
 
     # Get available models for selected provider
     available_llm_models = provider_models['llm'][selected_llm_provider]
@@ -664,12 +788,17 @@ def render_settings_tab():
     if current_llm_model not in available_llm_models:
         current_llm_model = available_llm_models[0]
 
-    selected_llm_model = st.selectbox(
-        "LLM Model",
-        options=available_llm_models,
-        index=available_llm_models.index(current_llm_model),
-        key='llm_model'
-    )
+    col1, col2 = st.columns([0.4, 0.6])
+    with col1:
+        selected_llm_model = st.selectbox(
+            "LLM Model",
+            options=available_llm_models,
+            index=available_llm_models.index(current_llm_model),
+            key='llm_model'
+        )
+    with col2:
+        st.markdown("*Description:*")
+        st.markdown(f"<p style='font-size:10px;'>{descriptions["LLM_MODEL"]}</p>", unsafe_allow_html=True)
 
     # Save Settings Button
     if st.button("Save Settings", type="primary"):
@@ -700,6 +829,12 @@ def render_settings_tab():
             settings.RERANK = rerank_enabled
             settings.LLM_PROVIDER = selected_llm_provider
             settings.LLM_MODEL = selected_llm_model
+            settings.CHUNK_SIZE = chunk_size
+            settings.CHUNK_OVERLAP = chunk_overlap
+            if selected_retriever == "parent":
+                settings.TEXT_SPLITTER_METHOD_CHILD = selected_splitter_child
+                settings.CHUNK_SIZE_CHILD = chunk_size_child
+                settings.CHUNK_OVERLAP_CHILD = chunk_overlap_child
 
             st.success("Settings saved successfully!")
 
