@@ -14,7 +14,6 @@ from loguru import logger
 from ingest.ingester import Ingester
 from query.querier import Querier
 import utils as ut
-import prompts.prompt_templates as pr
 import settings
 
 
@@ -73,7 +72,7 @@ def get_review_questions(question_list_path: str) -> List[Tuple[int, str, str]]:
     return review_questions
 
 
-def get_synthesis_questions(question_list_path: str) -> List[Tuple[int, str, str]]:
+def get_synthesis_prompts(prompt_list_path: str) -> List[Tuple[int, str, str]]:
     """
     Convert the file with questions into a list of questions
 
@@ -88,18 +87,18 @@ def get_synthesis_questions(question_list_path: str) -> List[Tuple[int, str, str
         list of tuples containing the question id, question type and question
     """
     # Get questions from question list file
-    with open(file=question_list_path, mode="r", encoding="utf8") as review_file:
-        review_questions = []
+    with open(file=prompt_list_path, mode="r", encoding="utf8") as prompt_file:
+        prompts = []
         # read each line
         cntline = 0
-        for line in review_file:
+        for line in prompt_file:
             elements = line.strip().split("\t")
             # Ignore header, add question to list
             if cntline > 0:
-                review_questions.append((cntline, elements[0]))
+                prompts.append((cntline, elements[0]))
             cntline += 1
 
-    return review_questions
+    return prompts
 
 
 def generate_answer(
@@ -146,20 +145,6 @@ def write_qa_prompt(myquerier: Querier, output_path: os.PathLike) -> None:
     with open(file=output_path, mode="a", encoding="utf8") as file:
         file.write("QA PROMPT TEMPLATE: \n")
         file.write(f"{qa_prompt_template} \n\n")
-
-
-def write_synthesis_prompt(output_path: os.PathLike) -> None:
-    """
-    Writes the synthesis prompt to the output file
-
-    Parameters
-    ----------
-    output_path : os.PathLike
-        path of the output file
-    """
-    with open(file=output_path, mode="a", encoding="utf8") as file:
-        file.write("SYNTHESIS PROMPT TEMPLATE: \n")
-        file.write(f"{pr.SYNTHESIZE_PROMPT_TEMPLATE} \n\n")
 
 
 def write_settings(input_path: os.PathLike, confidential: bool, output_path: os.PathLike) -> None:
@@ -391,7 +376,7 @@ def main() -> None:
     # create output folder with timestamp
     timestamp = datetime.now().strftime("%Y_%m_%d_%Hhour_%Mmin_%Ssec")
     os.mkdir(os.path.join(content_folder_path, f"review/{timestamp}"))
-    # copy the questions and synthethis file to the output folder
+    # copy the question list file to the output folder
     os.system(f"cp {question_list_path} {content_folder_path}/review/{timestamp}/questions.txt")
     # ingest documents if documents in source folder path are not ingested yet
     ingest_or_load_documents(content_folder_name=content_folder_name,
@@ -400,13 +385,10 @@ def main() -> None:
 
     # get review questions from file
     review_questions = get_review_questions(question_list_path)
-    synthesis_prompts = get_synthesis_questions(synthesis_list_path)
+    synthesis_prompts = get_synthesis_prompts(synthesis_list_path)
     # write out settings
     output_path_settings = os.path.join(
         content_folder_path, f"review/{timestamp}", "settings.txt"
-    )
-    output_path_synthesis_prompt = os.path.join(
-        content_folder_path, f"review/{timestamp}", "synthesis_template.txt"
     )
     output_path_synthesis = os.path.join(
         content_folder_path, f"review/{timestamp}", "synthesis.tsv"
@@ -437,7 +419,8 @@ def main() -> None:
     logger.info("Successfully reviewed the documents.")
 
     if synthesis.lower() == "y":
-        write_synthesis_prompt(output_path=output_path_synthesis_prompt)
+        # copy the synthethis prompts file to the output folder
+        os.system(f"cp {synthesis_list_path} {content_folder_path}/review/{timestamp}/synthesize_prompt.txt")
         # second phase: synthesize the results
         synthesize_results(querier=querier,
                            results_path=output_path_review,
