@@ -309,7 +309,6 @@ def synthesize_results(querier: Querier,
         synthesis_prompt = synthesize_prompt_template.format(
             question=question, answer_string=answer_string
         )
-        print(f"\n\nsynthesis prompt: {synthesis_prompt}")
         synthesis = querier.llm.invoke(synthesis_prompt)
         result[question] = synthesis.content
 
