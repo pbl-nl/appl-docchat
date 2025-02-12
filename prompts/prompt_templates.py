@@ -34,11 +34,6 @@ SUMMARY_REFINE_TEMPLATE = dedent(
     ------------\
     """)
 
-SYNTHESIZE_PROMPT_TEMPLATE = dedent("""For the question: \n {question} \n
-    Please synthesize/summarize the text below. Hereby cluster which papers have things in common and in which way 
-    the clusters differ. Finally, summarize the clusters. \n\n
-    Answer: {answer_string}""")
-
 YES_NO_TEMPLATE = dedent("""Use the context below to answer the following question: {question}\n
     Context: {context}\n\n
     Answer the question only with 'yes' or 'no', DO NOT RETURN ANY OTHER TEXT OTHER THAN YES OR NO!\n
