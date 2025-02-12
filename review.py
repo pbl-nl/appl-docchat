@@ -10,6 +10,7 @@ import csv
 from datetime import datetime
 import pandas as pd
 from loguru import logger
+from langchain_core.prompts import PromptTemplate
 # local imports
 from ingest.ingester import Ingester
 from query.querier import Querier
@@ -265,13 +266,7 @@ def create_answers_for_folder(
 
     # Then save to TSV
     df_result = df_result.sort_values(by=["question_id", "filename"])
-    df_result.to_csv(output_path,
-                     sep='\t',
-                     index=False,
-                     mode='a',
-                     quoting=csv.QUOTE_ALL,
-                     encoding='utf-8-sig',
-                     escapechar='\\')
+    df_result.to_csv(output_path, sep='\t', index=False, mode='a')
 
 
 def synthesize_results(querier: Querier,
@@ -304,17 +299,20 @@ def synthesize_results(querier: Querier,
         df_specific_questions = answers_df.loc[
             answers_df["question_id"] == question_num
         ].copy()
-        # make sure that the LLM understands a new paper starts
+        # concatenate answers in the answer list
         answer_list = [answer for answer in df_specific_questions["answer"]]
-        answer_string = "\n\n\n\n New Paper:\n".join(answer_list)
+        answer_string = "\n\n".join(answer_list)
+        # get the question
         question = df_specific_questions["question"].iloc[0]
         # synthesize results: load prompt for synthesis
         synthesize_prompt_template = synthesis_prompts[question_num-1][1]
-        synthesis_prompt = str(synthesize_prompt_template).format(
+        synthesis_prompt = synthesize_prompt_template.format(
             question=question, answer_string=answer_string
         )
+        print(f"\n\nsynthesis prompt: {synthesis_prompt}")
         synthesis = querier.llm.invoke(synthesis_prompt)
         result[question] = synthesis.content
+
     # write results
     with open(file=output_path, mode="a", newline="", encoding="utf8") as file:
         # create a writer object specifying TAB as delimiter
