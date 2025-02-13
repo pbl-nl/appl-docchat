@@ -635,8 +635,8 @@ def render_settings_tab():
             key='splitter'
         )
     with col2:
-        st.markdown("*Description:*")
-        st.markdown(f"<p style='font-size:10px;'>{descriptions["TEXT_SPLITTER_METHOD"]}</p>", unsafe_allow_html=True)
+        st.markdown(f"<p style='font-size:18px;'>{descriptions["TEXT_SPLITTER_METHOD"]}</p>", unsafe_allow_html=True)
+    st.divider()
 
     col1, col2 = st.columns([0.4, 0.6])
     with col1:
@@ -648,8 +648,8 @@ def render_settings_tab():
             key='chunk_size'
         )
     with col2:
-        st.markdown("*Description:*")
-        st.markdown(f"<p style='font-size:10px;'>{descriptions["CHUNK_SIZE"]}</p>", unsafe_allow_html=True)
+        st.markdown(f"<p style='font-size:18px;'>{descriptions["CHUNK_SIZE"]}</p>", unsafe_allow_html=True)
+    st.divider()
 
     col1, col2 = st.columns([0.4, 0.6])
     with col1:
@@ -661,8 +661,8 @@ def render_settings_tab():
             key='chunk_overlap'
         )
     with col2:
-        st.markdown("*Description:*")
-        st.markdown(f"<p style='font-size:10px;'>{descriptions["CHUNK_OVERLAP"]}</p>", unsafe_allow_html=True)
+        st.markdown(f"<p style='font-size:18px;'>{descriptions["CHUNK_OVERLAP"]}</p>", unsafe_allow_html=True)
+    st.divider()
 
     # Embeddings Configuration
     st.subheader("Embeddings Configuration")
@@ -677,8 +677,8 @@ def render_settings_tab():
             key='emb_provider'
         )
     with col2:
-        st.markdown("*Description:*")
-        st.markdown(f"<p style='font-size:10px;'>{descriptions["EMBEDDINGS_PROVIDER"]}</p>", unsafe_allow_html=True)
+        st.markdown(f"<p style='font-size:18px;'>{descriptions["EMBEDDINGS_PROVIDER"]}</p>", unsafe_allow_html=True)
+    st.divider()
 
     # Get available models for selected provider
     provider_models = get_provider_models()
@@ -698,8 +698,8 @@ def render_settings_tab():
             key='emb_model'
         )
     with col2:
-        st.markdown("*Description:*")
-        st.markdown(f"<p style='font-size:10px;'>{descriptions["EMBEDDINGS_MODEL"]}</p>", unsafe_allow_html=True)
+        st.markdown(f"<p style='font-size:18px;'>{descriptions["EMBEDDINGS_MODEL"]}</p>", unsafe_allow_html=True)
+    st.divider()
 
     # Retriever Configuration
     st.subheader("Retriever Configuration")
@@ -714,8 +714,8 @@ def render_settings_tab():
             key='retriever'
         )
     with col2:
-        st.markdown("*Description:*")
-        st.markdown(f"<p style='font-size:10px;'>{descriptions["RETRIEVER_TYPE"]}</p>", unsafe_allow_html=True)
+        st.markdown(f"<p style='font-size:18px;'>{descriptions["RETRIEVER_TYPE"]}</p>", unsafe_allow_html=True)
+    st.divider()
 
     if selected_retriever == "parent":
         col1, col2 = st.columns([0.4, 0.6])
@@ -728,9 +728,9 @@ def render_settings_tab():
                 key='splitter_child'
             )
         with col2:
-            st.markdown("*Description:*")
-            st.markdown(f"<p style='font-size:10px;'>{descriptions["TEXT_SPLITTER_METHOD_CHILD"]}</p>",
+            st.markdown(f"<p style='font-size:18px;'>{descriptions["TEXT_SPLITTER_METHOD_CHILD"]}</p>",
                         unsafe_allow_html=True)
+        st.divider()
 
         col1, col2 = st.columns([0.4, 0.6])
         with col1:
@@ -742,8 +742,8 @@ def render_settings_tab():
                 key='chunk_size_child'
             )
         with col2:
-            st.markdown("*Description:*")
-            st.markdown(f"<p style='font-size:10px;'>{descriptions["CHUNK_SIZE_CHILD"]}</p>", unsafe_allow_html=True)
+            st.markdown(f"<p style='font-size:18px;'>{descriptions["CHUNK_SIZE_CHILD"]}</p>", unsafe_allow_html=True)
+        st.divider()
 
         col1, col2 = st.columns([0.4, 0.6])
         with col1:
@@ -755,8 +755,9 @@ def render_settings_tab():
                 key='chunk_overlap_child'
             )
         with col2:
-            st.markdown("*Description:*")
-            st.markdown(f"<p style='font-size:10px;'>{descriptions["CHUNK_OVERLAP_CHILD"]}</p>", unsafe_allow_html=True)
+            st.markdown(f"<p style='font-size:18px;'>{descriptions["CHUNK_OVERLAP_CHILD"]}</p>", unsafe_allow_html=True)
+        st.divider()
+
     col1, col2 = st.columns([0.4, 0.6])
     with col1:
         rerank_enabled = st.checkbox(
@@ -765,8 +766,8 @@ def render_settings_tab():
             key='rerank'
         )
     with col2:
-        st.markdown("*Description:*")
-        st.markdown(f"<p style='font-size:10px;'>{descriptions["RERANK"]}</p>", unsafe_allow_html=True)
+        st.markdown(f"<p style='font-size:18px;'>{descriptions["RERANK"]}</p>", unsafe_allow_html=True)
+    st.divider()
 
     # LLM Configuration
     st.subheader("Language Model Configuration")
@@ -781,8 +782,8 @@ def render_settings_tab():
             key='llm_provider'
         )
     with col2:
-        st.markdown("*Description:*")
-        st.markdown(f"<p style='font-size:10px;'>{descriptions["LLM_PROVIDER"]}</p>", unsafe_allow_html=True)
+        st.markdown(f"<p style='font-size:18px;'>{descriptions["LLM_PROVIDER"]}</p>", unsafe_allow_html=True)
+    st.divider()
 
     # Get available models for selected provider
     available_llm_models = provider_models['llm'][selected_llm_provider]
@@ -801,8 +802,8 @@ def render_settings_tab():
             key='llm_model'
         )
     with col2:
-        st.markdown("*Description:*")
-        st.markdown(f"<p style='font-size:10px;'>{descriptions["LLM_MODEL"]}</p>", unsafe_allow_html=True)
+        st.markdown(f"<p style='font-size:18px;'>{descriptions["LLM_MODEL"]}</p>", unsafe_allow_html=True)
+    st.divider()
 
     # Save Settings Button
     if st.button("Save Settings", type="primary"):
