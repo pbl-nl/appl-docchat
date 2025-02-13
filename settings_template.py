@@ -21,17 +21,16 @@ ENVLOC = "path/to/dotenv/file"
 
 # ######### THE SETTINGS BELOW CAN BE USED FOR TESTING AND CUSTOMIZED TO YOUR PREFERENCE ##########
 
-# TEXT_SPLITTER_METHOD represents the way in which raw text chunks are created, must be one of:
-# "RecursiveCharacterTextSplitter" (default): split text to fixed size chunks
-# "NLTKTextSplitter": keep full sentences even if chunk size is exceeded
+# TEXT_SPLITTER_METHOD represents the way in which raw text is split into text chunks.
+# "RecursiveCharacterTextSplitter" (default): splits text to fixed size chunks
+# "NLTKTextSplitter": keeps full sentences even if chunk size is exceeded
 TEXT_SPLITTER_METHOD = "NLTKTextSplitter"
-# CHUNK_SIZE represents the maximum allowed size of text chunks, value must be integer
+# CHUNK_SIZE represents the maximum allowed size of text chunks
 CHUNK_SIZE = 1000
-# CHUNK_K represents the number of chunks that is returned from the vector database as input for the LLM
-# Value must be integer (>=1)
+# CHUNK_K represents the maximum number of chunks that is retrieved from the vector database
 # NB: CHUNK_SIZE and CHUNK_K are related, make sure that CHUNK_K * CHUNK_SIZE < LLM window size
 CHUNK_K = 5
-# CHUNK_OVERLAP represents the overlap between 2 sequential text chunks, value must be integer (>=0 and < CHUNK_SIZE)
+# CHUNK_OVERLAP represents the overlap between 2 sequential text chunks, value must be >=0 and < CHUNK_SIZE
 CHUNK_OVERLAP = 200
 
 # EMBEDDINGS_PROVIDER must be one of: "openai", "huggingface", "ollama", "azureopenai"
@@ -74,7 +73,7 @@ AZURE_EMBEDDING_DEPLOYMENT_MAP = {
 # vectors) and BM25 keyword search (sparse vectors)
 # - "parent": this uses a ParentDocument retriever meaning that small documents are stored in the vector database
 # and used for similarity search while the larger "parent" chunks are returned by the retriever
-# NB: the creation of the small documents is steered by the parameters TEXT_SPLITTE_METHOD_CHILD, CHUNK_SIZE_CHILD,
+# NB: the creation of the small documents is steered by the parameters TEXT_SPLITTER_METHOD_CHILD, CHUNK_SIZE_CHILD,
 # CHUNK_K_CHILD and CHUNK_OVERLAP_CHILD
 RETRIEVER_TYPE = "vectorstore"
 
@@ -180,7 +179,7 @@ SUMMARY_CHUNK_OVERLAP = 0
 SUMMARY_LLM_PROVIDER = "azureopenai"
 SUMMARY_EMBEDDINGS_PROVIDER = "azureopenai"
 SUMMARY_EMBEDDINGS_MODEL = "text-embedding-ada-002"
-# !! With the langchain version in appl-docchat.yaml it is necessary to choose gpt-35-turbo 
+# !! With the langchain version in appl-docchat.yaml it is necessary to choose gpt-35-turbo
 # if SUMMARY_LLM_PROVIDER = "azureopenai"
 SUMMARY_LLM_MODEL = "gpt-35-turbo"
 

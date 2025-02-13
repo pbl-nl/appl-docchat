@@ -78,6 +78,7 @@ def create_vectordb_path(content_folder_path: str,
                          text_splitter_method: str = None,
                          chunk_size: int = None,
                          chunk_overlap: int = None,
+                         text_splitter_method_child: str = None,
                          chunk_size_child: int = None,
                          chunk_overlap_child: int = None) -> str:
     """
@@ -99,6 +100,8 @@ def create_vectordb_path(content_folder_path: str,
         the maximum chunk size, by default None
     chunk_overlap : int, optional
         the chunk overlap, by default None
+    text_splitter_method_child : str, optional
+        name of the text splitter method used for child chunks, by default None
     chunk_size_child : int, optional
         the maximum chunk size of child chunks, by default None
     chunk_overlap_child : int, optional
@@ -115,14 +118,15 @@ def create_vectordb_path(content_folder_path: str,
     text_splitter_method = settings.TEXT_SPLITTER_METHOD if text_splitter_method is None else text_splitter_method
     chunk_size = str(settings.CHUNK_SIZE) if chunk_size is None else str(chunk_size)
     chunk_overlap = str(settings.CHUNK_OVERLAP) if chunk_overlap is None else str(chunk_overlap)
+    text_splitter_method_child = settings.TEXT_SPLITTER_METHOD_CHILD if text_splitter_method_child is None else \
+        text_splitter_method_child
     chunk_size_child = str(settings.CHUNK_SIZE_CHILD) if chunk_size_child is None else str(chunk_size_child)
     chunk_overlap_child = str(settings.CHUNK_OVERLAP_CHILD) \
         if chunk_overlap_child is None else str(chunk_overlap_child)
-    # vectordb_name is created from retriever_type, embeddings_provider, embeddings_model, text_splitter_method and
-    # parent and child chunk_size and chunk_overlap
-    vectordb_name = retriever_type + "_" + embeddings_provider + "_" + embeddings_model + "_" + \
-        text_splitter_method + "_" + chunk_size + "_" + chunk_overlap + "_" + chunk_size_child + "_" + \
-        chunk_overlap_child
+    # vectordb_name is created from retriever_type, embeddings_provider, embeddings_model, and
+    # parent and child text_splitter_method, chunk_size and chunk_overlap
+    vectordb_name = "_".join([retriever_type, embeddings_provider, embeddings_model, text_splitter_method, chunk_size,
+                              chunk_overlap, text_splitter_method_child, chunk_size_child, chunk_overlap_child])
 
     vectordb_folder_path = os.path.join(content_folder_path, "vector_stores", vectordb_name)
 
