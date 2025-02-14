@@ -22,8 +22,9 @@ def main():
     # Get content folder name from path
     content_folder_name = os.path.basename(content_folder_path)
     # Get private docs indicator from user
-    confidential_yn = input("Are there any confidential documents in the folder? (y/n) ")
-    confidential = confidential_yn in ["y", "Y"]
+    # confidential_yn = input("Are there any confidential documents in the folder? (y/n) ")
+    # confidential = confidential_yn in ["y", "Y"]
+    confidential = False
     # choose way of summarizing
     summarization_method = input("Summarization Method [map_reduce (m), refine (r)]: ")
     if summarization_method not in ["map_reduce", "refine", "m", "r"]:
