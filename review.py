@@ -171,7 +171,7 @@ def write_settings(input_path: os.PathLike, confidential: bool, output_path: os.
         file.write(f"settings.RERANK =  {settings.RERANK} \n")
         file.write(f"settings.RERANK_PROVIDER =  {settings.RERANK_PROVIDER} \n")
         file.write(f"settings.RERANK_MODEL =  {settings.RERANK_MODEL} \n")
-        file.write(f"settings.CHUNKS_K_FOR_RERANK =  {settings.CHUNKS_K_FOR_RERANK} \n")
+        file.write(f"settings.CHUNK_K_FOR_RERANK =  {settings.CHUNK_K_FOR_RERANK} \n")
         file.write(f"settings.RETRIEVER_PROMPT_TEMPLATE =  {settings.RETRIEVER_PROMPT_TEMPLATE} \n\n")
 
 

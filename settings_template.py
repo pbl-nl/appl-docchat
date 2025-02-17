@@ -21,17 +21,16 @@ ENVLOC = "path/to/dotenv/file"
 
 # ######### THE SETTINGS BELOW CAN BE USED FOR TESTING AND CUSTOMIZED TO YOUR PREFERENCE ##########
 
-# TEXT_SPLITTER_METHOD represents the way in which raw text chunks are created, must be one of:
-# "RecursiveCharacterTextSplitter" (default): split text to fixed size chunks
-# "NLTKTextSplitter": keep full sentences even if chunk size is exceeded
+# TEXT_SPLITTER_METHOD represents the way in which raw text is split into text chunks.
+# "RecursiveCharacterTextSplitter" (default): splits text to fixed size chunks
+# "NLTKTextSplitter": keeps full sentences even if chunk size is exceeded
 TEXT_SPLITTER_METHOD = "NLTKTextSplitter"
-# CHUNK_SIZE represents the maximum allowed size of text chunks, value must be integer
+# CHUNK_SIZE represents the maximum allowed size of text chunks
 CHUNK_SIZE = 1000
-# CHUNK_K represents the number of chunks that is returned from the vector database as input for the LLM
-# Value must be integer (>=1)
-# NB: CHUNK_SIZE and CHUNK_K are related, make sure that CHUNK_K * CHUNK_SIZE < LLM window size
-CHUNK_K = 5
-# CHUNK_OVERLAP represents the overlap between 2 sequential text chunks, value must be integer (>=0 and < CHUNK_SIZE)
+# CHUNK_K represents the maximum number of chunks that is conveyed to the LLM context window
+# NB: CHUNK_SIZE and CHUNK_K are related, make sure that CHUNK_K * CHUNK_SIZE < LLM context window size
+CHUNK_K = 4
+# CHUNK_OVERLAP represents the overlap between 2 sequential text chunks, value must be >=0 and < CHUNK_SIZE
 CHUNK_OVERLAP = 200
 
 # EMBEDDINGS_PROVIDER must be one of: "openai", "huggingface", "ollama", "azureopenai"
@@ -44,20 +43,25 @@ EMBEDDINGS_PROVIDER = "azureopenai"
 # - If EMBEDDINGS_PROVIDER is "huggingface", EMBEDDINGS_MODEL must be one of: "all-mpnet-base-v2"
 # - If EMBEDDINGS_PROVIDER is "ollama", EMBEDDINGS_MODEL must be one of the locally downloaded models, e.g.
 #   "llama3", "nomic-embed-text"
-# - If EMBEDDINGS_PROVIDER is "azureopenai", EMBEDDINGS_MODEL must be the embedding models deployed, e.g.
+# - EMBEDDINGS_PROVIDER is "azureopenai":
+
+# EMBEDDINGS_MODEL must be the embedding models deployed, e.g.
 #   "text-embedding-ada-002" (1536 dimensional, max 8191 tokens),
 #   "text-embedding-3-large" (3072 dimensional, max 8191 tokens)
 EMBEDDINGS_MODEL = "text-embedding-ada-002"
 
 # SEARCH_TYPE must be one of: "similarity", "similarity_score_threshold"
+# - "similarity": retrieves chunks based on similarity search
+# - "similarity_score_threshold": retrieves chunks based on similarity search and a score threshold
+# "similarity_score_threshold" is less useful when reranker is used
 SEARCH_TYPE = "similarity_score_threshold"
 
 # SCORE_THRESHOLD represents the similarity value that chunks must exceed to qualify for the context.
-# Value must be between 0.0 and 1.0
+# It is useful for preventing irrelevant context. Value must be between 0.0 and 1.0
 # This value is only relevant when SEARCH_TYPE has been set to "similarity_score_threshold"
-# When embedding model text-embedding-ada-002 is used, a value of 0.8 is reasonable
-# When embedding model text-embedding-3-large is used, a value of 0.5 is reasonable
-SCORE_THRESHOLD = 0.8
+# For embedding model text-embedding-ada-002, a value of 0.75 is reasonable
+# For embedding model text-embedding-3-large, a value of 0.5 is reasonable
+SCORE_THRESHOLD = 0.75
 
 # AZURE_EMBEDDING_DEPLOYMENT_MAP represents a dictionary of Azure embedding model deployments
 # with key the model name and value the deployment name
@@ -74,11 +78,8 @@ AZURE_EMBEDDING_DEPLOYMENT_MAP = {
 # vectors) and BM25 keyword search (sparse vectors)
 # - "parent": this uses a ParentDocument retriever meaning that small documents are stored in the vector database
 # and used for similarity search while the larger "parent" chunks are returned by the retriever
-# NB: the creation of the small documents is steered by the parameters TEXT_SPLITTE_METHOD_CHILD, CHUNK_SIZE_CHILD,
-# CHUNK_K_CHILD and CHUNK_OVERLAP_CHILD
 RETRIEVER_TYPE = "vectorstore"
 
-# Only when RETRIEVER_TYPE is set to "parent":
 # TEXT_SPLITTER_METHOD_CHILD represents the way in which raw text chunks for the "child" chunks are created.
 # Must be one of:
 # "RecursiveCharacterTextSplitter": split text to fixed size chunks
@@ -110,7 +111,7 @@ RERANK_PROVIDER = "flashrank_rerank"
 # For more info, see also https://github.com/PrithivirajDamodaran/FlashRank
 RERANK_MODEL = "ms-marco-MultiBERT-L-12"
 # Number of chunks to retrieve as input for reranker
-CHUNKS_K_FOR_RERANK = 20
+CHUNK_K_FOR_RERANK = 10
 
 # LLM_PROVIDER must be "openai" in case of using the OpenAI API
 # LLM_PROVIDER must be "huggingface" in case of using the Huggingface API
@@ -134,7 +135,9 @@ LLM_PROVIDER = "azureopenai"
 #   "orca-mini"
 #   "zephyr"
 #   See also https://ollama.ai/library
-# - If LLM_PROVIDER is "azureopenai", LLM_MODEL must be one of the LLM models deployed, e.g.:
+# - LLM_PROVIDER is "azureopenai":
+
+# LLM_MODEL must be one of the LLM models deployed, e.g.:
 #   "gpt-35-turbo", context window size = 4097 tokens
 #   "gpt-4", context window size = 8192 tokens
 #   "gpt-4o", context window size = 128000 tokens
@@ -175,12 +178,12 @@ EVALUATION_LLM_MODEL = "gpt-4o"
 
 # Similar settings as above, but specifically for creation of document summaries
 SUMMARY_TEXT_SPLITTER_METHOD = "RecursiveCharacterTextSplitter"
-SUMMARY_CHUNK_SIZE = 6000
+SUMMARY_CHUNK_SIZE = 8000
 SUMMARY_CHUNK_OVERLAP = 0
 SUMMARY_LLM_PROVIDER = "azureopenai"
 SUMMARY_EMBEDDINGS_PROVIDER = "azureopenai"
 SUMMARY_EMBEDDINGS_MODEL = "text-embedding-ada-002"
-# !! With the langchain version in appl-docchat.yaml it is necessary to choose gpt-35-turbo 
+# !! With the langchain version in appl-docchat.yaml it is necessary to choose gpt-35-turbo
 # if SUMMARY_LLM_PROVIDER = "azureopenai"
 SUMMARY_LLM_MODEL = "gpt-35-turbo"
 

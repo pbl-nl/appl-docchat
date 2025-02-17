@@ -442,7 +442,10 @@ def initialize_session_state() -> None:
 def initialize_querier(my_llm_provider: str,
                        my_llm_model: str,
                        my_embeddings_provider: str,
-                       my_embeddings_model: str) -> Querier:
+                       my_embeddings_model: str,
+                       my_retriever_type: str,
+                       my_rerank: bool,
+                       my_chunk_k: int) -> Querier:
     """
     Create a Querier object
 
@@ -456,6 +459,12 @@ def initialize_querier(my_llm_provider: str,
         chosen embeddings provider
     my_embeddings_model : str
         chosen embeddings model
+    my_retriever_type : str
+        chosen retriever type
+    my_rerank : bool
+        chosen rerank option
+    my_chunk_k : int
+        chosen max nr of chunks to retrieve
 
     Returns
     -------
@@ -465,7 +474,10 @@ def initialize_querier(my_llm_provider: str,
     my_querier = Querier(llm_provider=my_llm_provider,
                          llm_model=my_llm_model,
                          embeddings_provider=my_embeddings_provider,
-                         embeddings_model=my_embeddings_model)
+                         embeddings_model=my_embeddings_model,
+                         retriever_type=my_retriever_type,
+                         rerank=my_rerank,
+                         chunk_k=my_chunk_k)
     logger.info("Executed initialize_querier()")
 
     return my_querier
@@ -541,6 +553,7 @@ def initialize_settings_state():
             'RERANK': settings.RERANK,
             'LLM_PROVIDER': settings.LLM_PROVIDER,
             'LLM_MODEL': settings.LLM_MODEL,
+            'CHUNK_K': settings.CHUNK_K,
             'CHUNK_SIZE': settings.CHUNK_SIZE,
             'CHUNK_OVERLAP': settings.CHUNK_OVERLAP,
             'TEXT_SPLITTER_METHOD_CHILD': settings.TEXT_SPLITTER_METHOD_CHILD,
@@ -591,6 +604,7 @@ def get_settings_descriptions():
     # List of settings to find descriptions for
     settings = [
         "TEXT_SPLITTER_METHOD",
+        "CHUNK_K",
         "CHUNK_SIZE",
         "CHUNK_OVERLAP",
         "EMBEDDINGS_PROVIDER",
@@ -610,8 +624,6 @@ def get_settings_descriptions():
     # Get description for each setting
     for setting in settings:
         description = find_setting_description(content, setting)
-        # Convert setting name to display format (e.g., TEXT_SPLITTER_METHOD -> Text Splitter Method)
-        # display_name = ' '.join(setting.split('_')).title()
         descriptions[setting] = "<br>".join(desc.replace("# ", "").lstrip("# ") for desc in description.split("# "))[4:]
 
     return descriptions
@@ -686,8 +698,9 @@ def checkbox(label, valueOf, key, description, subheader=None):
 
 
 def save_settings(selected_splitter, selected_embeddings_provider, selected_embedding_model, selected_retriever,
-                  rerank_enabled, selected_llm_provider, selected_llm_model, chunk_size, chunk_overlap,
+                  rerank_enabled, selected_llm_provider, selected_llm_model, chunk_k, chunk_size, chunk_overlap,
                   selected_splitter_child, chunk_size_child, chunk_overlap_child):
+
     if not st.session_state['confidential']:
         st.session_state.settings.update({
             'TEXT_SPLITTER_METHOD': selected_splitter,
@@ -697,6 +710,7 @@ def save_settings(selected_splitter, selected_embeddings_provider, selected_embe
             'RERANK': rerank_enabled,
             'LLM_PROVIDER': selected_llm_provider,
             'LLM_MODEL': selected_llm_model,
+            'CHUNK_K': chunk_k,
             'CHUNK_SIZE': chunk_size,
             'CHUNK_OVERLAP': chunk_overlap,
             'TEXT_SPLITTER_METHOD_CHILD': selected_splitter_child,
@@ -721,6 +735,14 @@ def text_processing_settings_tab(descriptions):
                                   key='splitter',
                                   description=descriptions['TEXT_SPLITTER_METHOD'])
 
+    # Number of chunks
+    chunk_k = number_input(label="Chunk K",
+                           min_value=1,
+                           max_value=6,
+                           valueOf='CHUNK_K',
+                           key='chunk_k',
+                           description=descriptions['CHUNK_K'])
+
     # Chunk Size
     chunk_size = number_input(label="Chunk Size",
                               min_value=1,
@@ -738,7 +760,7 @@ def text_processing_settings_tab(descriptions):
                                  description=descriptions['CHUNK_OVERLAP'],
                                  itself=st.session_state.persistent_cache.get('CHUNK_OVERLAP', None))
 
-    return selected_splitter, chunk_size, chunk_overlap
+    return selected_splitter, chunk_k, chunk_size, chunk_overlap
 
 
 def embeddings_settings_tab(descriptions, provider_models, choose_llm_emb_provider):
@@ -784,6 +806,7 @@ def retrieve_settings_tab(descriptions, chunk_size):
         chunk_overlap_child = [st.session_state.settings['TEXT_SPLITTER_METHOD_CHILD'],
                                st.session_state.settings['CHUNK_SIZE_CHILD'],
                                st.session_state.settings['CHUNK_OVERLAP_CHILD']]
+
     if selected_retriever == "parent":
         # Child Text Splitter Method
         selected_splitter_child = selectbox(label="Child Text Splitter Method",
@@ -858,7 +881,7 @@ def render_settings_tab():
     provider_models = get_provider_models()
 
     # Text Splitter Method
-    selected_splitter, chunk_size, chunk_overlap = text_processing_settings_tab(descriptions)
+    selected_splitter, chunk_k, chunk_size, chunk_overlap = text_processing_settings_tab(descriptions)
 
     # Embeddings Configuration
     selected_embeddings_provider, selected_embedding_model = embeddings_settings_tab(descriptions, provider_models,
@@ -872,9 +895,9 @@ def render_settings_tab():
     selected_llm_provider, selected_llm_model = llm_settings_tab(descriptions, provider_models,
                                                                  choose_llm_emb_provider=False)
     # Not all values are used. Mainly created for User Experience
-    # If user change chunk overlap value without saving settings, 
+    # If user change chunk overlap value without saving settings,
     # and then change the chunk size, the chunk overlap value was
-    # resetting to its former value. Now it does not reset. This 
+    # resetting to its former value. Now it does not reset. This
     # is just one example. Others are child chunk size and overlap.
     # also embeddings model and llm model.
     st.session_state.persistent_cache.update({
@@ -885,6 +908,7 @@ def render_settings_tab():
         'RERANK': rerank_enabled,
         'LLM_PROVIDER': selected_llm_provider,
         'LLM_MODEL': selected_llm_model,
+        'CHUNK_K': chunk_k,
         'CHUNK_SIZE': chunk_size,
         'CHUNK_OVERLAP': chunk_overlap,
         'TEXT_SPLITTER_METHOD_CHILD': selected_splitter_child,
@@ -895,7 +919,7 @@ def render_settings_tab():
     if st.button("Save Settings", type="primary"):
         # Update settings in session state
         save_settings(selected_splitter, selected_embeddings_provider, selected_embedding_model, selected_retriever,
-                      rerank_enabled, selected_llm_provider, selected_llm_model, chunk_size, chunk_overlap,
+                      rerank_enabled, selected_llm_provider, selected_llm_model, chunk_k, chunk_size, chunk_overlap,
                       selected_splitter_child, chunk_size_child, chunk_overlap_child)
 
 
@@ -933,7 +957,9 @@ def render_chat_tab():
             embeddings_provider = st.session_state.settings['EMBEDDINGS_PROVIDER']
             embeddings_model = st.session_state.settings['EMBEDDINGS_MODEL']
             retriever_type = st.session_state.settings['RETRIEVER_TYPE']
+            rerank = st.session_state.settings['RERANK']
             text_splitter_method = st.session_state.settings['TEXT_SPLITTER_METHOD']
+            chunk_k = st.session_state.settings['CHUNK_K']
             chunk_size = st.session_state.settings['CHUNK_SIZE']
             chunk_overlap = st.session_state.settings['CHUNK_OVERLAP']
             text_splitter_method_child = st.session_state.settings['TEXT_SPLITTER_METHOD_CHILD']
@@ -944,7 +970,10 @@ def render_chat_tab():
         querier = initialize_querier(my_llm_provider=llm_provider,
                                      my_llm_model=llm_model,
                                      my_embeddings_provider=embeddings_provider,
-                                     my_embeddings_model=embeddings_model)
+                                     my_embeddings_model=embeddings_model,
+                                     my_retriever_type=retriever_type,
+                                     my_rerank=rerank,
+                                     my_chunk_k=chunk_k)
 
         # If a different folder or (set of) document(s) is chosen,
         # clear querier history and
@@ -1061,8 +1090,9 @@ def render_tab_safely(tab_name: str, render_function):
 
         # Log to file
         logger.error(f"Error in {tab_name}:\n{error_details}")
-# ### MAIN PROGRAM ####
 
+
+# ### MAIN PROGRAM ####
 
 # set page configuration, this is the first thing that needs to be done
 set_page_config()
