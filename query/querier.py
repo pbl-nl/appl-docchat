@@ -99,7 +99,9 @@ class Querier:
         retriever = RetrieverCreator(vectorstore=self.vector_store,
                                      chunk_k=self.chunk_k,
                                      retriever_type=self.retriever_type,
-                                     rerank=self.rerank).get_retriever(search_filter=search_filter)
+                                     rerank=self.rerank,
+                                     search_type=self.search_type,
+                                     score_threshold=self.score_threshold).get_retriever(search_filter=search_filter)
 
         # get appropriate RAG prompt for querying
         current_template = self.get_qa_template(settings.RETRIEVER_PROMPT_TEMPLATE)

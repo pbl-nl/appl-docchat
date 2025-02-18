@@ -1,7 +1,7 @@
 """
 Streamlit User Interface for chatting with documents
 """
-from typing import List, Dict, Any
+from typing import List, Dict
 import os
 import fitz
 import streamlit as st
@@ -445,7 +445,9 @@ def initialize_querier(my_llm_provider: str,
                        my_embeddings_model: str,
                        my_retriever_type: str,
                        my_rerank: bool,
-                       my_chunk_k: int) -> Querier:
+                       my_chunk_k: int,
+                       my_search_type: str,
+                       my_score_threshold: float) -> Querier:
     """
     Create a Querier object
 
@@ -465,6 +467,10 @@ def initialize_querier(my_llm_provider: str,
         chosen rerank option
     my_chunk_k : int
         chosen max nr of chunks to retrieve
+    my_search_type : str
+        chosen search type
+    my_score_threshold : float
+        chosen score threshold
 
     Returns
     -------
@@ -477,7 +483,9 @@ def initialize_querier(my_llm_provider: str,
                          embeddings_model=my_embeddings_model,
                          retriever_type=my_retriever_type,
                          rerank=my_rerank,
-                         chunk_k=my_chunk_k)
+                         chunk_k=my_chunk_k,
+                         search_type=my_search_type,
+                         score_threshold=my_score_threshold)
     logger.info("Executed initialize_querier()")
 
     return my_querier
@@ -558,10 +566,10 @@ def initialize_settings_state():
             'CHUNK_OVERLAP': settings.CHUNK_OVERLAP,
             'TEXT_SPLITTER_METHOD_CHILD': settings.TEXT_SPLITTER_METHOD_CHILD,
             'CHUNK_SIZE_CHILD': settings.CHUNK_SIZE_CHILD,
-            'CHUNK_OVERLAP_CHILD': settings.CHUNK_OVERLAP_CHILD
+            'CHUNK_OVERLAP_CHILD': settings.CHUNK_OVERLAP_CHILD,
+            'SEARCH_TYPE': settings.SEARCH_TYPE,
+            'SCORE_THRESHOLD': settings.SCORE_THRESHOLD,
         }
-    if 'persistent_cache' not in st.session_state:
-        st.session_state.persistent_cache = {}
 
 
 def read_description():
@@ -615,7 +623,9 @@ def get_settings_descriptions():
         "CHUNK_OVERLAP_CHILD",
         "RERANK",
         "LLM_PROVIDER",
-        "LLM_MODEL"
+        "LLM_MODEL",
+        "SEARCH_TYPE",
+        "SCORE_THRESHOLD"
     ]
 
     # Dictionary to store setting descriptions
@@ -629,77 +639,77 @@ def get_settings_descriptions():
     return descriptions
 
 
-def selectbox(label, options, indexOf, key, description, subheader=None, itself=None):
+def selectbox(label, options, key, description, subheader=None):
     if subheader:
         st.subheader(subheader)
 
-    if (itself and itself in options):
-        index = options.index(itself)
-    elif st.session_state.settings[indexOf] in options:
-        index = options.index(st.session_state.settings[indexOf])
-    else:
-        index = 0
+    if key not in st.session_state:
+        st.session_state[key] = st.session_state.settings[key]
 
-    col1, col2 = st.columns([0.4, 0.6])
-    with col1:
-        selected = st.selectbox(
-            label=label,
-            options=options,
-            index=index,
-            key=key
-        )
-    with col2:
+    index = options.index(st.session_state[key]) if st.session_state[key] in options else 0
+
+    # col1, col2 = st.columns([0.4, 0.6])
+    # with col1:
+    selected = st.selectbox(
+        label=label,
+        options=options,
+        index=index,
+        key=key
+    )
+    with st.expander("Description"):
         st.markdown(f"<p style='font-size:18px;'>{description}</p>", unsafe_allow_html=True)
-    st.divider()
+    # st.divider()
     return selected
 
 
-def number_input(label, min_value, max_value, valueOf, key, description, subheader=None, itself=None):
+def number_input(label, min_value, max_value, key, description, subheader=None):
     if subheader:
         st.subheader(subheader)
 
-    if itself is not None and min_value <= itself <= max_value:
-        default_value = itself
-    elif min_value <= st.session_state.settings[valueOf] <= max_value:
-        default_value = st.session_state.settings[valueOf]
-    else:
-        default_value = min(max_value, st.session_state.settings[valueOf])
+    if key not in st.session_state:
+        st.session_state[key] = st.session_state.settings[key]
 
-    col1, col2 = st.columns([0.4, 0.6])
-    with col1:
-        number = st.number_input(
-            label=label,
-            min_value=min_value,
-            max_value=max_value,
-            value=default_value,
-            key=key
-        )
-    with col2:
+    default_value = max(min_value, min(max_value, st.session_state[key]))
+
+    # col1, col2 = st.columns([0.4, 0.6])
+    # with col1:
+    number = st.number_input(
+        label=label,
+        min_value=min_value,
+        max_value=max_value,
+        value=default_value,
+        key=key
+    )
+    with st.expander("Description"):
         st.markdown(f"<p style='font-size:18px;'>{description}</p>", unsafe_allow_html=True)
-    st.divider()
+    # st.divider()
     return number
 
 
-def checkbox(label, valueOf, key, description, subheader=None):
+def checkbox(label, key, description, subheader=None):
     if subheader:
         st.subheader(subheader)
 
-    col1, col2 = st.columns([0.4, 0.6])
-    with col1:
-        checked = st.checkbox(
-            label=label,
-            value=st.session_state.settings[valueOf],
-            key=key
-        )
-    with col2:
+    if key not in st.session_state:
+        st.session_state[key] = st.session_state.settings[key]
+
+    # col1, col2 = st.columns([0.4, 0.6])
+    # with col1:
+    checked = st.checkbox(
+        label=label,
+        value=st.session_state[key],
+        key=key
+    )
+    with st.expander("Description"):
         st.markdown(f"<p style='font-size:18px;'>{description}</p>", unsafe_allow_html=True)
-    st.divider()
+    # st.divider()
     return checked
 
 
 def save_settings(selected_splitter, selected_embeddings_provider, selected_embedding_model, selected_retriever,
                   rerank_enabled, selected_llm_provider, selected_llm_model, chunk_k, chunk_size, chunk_overlap,
-                  selected_splitter_child, chunk_size_child, chunk_overlap_child):
+                  selected_splitter_child, chunk_size_child, chunk_overlap_child, search_type, score_threshold,
+                  developer_mode):
 
     if not st.session_state['confidential']:
         st.session_state.settings.update({
@@ -715,13 +725,16 @@ def save_settings(selected_splitter, selected_embeddings_provider, selected_embe
             'CHUNK_OVERLAP': chunk_overlap,
             'TEXT_SPLITTER_METHOD_CHILD': selected_splitter_child,
             'CHUNK_SIZE_CHILD': chunk_size_child,
-            'CHUNK_OVERLAP_CHILD': chunk_overlap_child
+            'CHUNK_OVERLAP_CHILD': chunk_overlap_child,
+            'SEARCH_TYPE': search_type,
+            'SCORE_THRESHOLD': score_threshold
         })
         st.success("Settings saved successfully!")
 
         # Log current settings
-        st.write("Current Settings:")
-        st.json(st.session_state.settings)
+        if developer_mode:
+            st.write("Current Settings:")
+            st.json(st.session_state.settings)
     else:
         st.error("Confidential mode is enabled. Settings cannot be changed.")
 
@@ -731,47 +744,33 @@ def text_processing_settings_tab(descriptions):
     selected_splitter = selectbox(subheader="Text Processing",
                                   label="Text Splitter Method",
                                   options=["RecursiveCharacterTextSplitter", "NLTKTextSplitter"],
-                                  indexOf='TEXT_SPLITTER_METHOD',
-                                  key='splitter',
+                                  key='TEXT_SPLITTER_METHOD',
                                   description=descriptions['TEXT_SPLITTER_METHOD'])
-
-    # Number of chunks
-    chunk_k = number_input(label="Chunk K",
-                           min_value=1,
-                           max_value=6,
-                           valueOf='CHUNK_K',
-                           key='chunk_k',
-                           description=descriptions['CHUNK_K'])
 
     # Chunk Size
     chunk_size = number_input(label="Chunk Size",
                               min_value=1,
                               max_value=1000,
-                              valueOf='CHUNK_SIZE',
-                              key='chunk_size',
+                              key='CHUNK_SIZE',
                               description=descriptions['CHUNK_SIZE'])
 
     # Chunk Overlap
     chunk_overlap = number_input(label="Chunk Overlap",
                                  min_value=0,
                                  max_value=chunk_size-1,
-                                 valueOf='CHUNK_OVERLAP',
-                                 key='chunk_overlap',
-                                 description=descriptions['CHUNK_OVERLAP'],
-                                 itself=st.session_state.persistent_cache.get('CHUNK_OVERLAP', None))
+                                 key='CHUNK_OVERLAP',
+                                 description=descriptions['CHUNK_OVERLAP'],)
 
-    return selected_splitter, chunk_k, chunk_size, chunk_overlap
+    return selected_splitter, chunk_size, chunk_overlap
 
 
 def embeddings_settings_tab(descriptions, provider_models, choose_llm_emb_provider):
     # TO BE REMOVED, ONCE OTHER EMBEDDINGS PROVIDERS ARE IMPLEMENTED
-    choose_llm_emb_provider = False
     if choose_llm_emb_provider:
         selected_embeddings_provider = selectbox(subheader="Embeddings Configuration",
                                                  label="Embeddings Provider",
                                                  options=["openai", "huggingface", "ollama", "azureopenai"],
-                                                 indexOf='EMBEDDINGS_PROVIDER',
-                                                 key='emb_provider',
+                                                 key='EMBEDDINGS_PROVIDER',
                                                  description=descriptions['EMBEDDINGS_PROVIDER'])
     else:
         selected_embeddings_provider = "azureopenai"
@@ -787,19 +786,37 @@ def embeddings_settings_tab(descriptions, provider_models, choose_llm_emb_provid
     selected_embedding_model = selectbox(subheader=None if choose_llm_emb_provider else "Embeddings Configuration",
                                          label="Embeddings Model",
                                          options=available_embedding_models,
-                                         indexOf='EMBEDDINGS_MODEL',
-                                         key='emb_model',
-                                         description=descriptions['EMBEDDINGS_MODEL'],
-                                         itself=st.session_state.persistent_cache.get('EMBEDDINGS_MODEL', None))
+                                         key='EMBEDDINGS_MODEL',
+                                         description=descriptions['EMBEDDINGS_MODEL'])
     return selected_embeddings_provider, selected_embedding_model
 
 
 def retrieve_settings_tab(descriptions, chunk_size):
-    selected_retriever = selectbox(subheader="Retriever Configuration",
-                                   label="Retriever Type",
+    # Number of chunks
+    chunk_k = number_input(subheader="Retriever Configuration",
+                           label="Chunk K",
+                           min_value=1,
+                           max_value=6,
+                           key='CHUNK_K',
+                           description=descriptions['CHUNK_K'])
+
+    # Text Splitter Method
+    search_type = selectbox(label="Search Type",
+                            options=["similarity_score_threshold", "similarity"],
+                            key='SEARCH_TYPE',
+                            description=descriptions['SEARCH_TYPE'])
+
+    score_threshold = st.session_state.settings.get('SCORE_THRESHOLD', None)
+    if search_type == "similarity_score_threshold":
+        score_threshold = number_input(label="Similarity Score Threshold",
+                                       min_value=0.0,
+                                       max_value=1.0,
+                                       key='SCORE_THRESHOLD',
+                                       description=descriptions['SCORE_THRESHOLD'])
+
+    selected_retriever = selectbox(label="Retriever Type",
                                    options=["vectorstore", "hybrid", "parent"],
-                                   indexOf='RETRIEVER_TYPE',
-                                   key='retriever',
+                                   key='RETRIEVER_TYPE',
                                    description=descriptions['RETRIEVER_TYPE'])
 
     selected_splitter_child, chunk_size_child, \
@@ -811,35 +828,30 @@ def retrieve_settings_tab(descriptions, chunk_size):
         # Child Text Splitter Method
         selected_splitter_child = selectbox(label="Child Text Splitter Method",
                                             options=["RecursiveCharacterTextSplitter", "NLTKTextSplitter"],
-                                            indexOf='TEXT_SPLITTER_METHOD_CHILD',
-                                            key='splitter_child',
+                                            key='TEXT_SPLITTER_METHOD_CHILD',
                                             description=descriptions['TEXT_SPLITTER_METHOD_CHILD'])
 
         # Child Chunk Size
         chunk_size_child = number_input(label="Child Chunk Size",
                                         min_value=1,
                                         max_value=chunk_size,
-                                        valueOf='CHUNK_SIZE_CHILD',
-                                        key='chunk_size_child',
-                                        description=descriptions['CHUNK_SIZE_CHILD'],
-                                        itself=st.session_state.persistent_cache.get('CHUNK_SIZE_CHILD', None))
+                                        key='CHUNK_SIZE_CHILD',
+                                        description=descriptions['CHUNK_SIZE_CHILD'])
 
         # Child Chunk Overlap
         chunk_overlap_child = number_input(label="Child Chunk Overlap",
                                            min_value=0,
                                            max_value=chunk_size_child-1,
-                                           valueOf='CHUNK_OVERLAP_CHILD',
-                                           key='chunk_overlap_child',
-                                           description=descriptions['CHUNK_OVERLAP_CHILD'],
-                                           itself=st.session_state.persistent_cache.get('CHUNK_OVERLAP_CHILD', None))
+                                           key='CHUNK_OVERLAP_CHILD',
+                                           description=descriptions['CHUNK_OVERLAP_CHILD'],)
 
     # Reranking Configuration
     rerank_enabled = checkbox(label="Enable Reranking",
-                              valueOf='RERANK',
-                              key='rerank',
+                              key='RERANK',
                               description=descriptions['RERANK'])
 
-    return selected_retriever, selected_splitter_child, chunk_size_child, chunk_overlap_child, rerank_enabled
+    return chunk_k, search_type, score_threshold, selected_retriever, selected_splitter_child, \
+        chunk_size_child, chunk_overlap_child, rerank_enabled
 
 
 def llm_settings_tab(descriptions, provider_models, choose_llm_emb_provider):
@@ -847,8 +859,7 @@ def llm_settings_tab(descriptions, provider_models, choose_llm_emb_provider):
         selected_llm_provider = selectbox(subheader="Language Model Configuration",
                                           label="LLM Provider",
                                           options=["openai", "huggingface", "ollama", "azureopenai"],
-                                          indexOf='LLM_PROVIDER',
-                                          key='llm_provider',
+                                          key='LLM_PROVIDER',
                                           description=descriptions['LLM_PROVIDER'])
     else:
         selected_llm_provider = "azureopenai"
@@ -864,66 +875,49 @@ def llm_settings_tab(descriptions, provider_models, choose_llm_emb_provider):
     selected_llm_model = selectbox(subheader=None if choose_llm_emb_provider else "Language Model Configuration",
                                    label="LLM Model",
                                    options=available_llm_models,
-                                   indexOf='LLM_MODEL',
-                                   key='llm_model',
-                                   description=descriptions['LLM_MODEL'],
-                                   itself=st.session_state.persistent_cache.get('LLM_MODEL', None))
+                                   key='LLM_MODEL',
+                                   description=descriptions['LLM_MODEL'])
 
     return selected_llm_provider, selected_llm_model
 
 
-def render_settings_tab():
+def render_settings_tab(developer_mode):
     """Render the settings tab content"""
-    st.header("RAG Settings")
+    initialize_session_state()
 
     # Get descriptions from settings.py
     descriptions = get_settings_descriptions()
     provider_models = get_provider_models()
 
-    # Text Splitter Method
-    selected_splitter, chunk_k, chunk_size, chunk_overlap = text_processing_settings_tab(descriptions)
+    # Display settings
+    col1, col2 = st.columns([0.5, 0.5])
+    with col1:
+        choose_llm_emb_provider = False
+        # Text Splitter Method
+        selected_splitter, chunk_size, chunk_overlap = text_processing_settings_tab(descriptions)
 
-    # Embeddings Configuration
-    selected_embeddings_provider, selected_embedding_model = embeddings_settings_tab(descriptions, provider_models,
-                                                                                     choose_llm_emb_provider=False)
+        # Embeddings Configuration
+        selected_embeddings_provider, selected_embedding_model = embeddings_settings_tab(descriptions, provider_models,
+                                                                                         choose_llm_emb_provider)
 
-    # Retriever Configuration
-    selected_retriever, selected_splitter_child, chunk_size_child, \
-        chunk_overlap_child, rerank_enabled = retrieve_settings_tab(descriptions, chunk_size)
+        # LLM Configuration
+        selected_llm_provider, selected_llm_model = llm_settings_tab(descriptions, provider_models,
+                                                                     choose_llm_emb_provider=choose_llm_emb_provider)
+    with col2:
+        # Retriever Configuration
+        chunk_k, search_type, score_threshold, selected_retriever, selected_splitter_child, \
+            chunk_size_child, chunk_overlap_child, rerank_enabled = retrieve_settings_tab(descriptions, chunk_size)
 
-    # LLM Configuration
-    selected_llm_provider, selected_llm_model = llm_settings_tab(descriptions, provider_models,
-                                                                 choose_llm_emb_provider=False)
-    # Not all values are used. Mainly created for User Experience
-    # If user change chunk overlap value without saving settings,
-    # and then change the chunk size, the chunk overlap value was
-    # resetting to its former value. Now it does not reset. This
-    # is just one example. Others are child chunk size and overlap.
-    # also embeddings model and llm model.
-    st.session_state.persistent_cache.update({
-        'TEXT_SPLITTER_METHOD': selected_splitter,
-        'EMBEDDINGS_PROVIDER': selected_embeddings_provider,
-        'EMBEDDINGS_MODEL': selected_embedding_model,
-        'RETRIEVER_TYPE': selected_retriever,
-        'RERANK': rerank_enabled,
-        'LLM_PROVIDER': selected_llm_provider,
-        'LLM_MODEL': selected_llm_model,
-        'CHUNK_K': chunk_k,
-        'CHUNK_SIZE': chunk_size,
-        'CHUNK_OVERLAP': chunk_overlap,
-        'TEXT_SPLITTER_METHOD_CHILD': selected_splitter_child,
-        'CHUNK_SIZE_CHILD': chunk_size_child,
-        'CHUNK_OVERLAP_CHILD': chunk_overlap_child
-    })
     # Save Settings Button
     if st.button("Save Settings", type="primary"):
         # Update settings in session state
         save_settings(selected_splitter, selected_embeddings_provider, selected_embedding_model, selected_retriever,
                       rerank_enabled, selected_llm_provider, selected_llm_model, chunk_k, chunk_size, chunk_overlap,
-                      selected_splitter_child, chunk_size_child, chunk_overlap_child)
+                      selected_splitter_child, chunk_size_child, chunk_overlap_child, search_type, score_threshold,
+                      developer_mode)
 
 
-def render_chat_tab():
+def render_chat_tab(developer_mode):
     # initialize page, executed only once per session
     initialize_page()
     # Create button to exit the application. This button sets session_state['is_EXIT_clicked'] to True
@@ -965,6 +959,8 @@ def render_chat_tab():
             text_splitter_method_child = st.session_state.settings['TEXT_SPLITTER_METHOD_CHILD']
             chunk_size_child = st.session_state.settings['CHUNK_SIZE_CHILD']
             chunk_overlap_child = st.session_state.settings['CHUNK_OVERLAP_CHILD']
+            search_type = st.session_state.settings['SEARCH_TYPE']
+            score_threshold = st.session_state.settings['SCORE_THRESHOLD']
 
         # creation of Querier object, executed only once per session
         querier = initialize_querier(my_llm_provider=llm_provider,
@@ -973,7 +969,9 @@ def render_chat_tab():
                                      my_embeddings_model=embeddings_model,
                                      my_retriever_type=retriever_type,
                                      my_rerank=rerank,
-                                     my_chunk_k=chunk_k)
+                                     my_chunk_k=chunk_k,
+                                     my_search_type=search_type,
+                                     my_score_threshold=score_threshold)
 
         # If a different folder or (set of) document(s) is chosen,
         # clear querier history and
@@ -1077,9 +1075,9 @@ def render_chat_tab():
                 st.write("Please choose one or more documents")
 
 
-def render_tab_safely(tab_name: str, render_function):
+def render_tab_safely(tab_name: str, render_function, developer_mode: bool = False):
     try:
-        render_function()
+        render_function(developer_mode)
     except Exception:
         st.error("An error occurred. Please try again.")
         error_details = traceback.format_exc()
@@ -1093,12 +1091,21 @@ def render_tab_safely(tab_name: str, render_function):
 
 
 # ### MAIN PROGRAM ####
+def main():
+    # set page configuration, this is the first thing that needs to be done
+    import sys
+    if len(sys.argv) > 1:
+        print("Developer mode on")
+        developer_mode = True
+    else:
+        developer_mode = False
+    set_page_config()
+    tab1, tab2 = st.tabs(["Chat", "Settings"])
+    with tab1:
+        render_tab_safely("render_chat_tab", render_chat_tab)
+    with tab2:
+        render_tab_safely("render_settings_tab", render_settings_tab, developer_mode)
 
-# set page configuration, this is the first thing that needs to be done
-set_page_config()
-persistent_cache: Dict[str, Any] = {}
-tab1, tab2 = st.tabs(["Chat", "Settings"])
-with tab1:
-    render_tab_safely("render_chat_tab", render_chat_tab)
-with tab2:
-    render_tab_safely("render_settings_tab", render_settings_tab)
+
+if __name__ == "__main__":
+    main()

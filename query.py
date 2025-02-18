@@ -12,8 +12,9 @@ def main():
     # Get content folder name from path
     content_folder_name = os.path.basename(content_folder_path)
     # Get private docs indicator from user
-    confidential_yn = input("Are there any confidential documents in the folder? (y/n) ")
-    confidential = confidential_yn in ["y", "Y"]
+    # confidential_yn = input("Are there any confidential documents in the folder? (y/n) ")
+    # confidential = confidential_yn in ["y", "Y"]
+    confidential = False
     # get relevant models
     llm_provider, llm_model, embeddings_provider, embeddings_model = ut.get_relevant_models(summary=False,
                                                                                             private=confidential)
