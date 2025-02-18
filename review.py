@@ -15,7 +15,6 @@ from langchain_core.prompts import PromptTemplate
 from ingest.ingester import Ingester
 from query.querier import Querier
 import utils as ut
-import prompts.prompt_templates as pr
 import settings
 
 
@@ -71,8 +70,36 @@ def get_review_questions(question_list_path: str) -> List[Tuple[int, str, str]]:
             if cntline > 0:
                 review_questions.append((cntline, elements[0], elements[1]))
             cntline += 1
-
     return review_questions
+
+
+def get_synthesis_prompts(prompt_list_path: str) -> List[Tuple[int, str, str]]:
+    """
+    Convert the file with questions into a list of questions
+
+    Parameters
+    ----------
+    question_list_path : str
+        the full path of the location containing the file with questions
+
+    Returns
+    -------
+    List[Tuple[int, str, str]]
+        list of tuples containing the question id, question type and question
+    """
+    # Get questions from question list file
+    with open(file=prompt_list_path, mode="r", encoding="utf8") as prompt_file:
+        prompts = []
+        # read each line
+        cntline = 0
+        for line in prompt_file:
+            elements = line.strip().split("\t")
+            # Ignore header, add question to list
+            if cntline > 0:
+                prompts.append((cntline, elements[0]))
+            cntline += 1
+
+    return prompts
 
 
 def generate_answer(
@@ -119,20 +146,6 @@ def write_qa_prompt(myquerier: Querier, output_path: os.PathLike) -> None:
     with open(file=output_path, mode="a", encoding="utf8") as file:
         file.write("QA PROMPT TEMPLATE: \n")
         file.write(f"{qa_prompt_template} \n\n")
-
-
-def write_synthesis_prompt(output_path: os.PathLike) -> None:
-    """
-    Writes the synthesis prompt to the output file
-
-    Parameters
-    ----------
-    output_path : os.PathLike
-        path of the output file
-    """
-    with open(file=output_path, mode="a", encoding="utf8") as file:
-        file.write("SYNTHESIS PROMPT TEMPLATE: \n")
-        file.write(f"{pr.SYNTHESIZE_PROMPT_TEMPLATE} \n\n")
 
 
 def write_settings(input_path: os.PathLike, confidential: bool, output_path: os.PathLike) -> None:
@@ -239,12 +252,27 @@ def create_answers_for_folder(
                 final_answer,
                 sources,
             ]
-    # sort on question, then on document
+
+    # First clean up the newlines in the text columns
+    def clean_newlines(text):
+        if isinstance(text, str):
+            return text.replace('\n', ' ')
+        return text
+
+    # Apply to columns that contain text with newlines
+    text_columns = ['question', 'answer', 'sources']
+    for col in text_columns:
+        df_result[col] = df_result[col].apply(clean_newlines)
+
+    # Then save to TSV
     df_result = df_result.sort_values(by=["question_id", "filename"])
-    df_result.to_csv(output_path, sep="\t", index=False, mode="a")
+    df_result.to_csv(output_path, sep='\t', index=False, mode='a')
 
 
-def synthesize_results(querier: Querier, results_path: str, output_path: str) -> None:
+def synthesize_results(querier: Querier,
+                       results_path: str,
+                       output_path: str,
+                       synthesis_prompts: List[Tuple[int, str]]) -> None:
     """
     Phase 2 of the review: synthesizes, per question, the results from phase 1
 
@@ -257,6 +285,8 @@ def synthesize_results(querier: Querier, results_path: str, output_path: str) ->
         path of the file resulting from phase 1
     output_path : os.PathLike
         path of the output file
+    synthesis_prompts: List[Tuple[int, str]]
+        list of tuples containing question id and synthesis prompt
     """
     # load questions and answers
     answers_df = pd.read_csv(filepath_or_buffer=results_path,
@@ -269,19 +299,19 @@ def synthesize_results(querier: Querier, results_path: str, output_path: str) ->
         df_specific_questions = answers_df.loc[
             answers_df["question_id"] == question_num
         ].copy()
-        # make sure that the LLM understands a new paper starts
-        answer_list = [question for question in df_specific_questions["answer"]]
-        answer_string = "\n\n\n\n New Paper:\n".join(answer_list)
+        # concatenate answers in the answer list
+        answer_list = [answer for answer in df_specific_questions["answer"]]
+        answer_string = "\n\n".join(answer_list)
+        # get the question
         question = df_specific_questions["question"].iloc[0]
         # synthesize results: load prompt for synthesis
-        synthesize_prompt_template = PromptTemplate.from_template(
-            template=pr.SYNTHESIZE_PROMPT_TEMPLATE
-        )
+        synthesize_prompt_template = synthesis_prompts[question_num-1][1]
         synthesis_prompt = synthesize_prompt_template.format(
             question=question, answer_string=answer_string
         )
         synthesis = querier.llm.invoke(synthesis_prompt)
         result[question] = synthesis.content
+
     # write results
     with open(file=output_path, mode="a", newline="", encoding="utf8") as file:
         # create a writer object specifying TAB as delimiter
@@ -302,8 +332,9 @@ def main() -> None:
     # Get content folder name from path
     content_folder_name = os.path.basename(content_folder_path)
     # Get private docs indicator from user
-    confidential_yn = input("Are there any confidential documents in the folder? (y/n) ")
-    confidential = confidential_yn in ["y", "Y"]
+    # confidential_yn = input("Are there any confidential documents in the folder? (y/n) ")
+    # confidential = confidential_yn in ["y", "Y"]
+    confidential = False
     # get relevant models
     llm_provider, llm_model, embeddings_provider, embeddings_model = ut.get_relevant_models(summary=False,
                                                                                             private=confidential)
@@ -320,6 +351,7 @@ def main() -> None:
 
     # get path of file with list of questions
     question_list_path = os.path.join(content_folder_path, "review", "questions.txt")
+    synthesis_list_path = os.path.join(content_folder_path, "review", "synthesize_prompt.txt")
 
     # if question list path does not exist, stop
     if not os.path.exists(question_list_path):
@@ -342,7 +374,7 @@ def main() -> None:
     # create output folder with timestamp
     timestamp = datetime.now().strftime("%Y_%m_%d_%Hhour_%Mmin_%Ssec")
     os.mkdir(os.path.join(content_folder_path, f"review/{timestamp}"))
-    # copy the questions and synthethis file to the output folder
+    # copy the question list file to the output folder
     os.system(f"cp {question_list_path} {content_folder_path}/review/{timestamp}/questions.txt")
     # ingest documents if documents in source folder path are not ingested yet
     ingest_or_load_documents(content_folder_name=content_folder_name,
@@ -351,10 +383,13 @@ def main() -> None:
 
     # get review questions from file
     review_questions = get_review_questions(question_list_path)
-
-    # write settings to file
+    synthesis_prompts = get_synthesis_prompts(synthesis_list_path)
+    # write out settings
     output_path_settings = os.path.join(
         content_folder_path, f"review/{timestamp}", "settings.txt"
+    )
+    output_path_synthesis = os.path.join(
+        content_folder_path, f"review/{timestamp}", "synthesis.tsv"
     )
     write_settings(input_path=content_folder_path,
                    confidential=confidential,
@@ -370,34 +405,25 @@ def main() -> None:
     output_path_review = os.path.join(
         content_folder_path, f"review/{timestamp}", "answers.tsv"
     )
-    if not os.path.exists(output_path_review):
-        create_answers_for_folder(
-            synthesis=synthesis,
-            review_files=review_files,
-            review_questions=review_questions,
-            content_folder_name=content_folder_name,
-            querier=querier,
-            vecdb_folder_path=vecdb_folder_path,
-            output_path=output_path_review
-        )
-        logger.info("Successfully reviewed the documents.")
-    else:
-        logger.info("Results already exist, skipping creation of answers.")
+    create_answers_for_folder(
+        synthesis=synthesis,
+        review_files=review_files,
+        review_questions=review_questions,
+        content_folder_name=content_folder_name,
+        querier=querier,
+        vecdb_folder_path=vecdb_folder_path,
+        output_path=output_path_review
+    )
+    logger.info("Successfully reviewed the documents.")
 
     if synthesis.lower() == "y":
-        # write synthesis template to file
-        output_path_synthesis = os.path.join(
-            content_folder_path, f"review/{timestamp}", "synthesis_template.txt"
-        )
-        write_synthesis_prompt(output_path=output_path_synthesis)
-        # check if synthesis already exists, if not create one
-        output_path_synthesis = os.path.join(
-            content_folder_path, f"review/{timestamp}", "synthesis.tsv"
-        )
+        # copy the synthethis prompts file to the output folder
+        os.system(f"cp {synthesis_list_path} {content_folder_path}/review/{timestamp}/synthesize_prompt.txt")
         # second phase: synthesize the results
         synthesize_results(querier=querier,
                            results_path=output_path_review,
-                           output_path=output_path_synthesis)
+                           output_path=output_path_synthesis,
+                           synthesis_prompts=synthesis_prompts)
         logger.info("Successfully synthesized results.")
 
 
