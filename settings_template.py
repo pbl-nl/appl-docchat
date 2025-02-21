@@ -71,13 +71,10 @@ AZURE_EMBEDDING_DEPLOYMENT_MAP = {
     "text-embedding-3-large": "pbl-openai-a-cd-3large"
 }
 
-# RETRIEVER_TYPE represents the type of retriever that is used to extract chunks from the vectorstore
-# Value must be one of:
-# - "vectorstore": in case a purely semantic search is done in the vectorstore (dense vectors)
-# - "hybrid": in case a hybrid search is done, the result will be a combination of vectorstore semantic search (dense
-# vectors) and BM25 keyword search (sparse vectors)
-# - "parent": this uses a ParentDocument retriever meaning that small documents are stored in the vector database
-# and used for similarity search while the larger "parent" chunks are returned by the retriever
+# RETRIEVER_TYPE represents the type of retrieval that is used to extract the most relevant chunks from the vectorstore
+# - "vectorstore": a purely semantic search is done in the vectorstore
+# - "hybrid": result will be a combination of vectorstore semantic search and keyword search
+# - "parent": semantic search on small chunks but retrieval of larger "parent" chunks
 RETRIEVER_TYPE = "vectorstore"
 
 # TEXT_SPLITTER_METHOD_CHILD represents the way in which raw text chunks for the "child" chunks are created.
