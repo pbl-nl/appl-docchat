@@ -795,7 +795,7 @@ def embeddings_settings_tab(descriptions, provider_models, choose_llm_emb_provid
     if current_emb_model not in available_embedding_models:
         current_emb_model = available_embedding_models[0]
 
-    selected_embedding_model = selectbox(subheader=None if choose_llm_emb_provider else "Embeddings Configuration",
+    selected_embedding_model = selectbox(subheader=None if choose_llm_emb_provider else "Embedding",
                                          label="Embeddings Model",
                                          options=available_embedding_models,
                                          key='EMBEDDINGS_MODEL',
@@ -920,6 +920,8 @@ def render_settings_tab(developer_mode):
         # LLM Configuration
         selected_llm_provider, selected_llm_model = llm_settings_tab(descriptions, provider_models,
                                                                      choose_llm_emb_provider=choose_llm_emb_provider)
+        st.subheader("RAG Pipeline Overview")
+        st.image("./images/pipeline.PNG", use_container_width=True)
 
     # Save Settings Button
     if st.button("Save Settings", type="primary", key="save_settings"):
