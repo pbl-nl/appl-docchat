@@ -382,3 +382,29 @@ def get_relevant_models(summary: bool, private: bool) -> Tuple[str, str, str, st
         else:
             return settings.LLM_PROVIDER, settings.LLM_MODEL, \
                    settings.EMBEDDINGS_PROVIDER, settings.EMBEDDINGS_MODEL
+
+
+def answer_idontknow(language: str) -> str:
+    """
+    Returns the answer "I don't know" in the correct language
+
+    Parameters
+    ----------
+    language : str
+        language of the answer
+
+    Returns
+    -------
+    str
+        the answer "I don't know" in the correct language
+    """
+    if language == 'nl':
+        result = "Ik weet het niet omdat er geen relevante context is die het antwoord bevat"
+    elif language == 'de':
+        result = "Ich weiß es nicht, weil es keinen relevanten Kontext gibt, der die Antwort enthält"
+    elif language == 'fr':
+        result = "Je ne sais pas car il n'y a pas de contexte pertinent contenant la réponse"
+    else:
+        result = "I don't know because there is no relevant context containing the answer"
+
+    return result
