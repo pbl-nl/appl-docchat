@@ -386,6 +386,18 @@ def initialize_page() -> None:
             z-index: 999999 !important;
             margin: 0 !important;
         }
+        /* Fixed save button */
+        .st-key-save_settings {
+            position: fixed !important;
+            bottom: 10% !important;
+            right: 20% !important;
+            padding: 0.5rem !important;  /* reduced padding */
+            z-index: 999999 !important;
+            margin: 0 !important;
+            width: 0 !important;      /* specific width */
+            height: 0 !important;     /* specific height */
+            /* center content */
+        }
         </style>
         ''',
         unsafe_allow_html=True
@@ -767,7 +779,7 @@ def text_processing_settings_tab(descriptions):
 def embeddings_settings_tab(descriptions, provider_models, choose_llm_emb_provider):
     # TO BE REMOVED, ONCE OTHER EMBEDDINGS PROVIDERS ARE IMPLEMENTED
     if choose_llm_emb_provider:
-        selected_embeddings_provider = selectbox(subheader="Embeddings Configuration",
+        selected_embeddings_provider = selectbox(subheader="Embedding",
                                                  label="Embeddings Provider",
                                                  options=["openai", "huggingface", "ollama", "azureopenai"],
                                                  key='EMBEDDINGS_PROVIDER',
@@ -793,7 +805,7 @@ def embeddings_settings_tab(descriptions, provider_models, choose_llm_emb_provid
 
 def retrieve_settings_tab(descriptions, chunk_size):
     # Number of chunks
-    chunk_k = number_input(subheader="Retriever Configuration",
+    chunk_k = number_input(subheader="Retrieval",
                            label="Chunk K",
                            min_value=1,
                            max_value=6,
@@ -856,7 +868,7 @@ def retrieve_settings_tab(descriptions, chunk_size):
 
 def llm_settings_tab(descriptions, provider_models, choose_llm_emb_provider):
     if choose_llm_emb_provider:
-        selected_llm_provider = selectbox(subheader="Language Model Configuration",
+        selected_llm_provider = selectbox(subheader="LLM",
                                           label="LLM Provider",
                                           options=["openai", "huggingface", "ollama", "azureopenai"],
                                           key='LLM_PROVIDER',
@@ -872,7 +884,7 @@ def llm_settings_tab(descriptions, provider_models, choose_llm_emb_provider):
     if current_llm_model not in available_llm_models:
         current_llm_model = available_llm_models[0]
 
-    selected_llm_model = selectbox(subheader=None if choose_llm_emb_provider else "Language Model Configuration",
+    selected_llm_model = selectbox(subheader=None if choose_llm_emb_provider else "LLM",
                                    label="LLM Model",
                                    options=available_llm_models,
                                    key='LLM_MODEL',
@@ -884,13 +896,12 @@ def llm_settings_tab(descriptions, provider_models, choose_llm_emb_provider):
 def render_settings_tab(developer_mode):
     """Render the settings tab content"""
     initialize_session_state()
-
     # Get descriptions from settings.py
     descriptions = get_settings_descriptions()
     provider_models = get_provider_models()
 
     # Display settings
-    col1, col2 = st.columns([0.5, 0.5])
+    col1, col2, col3 = st.columns([1/3, 1/3, 1/3])
     with col1:
         choose_llm_emb_provider = False
         # Text Splitter Method
@@ -900,16 +911,18 @@ def render_settings_tab(developer_mode):
         selected_embeddings_provider, selected_embedding_model = embeddings_settings_tab(descriptions, provider_models,
                                                                                          choose_llm_emb_provider)
 
-        # LLM Configuration
-        selected_llm_provider, selected_llm_model = llm_settings_tab(descriptions, provider_models,
-                                                                     choose_llm_emb_provider=choose_llm_emb_provider)
     with col2:
         # Retriever Configuration
         chunk_k, search_type, score_threshold, selected_retriever, selected_splitter_child, \
             chunk_size_child, chunk_overlap_child, rerank_enabled = retrieve_settings_tab(descriptions, chunk_size)
 
+    with col3:
+        # LLM Configuration
+        selected_llm_provider, selected_llm_model = llm_settings_tab(descriptions, provider_models,
+                                                                     choose_llm_emb_provider=choose_llm_emb_provider)
+
     # Save Settings Button
-    if st.button("Save Settings", type="primary"):
+    if st.button("Save Settings", type="primary", key="save_settings"):
         # Update settings in session state
         save_settings(selected_splitter, selected_embeddings_provider, selected_embedding_model, selected_retriever,
                       rerank_enabled, selected_llm_provider, selected_llm_model, chunk_k, chunk_size, chunk_overlap,
