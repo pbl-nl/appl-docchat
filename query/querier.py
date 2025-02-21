@@ -21,13 +21,15 @@ class Querier:
     When parameters are read from GUI, object is initiated with parameter settings listed
     """
     def __init__(self, llm_provider=None, llm_model=None, embeddings_provider=None, embeddings_model=None,
-                 chain_name=None, chain_type=None, chain_verbosity=None, search_type=None,
-                 score_threshold=None, chunk_k=None):
+                 retriever_type=None, rerank=None, chain_name=None, chain_type=None, chain_verbosity=None,
+                 search_type=None, score_threshold=None, chunk_k=None):
         load_dotenv(dotenv_path=os.path.join(settings.ENVLOC, ".env"))
         self.llm_provider = settings.LLM_PROVIDER if llm_provider is None else llm_provider
         self.llm_model = settings.LLM_MODEL if llm_model is None else llm_model
         self.embeddings_provider = settings.EMBEDDINGS_PROVIDER if embeddings_provider is None else embeddings_provider
         self.embeddings_model = settings.EMBEDDINGS_MODEL if embeddings_model is None else embeddings_model
+        self.retriever_type = settings.RETRIEVER_TYPE if retriever_type is None else retriever_type
+        self.rerank = settings.RERANK if rerank is None else rerank
         self.chain_name = settings.CHAIN_NAME if chain_name is None else chain_name
         self.chain_type = settings.CHAIN_TYPE if chain_type is None else chain_type
         self.chain_verbosity = settings.CHAIN_VERBOSITY if chain_verbosity is None else chain_verbosity
@@ -94,7 +96,12 @@ class Querier:
         logger.info(f"Loaded vector store from folder {vecdb_folder}")
 
         # get retriever with search_filter
-        retriever = RetrieverCreator(vectorstore=self.vector_store).get_retriever(search_filter=search_filter)
+        retriever = RetrieverCreator(vectorstore=self.vector_store,
+                                     chunk_k=self.chunk_k,
+                                     retriever_type=self.retriever_type,
+                                     rerank=self.rerank,
+                                     search_type=self.search_type,
+                                     score_threshold=self.score_threshold).get_retriever(search_filter=search_filter)
 
         # get appropriate RAG prompt for querying
         current_template = self.get_qa_template(settings.RETRIEVER_PROMPT_TEMPLATE)
