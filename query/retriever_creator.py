@@ -38,7 +38,7 @@ class RetrieverCreator():
         self.rerank = settings.RERANK if rerank is None else rerank
         self.rerank_provider = settings.RERANK_PROVIDER if rerank_provider is None else rerank_provider
         self.rerank_model = settings.RERANK_MODEL if rerank_model is None else rerank_model
-        self.chunk_k_for_rerank = settings.CHUNKS_K_FOR_RERANK if chunk_k_for_rerank is None else chunk_k_for_rerank
+        self.chunk_k_for_rerank = settings.CHUNK_K_FOR_RERANK if chunk_k_for_rerank is None else chunk_k_for_rerank
         self.multiquery = settings.MULTIQUERY if multiquery is None else multiquery
 
     def get_vectorstore_retriever(self, search_filter=None):
@@ -46,7 +46,7 @@ class RetrieverCreator():
         returns plain vectorstore retriever
         """
         # maximum number of chunks to retrieve
-        search_kwargs = {"k": self.chunk_k}
+        search_kwargs = {"k": self.chunk_k if not self.rerank else self.chunk_k_for_rerank}
         # filter, if set
         if search_filter is not None:
             # logger.info(f"querying vector store with filter {search_filter}")
@@ -78,10 +78,10 @@ class RetrieverCreator():
             filtered_collection = self.vectorstore.get()
         bm25_retriever = BM25Retriever.from_texts(texts=filtered_collection["documents"],
                                                   metadatas=filtered_collection["metadatas"])
-        bm25_retriever.k = self.chunk_k
-        # For vectorstore retriever
-        # maximum number of chunks to retrieve
-        search_kwargs = {"k": self.chunk_k}
+        # maximum number of chunks to retrieve for BM25 retriever
+        bm25_retriever.k = self.chunk_k if not self.rerank else self.chunk_k_for_rerank
+        # maximum number of chunks to retrieve for vectorstore retriever
+        search_kwargs = {"k": self.chunk_k if not self.rerank else self.chunk_k_for_rerank}
         if search_filter is not None:
             # logger.info(f"querying vector store with filter {search_filter}")
             search_kwargs["filter"] = search_filter
@@ -101,7 +101,7 @@ class RetrieverCreator():
         """
         # Use the custom ParentDocumentRetriever that returns the parent docs associated with the child docs
         # maximum number of chunks to retrieve
-        search_kwargs = {"k": self.chunk_k_child}
+        search_kwargs = {"k": self.chunk_k_child if not self.rerank else self.chunk_k_for_rerank}
         # filter, if set
         if search_filter is not None:
             # logger.info(f"querying vector store with filter {search_filter}")
@@ -118,12 +118,7 @@ class RetrieverCreator():
         """
         returns compression retriever to allow reranking of the retrieved documents
         """
-        # maximum number of chunks to retrieve
-        search_kwargs = {"k": self.chunk_k_for_rerank}
-        # filter, if set
-        if search_filter is not None:
-            search_kwargs["filter"] = search_filter
-
+        # maximum number of chunks to retrieve is restricted to self.chunk_k_for_rerank
         base_retriever = self.get_vectorstore_retriever(search_filter)
         if self.retriever_type == "hybrid":
             base_retriever = self.get_ensemble_retriever(search_filter)
@@ -133,6 +128,7 @@ class RetrieverCreator():
         compressor = None
         if self.rerank_provider == "flashrank_rerank":
             my_client = Ranker(model_name=self.rerank_model, cache_dir="flashrank_models")
+            # maximum number of chunks to retrieve is now restricted to self.chunk_k
             compressor = FlashrankRerank(client=my_client, top_n=self.chunk_k)
 
         retriever = ContextualCompressionRetriever(base_retriever=base_retriever,
@@ -146,11 +142,10 @@ class RetrieverCreator():
         """
         if self.rerank:
             retriever = self.get_compression_retriever(search_filter)
-            logger.info(f"""Reranking activated with base_retriever {self.retriever_type}
-                         and compressor {self.rerank_provider}""")
+            logger.info(f"Reranking with base_retriever {self.retriever_type} and compressor {self.rerank_provider}")
         else:
             if self.retriever_type == "vectorstore":
-                retriever = self.get_vectorstore_retriever(search_filter)
+                retriever = self.get_vectorstore_retriever(search_filter=search_filter)
             elif self.retriever_type == "hybrid":
                 retriever = self.get_ensemble_retriever(search_filter)
             elif self.retriever_type == "parent":
