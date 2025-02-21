@@ -14,6 +14,7 @@ from ingest.ingester import Ingester
 from query.querier import Querier
 from summarize.summarizer import Summarizer
 import settings
+import settings_template
 import utils as ut
 
 
@@ -566,21 +567,21 @@ def initialize_settings_state():
     """Initialize session state for settings if not already present"""
     if 'settings' not in st.session_state:
         st.session_state.settings = {
-            'TEXT_SPLITTER_METHOD': settings.TEXT_SPLITTER_METHOD,
-            'EMBEDDINGS_PROVIDER': settings.EMBEDDINGS_PROVIDER,
-            'EMBEDDINGS_MODEL': settings.EMBEDDINGS_MODEL,
-            'RETRIEVER_TYPE': settings.RETRIEVER_TYPE,
-            'RERANK': settings.RERANK,
-            'LLM_PROVIDER': settings.LLM_PROVIDER,
-            'LLM_MODEL': settings.LLM_MODEL,
-            'CHUNK_K': settings.CHUNK_K,
-            'CHUNK_SIZE': settings.CHUNK_SIZE,
-            'CHUNK_OVERLAP': settings.CHUNK_OVERLAP,
-            'TEXT_SPLITTER_METHOD_CHILD': settings.TEXT_SPLITTER_METHOD_CHILD,
-            'CHUNK_SIZE_CHILD': settings.CHUNK_SIZE_CHILD,
-            'CHUNK_OVERLAP_CHILD': settings.CHUNK_OVERLAP_CHILD,
-            'SEARCH_TYPE': settings.SEARCH_TYPE,
-            'SCORE_THRESHOLD': settings.SCORE_THRESHOLD,
+            'TEXT_SPLITTER_METHOD': settings_template.TEXT_SPLITTER_METHOD,
+            'EMBEDDINGS_PROVIDER': settings_template.EMBEDDINGS_PROVIDER,
+            'EMBEDDINGS_MODEL': settings_template.EMBEDDINGS_MODEL,
+            'RETRIEVER_TYPE': settings_template.RETRIEVER_TYPE,
+            'RERANK': settings_template.RERANK,
+            'LLM_PROVIDER': settings_template.LLM_PROVIDER,
+            'LLM_MODEL': settings_template.LLM_MODEL,
+            'CHUNK_K': settings_template.CHUNK_K,
+            'CHUNK_SIZE': settings_template.CHUNK_SIZE,
+            'CHUNK_OVERLAP': settings_template.CHUNK_OVERLAP,
+            'TEXT_SPLITTER_METHOD_CHILD': settings_template.TEXT_SPLITTER_METHOD_CHILD,
+            'CHUNK_SIZE_CHILD': settings_template.CHUNK_SIZE_CHILD,
+            'CHUNK_OVERLAP_CHILD': settings_template.CHUNK_OVERLAP_CHILD,
+            'SEARCH_TYPE': settings_template.SEARCH_TYPE,
+            'SCORE_THRESHOLD': settings_template.SCORE_THRESHOLD,
         }
 
 
@@ -597,7 +598,7 @@ def find_setting_description(content: str, setting_name: str) -> str:
     and combine them into a single line.
 
     Args:
-        content (str): The content of settings.py
+        content (str): The content of settings_template.py
         setting_name (str): The name of the setting to find
 
     Returns:
@@ -616,7 +617,7 @@ def find_setting_description(content: str, setting_name: str) -> str:
 
 def get_settings_descriptions():
     """
-    Read settings.py and extract descriptions for all settings.
+    Read settings_template.py and extract descriptions for all settings.
     Returns a dictionary with setting names as keys and their descriptions as values.
     """
     content = read_description()
@@ -894,9 +895,7 @@ def llm_settings_tab(descriptions, provider_models, choose_llm_emb_provider):
 
 
 def render_settings_tab(developer_mode):
-    """Render the settings tab content"""
-    initialize_session_state()
-    # Get descriptions from settings.py
+    # Get descriptions from settings_template.py
     descriptions = get_settings_descriptions()
     provider_models = get_provider_models()
 
@@ -939,8 +938,6 @@ def render_chat_tab(developer_mode):
     st.sidebar.button("EXIT", type="primary", on_click=click_exit_button)
     # initialize logo, executed only once per session
     initialize_logo()
-    # initialize session state variables
-    initialize_session_state()
     # allow user to set the path to the document folder
     folder_path_selected = st.sidebar.text_input(label="***ENTER THE DOCUMENT FOLDER PATH***",
                                                  help="""Please enter the full path e.g. Y:/User/troosts/chatpbl/...""")
@@ -1115,6 +1112,8 @@ def main():
     else:
         developer_mode = False
     set_page_config()
+    # initialize session state variables
+    initialize_session_state()
     tab1, tab2 = st.tabs(["Chat", "Settings"])
     with tab1:
         render_tab_safely("render_chat_tab", render_chat_tab)
