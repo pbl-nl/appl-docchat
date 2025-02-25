@@ -85,7 +85,7 @@ class Summarizer:
         """
         # detect language first
         file_parser = FileParser()
-        _, metadata = file_parser.parse_file(os.path.join(self.content_folder_path, file))
+        _, metadata, _ = file_parser.parse_file(os.path.join(self.content_folder_path, file))
         language = ut.LANGUAGE_MAP.get(metadata['Language'], 'english')
         # create splitter object
         text_splitter = SplitterCreator(text_splitter_method=self.text_splitter_method,
