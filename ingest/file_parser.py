@@ -95,10 +95,13 @@ class FileParser:
             path of output pdf file
         """
         folder, file = os.path.split(docx_path)
-        pdf_path = os.path.join(folder, "conversions", file + '.pdf')
-        if not os.path.exists(os.path.join(folder, 'conversions')):
-            os.mkdir(os.path.join(folder, 'conversions'))
-        convert(input_path=docx_path, output_path=pdf_path, keep_active=False)
+        pdf_file = file + '.pdf'
+        folder_path = os.path.join(folder, 'conversions')
+        pdf_path = os.path.join(folder_path, pdf_file)
+        if not os.path.exists(folder_path):
+            os.mkdir(folder_path)
+        if not os.path.exists(pdf_path):
+            convert(input_path=docx_path, output_path=pdf_path, keep_active=False)
 
         return pdf_path
 
