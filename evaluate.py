@@ -210,7 +210,7 @@ def store_aggregated_results(timestamp: str,
     eval_file : str
         name of the evaluation file
     result : pd.DataFrame
-        dataframe with ragas performance metrics 
+        dataframe with ragas performance metrics
     """
     # administrative data
     admin_data = zip([evaluation_folder], [timestamp], [eval_file])
@@ -298,7 +298,9 @@ def store_evaluation_result(df: pd.DataFrame, evaluation_folder: str, evaluation
     df.to_csv(path, sep="\t", index=False)
 
 
-def main(chunk_size: int = None, chunk_overlap: int = None, chunk_k: int = None):
+def main(splitter, chunk_size, chunk_overlap, embeddings_provider, embeddings_model,
+         chunk_k, search_type, score_threshold, retriever, splitter_child,
+         chunk_size_child, chunk_overlap_child, rerank, llm_provider, llm_model):
     """
     main evaluation function that ingests and queries documents according to the evaluation json file
 
@@ -311,14 +313,16 @@ def main(chunk_size: int = None, chunk_overlap: int = None, chunk_k: int = None)
     chunk_k : int, optional
         the maximum number of chunks to return from the retriever, by default None
     """
-    # get relevant models
-    llm_provider, llm_model, embeddings_provider, embeddings_model = ut.get_relevant_models(summary=False,
-                                                                                            private=False)
     # Create instance of Querier
     querier = Querier(llm_provider=llm_provider,
                       llm_model=llm_model,
                       embeddings_provider=embeddings_provider,
-                      embeddings_model=embeddings_model)
+                      embeddings_model=embeddings_model,
+                      retriever_type=retriever,
+                      rerank=rerank,
+                      search_type=search_type,
+                      score_threshold=score_threshold,
+                      chunk_k=chunk_k)
 
     # Get evaluation file name
     eval_file = input("Name of evaluation file (without path): ")
@@ -340,7 +344,16 @@ def main(chunk_size: int = None, chunk_overlap: int = None, chunk_k: int = None)
         # ingest documents if documents in source folder path are not ingested yet
         ingest_or_load_documents(evaluation_folder=evaluation_folder,
                                  content_folder_path=folder_path,
-                                 vectordb_folder_path=vectordb_folder_path)
+                                 vectordb_folder_path=vectordb_folder_path,
+                                 embeddings_model=embeddings_model,
+                                 embeddings_provider=embeddings_provider,
+                                 chunk_size=chunk_size,
+                                 chunk_overlap=chunk_overlap,
+                                 retriever_type=retriever,
+                                 text_splitter_method=splitter,
+                                 text_splitter_method_child=splitter_child,
+                                 chunk_size_child=chunk_size_child,
+                                 chunk_overlap_child=chunk_overlap_child)
 
         # Get question types, questions and ground_truth from json file
         eval_questions, eval_question_files, eval_question_types, eval_groundtruths = \
@@ -366,7 +379,6 @@ def main(chunk_size: int = None, chunk_overlap: int = None, chunk_k: int = None)
                                                               eval_question_type=eval_question_type)
             answers.append(current_answer)
             sources.append(current_sources)
-
         # get for ragas evaluation values
         result = get_ragas_results(answers=answers,
                                    sources=sources,
@@ -375,8 +387,13 @@ def main(chunk_size: int = None, chunk_overlap: int = None, chunk_k: int = None)
 
         # update location for results
         if chunk_size:
-            evaluation_folder = f"{evaluation_folder}_size_{chunk_size}_overlap_{chunk_overlap}_k_{chunk_k}"
-
+            text_process = f"split_{splitter}_size_{chunk_size}_overlap_{chunk_overlap}_k_{chunk_k}"
+            llm_embedding = f"llm_{llm_provider}_{llm_model}_embeddings_{embeddings_provider}_{embeddings_model}"
+            retriever_search = f"search_{search_type}_threshold_{score_threshold}_retriever_{retriever}"
+            child_text_process = f"split_{splitter_child}_size_{chunk_size_child}_overlap_{chunk_overlap_child}"
+            rerank_chunk_k = f"rerank_{rerank}_chunk_k_{chunk_k}"
+            evaluation_folder = f"{evaluation_folder}_{text_process}_{llm_embedding}_{retriever_search}"
+            evaluation_folder += f"_{child_text_process}_{rerank_chunk_k}"
         # store aggregate results including the ragas score:
         timestamp = ut.get_timestamp()
         admin_columns_agg = ["folder", "timestamp", "eval_file"]
