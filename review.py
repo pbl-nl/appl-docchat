@@ -73,7 +73,7 @@ def get_review_questions(question_list_path: str) -> List[Tuple[int, str, str]]:
     return review_questions
 
 
-def get_synthesis_prompts(prompt_list_path: str) -> List[Tuple[int, str, str]]:
+def get_synthesis_prompts(prompt_list_path: str) -> List[Tuple[int, str]]:
     """
     Convert the file with questions into a list of questions
 
