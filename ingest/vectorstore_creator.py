@@ -27,6 +27,9 @@ class VectorStoreCreator():
         Chroma
             Chroma vector database object
         """
+        # if content_folder contains whitespaces, replace them with underscores
+        content_folder = content_folder.replace(" ", "_")
+
         vectorstore = Chroma(
             collection_name=content_folder,
             embedding_function=embeddings,
