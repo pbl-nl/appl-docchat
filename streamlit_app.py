@@ -1068,7 +1068,7 @@ def render_chat_tab(developer_mode):
                     st.session_state['messages'] = []
                     querier.clear_history()
                     st.session_state['chat_history'] = []
-                    st.session_state['is_GO_clicked'] = False
+                    # st.session_state['is_GO_clicked'] = False
                     logger.info("Clear Conversation button clicked")
                 # display chat messages from history
                 # path is needed to show source documents after the assistant's response
