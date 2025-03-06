@@ -6,21 +6,21 @@ import evaluate
 
 # define grid of hyperparameters
 CHUNK_SIZE_SET = [500, 1000]
-CHUNK_OVERLAP_SET = [100, 200]
-CHUNK_K_SET = [2, 4]
-TEXT_SPLITTER_SET = ["NLTKTextSplitter", "RecursiveCharacterTextSplitter"]
-TEXT_CHILD_SPLITTER_SET = ["NLTKTextSplitter", "RecursiveCharacterTextSplitter"]
-CHUNK_CHILD_SIZE_SET = [100, 200]
-CHUNK_CHILD_OVERLAP_SET = [50, 100]
-SEARCH_TYPE_SET = ["similarity_score_threshold", "similarity"]
-SCORE_THRESHOLD_SET = [0.6, 0.8]
-RETRIEVER_SET = ["vectorstore", "hybrid", "parent"]
-RERANK = [True, False]
+CHUNK_OVERLAP_SET = [100]
+CHUNK_K_SET = [4]
+TEXT_SPLITTER_SET = ["NLTKTextSplitter"]
+TEXT_CHILD_SPLITTER_SET = ["NLTKTextSplitter"]
+CHUNK_CHILD_SIZE_SET = [100]
+CHUNK_CHILD_OVERLAP_SET = [50]
+SEARCH_TYPE_SET = ["similarity_score_threshold"]
+SCORE_THRESHOLD_SET = [0.6]
+RETRIEVER_SET = ["vectorstore"]
+RERANK = [True]
 # BELOW SHOULD BE IN DICTIONARY FORMAT IN LATER VERSIONS
 EMBEDDINGS_PROVIDER = ["azureopenai"]
-EMBEDDINGS_MODEL = ["text-embedding-ada-002", "text-embedding-3-large"]
+EMBEDDINGS_MODEL = ["text-embedding-ada-002"]
 LLM_PROVIDER = ["azureopenai"]
-LLM_MODEL = ["gpt-35-turbo", "gpt-4", "gpt-4o"]
+LLM_MODEL = ["gpt-35-turbo"]
 
 
 def text_processing():
@@ -131,5 +131,7 @@ rerank_chunk_k_settings = rerank_chunk_k()
 combined_settings = get_all_combinations([text_processing_settings, embeddings_settings, llm_settings,
                                           retriever_settings, search_score_settings, rerank_chunk_k_settings])
 combined_settings = format_check_settings(names, combined_settings)
+
+name = None  # To create a loop that will run all the settings
 for settings in combined_settings:
-    evaluate.main(**settings)
+    name = evaluate.main(name=name, **settings)

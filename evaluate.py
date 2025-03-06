@@ -64,7 +64,16 @@ def get_eval_questions(evaluation_folder: str, eval_file: str) -> Tuple[List[str
 
 def ingest_or_load_documents(evaluation_folder: str,
                              content_folder_path: str,
-                             vectordb_folder_path: str) -> None:
+                             vectordb_folder_path: str,
+                             embeddings_model,
+                             embeddings_provider,
+                             chunk_size,
+                             chunk_overlap,
+                             retriever_type,
+                             text_splitter_method,
+                             text_splitter_method_child,
+                             chunk_size_child,
+                             chunk_overlap_child) -> None:
     """
     ingests documents and creates vector store or just loads documents if vector store already exists
 
@@ -82,7 +91,16 @@ def ingest_or_load_documents(evaluation_folder: str,
         # ingest documents
         ingester = Ingester(collection_name=evaluation_folder,
                             content_folder=content_folder_path,
-                            vecdb_folder=vectordb_folder_path)
+                            vecdb_folder=vectordb_folder_path,
+                            embeddings_model=embeddings_model,
+                            embeddings_provider=embeddings_provider,
+                            chunk_size=chunk_size,
+                            chunk_overlap=chunk_overlap,
+                            retriever_type=retriever_type,
+                            text_splitter_method=text_splitter_method,
+                            text_splitter_method_child=text_splitter_method_child,
+                            chunk_size_child=chunk_size_child,
+                            chunk_overlap_child=chunk_overlap_child)
         ingester.ingest()
         logger.info(f"Created vector store in folder {vectordb_folder_path}")
     else:
@@ -295,12 +313,14 @@ def store_evaluation_result(df: pd.DataFrame, evaluation_folder: str, evaluation
     if os.path.isfile(path):
         df_old = pd.read_csv(path, sep="\t")
         df = pd.concat([df, df_old], axis=0)
+    if not os.path.exists(os.path.join(settings.EVAL_DIR, "results")):
+        os.mkdir(os.path.join(settings.EVAL_DIR, "results"))
     df.to_csv(path, sep="\t", index=False)
 
 
 def main(splitter, chunk_size, chunk_overlap, embeddings_provider, embeddings_model,
          chunk_k, search_type, score_threshold, retriever, splitter_child,
-         chunk_size_child, chunk_overlap_child, rerank, llm_provider, llm_model):
+         chunk_size_child, chunk_overlap_child, rerank, llm_provider, llm_model, name=None):
     """
     main evaluation function that ingests and queries documents according to the evaluation json file
 
@@ -325,7 +345,10 @@ def main(splitter, chunk_size, chunk_overlap, embeddings_provider, embeddings_mo
                       chunk_k=chunk_k)
 
     # Get evaluation file name
-    eval_file = input("Name of evaluation file (without path): ")
+    if name:
+        eval_file = name
+    else:
+        eval_file = input("Name of evaluation file (without path): ")
 
     # Get source folder with evaluation documents from user
     with open(os.path.join(settings.EVAL_DIR, eval_file), mode='r', encoding='utf8') as evalfile:
@@ -387,11 +410,12 @@ def main(splitter, chunk_size, chunk_overlap, embeddings_provider, embeddings_mo
 
         # update location for results
         if chunk_size:
-            text_process = f"split_{splitter}_size_{chunk_size}_overlap_{chunk_overlap}_k_{chunk_k}"
-            llm_embedding = f"llm_{llm_provider}_{llm_model}_embeddings_{embeddings_provider}_{embeddings_model}"
-            retriever_search = f"search_{search_type}_threshold_{score_threshold}_retriever_{retriever}"
-            child_text_process = f"split_{splitter_child}_size_{chunk_size_child}_overlap_{chunk_overlap_child}"
-            rerank_chunk_k = f"rerank_{rerank}_chunk_k_{chunk_k}"
+            text_process = f"{splitter}_{chunk_size}_{chunk_overlap}_{chunk_k}"
+            llm_embedding = f"_{llm_provider}_{llm_model}_{embeddings_provider}_{embeddings_model}"
+            retriever_search = f"_{search_type}_{score_threshold}_{retriever}"
+            child_text_process = f"_{splitter_child}_{chunk_size_child}_{chunk_overlap_child}"
+            rerank_chunk_k = f"_{rerank}_{chunk_k}"
+
             evaluation_folder = f"{evaluation_folder}_{text_process}_{llm_embedding}_{retriever_search}"
             evaluation_folder += f"_{child_text_process}_{rerank_chunk_k}"
         # store aggregate results including the ragas score:
@@ -412,6 +436,7 @@ def main(splitter, chunk_size, chunk_overlap, embeddings_provider, embeddings_mo
                                eval_questions=eval_questions,
                                eval_question_files=eval_question_files,
                                result=result)
+    return eval_file
 
 
 if __name__ == "__main__":
