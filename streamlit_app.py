@@ -992,6 +992,7 @@ def render_chat_tab(developer_mode):
            (document_selection != st.session_state['documents_selected'])):
             querier.clear_history()
             st.session_state['chat_history'] = []
+            st.session_state['messages'] = []
             st.session_state['is_GO_clicked'] = False
         st.session_state['folder_selected'] = folder_name_selected
         st.session_state['documents_selected'] = document_selection
@@ -1000,6 +1001,7 @@ def render_chat_tab(developer_mode):
         if confidential != st.session_state['confidential']:
             querier.clear_history()
             st.session_state['chat_history'] = []
+            st.session_state['messages'] = []
             st.session_state['is_GO_clicked'] = False
         st.session_state['confidential'] = confidential
 
