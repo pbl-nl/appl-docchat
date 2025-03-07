@@ -201,3 +201,6 @@ CHAIN_TYPE = "stuff"
 # value must be one of "openai_rag", "openai_rag_concise", "openai_rag_language", "yesno"
 # see file prompt_templates.py for explanation
 RETRIEVER_PROMPT_TEMPLATE = "openai_rag"
+
+# MAX_INGESTION_SIZE represents the maximum size of the folder in MB
+MAX_INGESTION_SIZE = 20
