@@ -110,7 +110,8 @@ class RetrieverCreator():
             search_kwargs["score_threshold"] = self.score_threshold
         retriever = ParentDocumentRetriever(vectorstore=self.vectorstore,
                                             search_type=self.search_type,
-                                            search_kwargs=search_kwargs)
+                                            search_kwargs=search_kwargs,
+                                            chunk_k=self.chunk_k)
 
         return retriever
 
