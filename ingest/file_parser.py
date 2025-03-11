@@ -172,7 +172,6 @@ class FileParser:
             prv_block_is_paragraph = False
             # obtain the blocks
             blocks = page.get_text("blocks")
-
             # for each block
             for block in blocks:
                 # only consider text blocks
@@ -247,7 +246,10 @@ class FileParser:
                 # add text of previous block to pages together with page number
                 pages.append((i, prv_block_text))
 
-            # store pagenr with maximum amount of characters for language detection of document
+            # In case the current page not added to pages, add an empty string to pages
+            if (len(pages) - 1) != i:
+                pages.append((i, ""))
+
             page_text_length = len(pages[i][1])
             if page_text_length > max_page_text_length:
                 page_with_max_text = i
