@@ -221,6 +221,9 @@ def check_vectordb(my_querier: Querier,
                             chunk_size_child=my_chunk_size_child,
                             chunk_overlap_child=my_chunk_overlap_child)
         ingester.ingest()
+        error_text = ingester.ingest()
+        if error_text:
+            st.error(error_text)
 
     # create a new chain based on the new source folder
     my_querier.make_chain(my_folder_name_selected, my_vecdb_folder_path_selected)
@@ -991,6 +994,7 @@ def render_chat_tab(developer_mode):
         if ((folder_name_selected != st.session_state['folder_selected']) or
            (document_selection != st.session_state['documents_selected'])):
             querier.clear_history()
+            st.session_state['messages'] = []
             st.session_state['chat_history'] = []
             st.session_state['is_GO_clicked'] = False
         st.session_state['folder_selected'] = folder_name_selected
@@ -999,6 +1003,7 @@ def render_chat_tab(developer_mode):
         # clear querier history if a switch in confidentiality is made
         if confidential != st.session_state['confidential']:
             querier.clear_history()
+            st.session_state['messages'] = []
             st.session_state['chat_history'] = []
             st.session_state['is_GO_clicked'] = False
         st.session_state['confidential'] = confidential
