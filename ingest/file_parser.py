@@ -247,6 +247,10 @@ class FileParser:
                 # add text of previous block to pages together with page number
                 pages.append((i, prv_block_text))
 
+            # In case the current page not added to pages, add an empty string to pages
+            if (len(pages) - 1) != i:
+                pages.append((i, ""))
+
             # store pagenr with maximum amount of characters for language detection of document
             page_text_length = len(pages[i][1])
             if page_text_length > max_page_text_length:
