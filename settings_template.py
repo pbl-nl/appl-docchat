@@ -7,8 +7,8 @@ APP_LOGO = "./images/b30.png"
 APP_INFO = "./info/explanation.txt"
 # header in Streamlit UI
 APP_HEADER = "CHATPBL"
-# filepath of evaluation results folder, e.g. "./evaluate"
-EVAL_DIR = "./evaluate"
+# filepath of evaluation results folder, e.g. "./evaluation"
+EVAL_DIR = "./evaluation"
 # header in Streamlit evaluation UI
 EVAL_APP_HEADER = "CHATPBL evaluation"
 # filepath of text file with content for evaluation explanation in evaluation UI
