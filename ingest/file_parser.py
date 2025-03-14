@@ -95,10 +95,13 @@ class FileParser:
             path of output pdf file
         """
         folder, file = os.path.split(docx_path)
-        pdf_path = os.path.join(folder, "conversions", file + '.pdf')
-        if not os.path.exists(os.path.join(folder, 'conversions')):
-            os.mkdir(os.path.join(folder, 'conversions'))
-        convert(input_path=docx_path, output_path=pdf_path, keep_active=False)
+        pdf_file = file + '.pdf'
+        folder_path = os.path.join(folder, 'conversions')
+        pdf_path = os.path.join(folder_path, pdf_file)
+        if not os.path.exists(folder_path):
+            os.mkdir(folder_path)
+        if not os.path.exists(pdf_path):
+            convert(input_path=docx_path, output_path=pdf_path, keep_active=False)
 
         return pdf_path
 
@@ -243,6 +246,10 @@ class FileParser:
             if prv_block_is_valid and (not prv_block_is_paragraph):
                 # add text of previous block to pages together with page number
                 pages.append((i, prv_block_text))
+
+            # In case the current page not added to pages, add an empty string to pages
+            if (len(pages) - 1) != i:
+                pages.append((i, ""))
 
             # store pagenr with maximum amount of characters for language detection of document
             page_text_length = len(pages[i][1])

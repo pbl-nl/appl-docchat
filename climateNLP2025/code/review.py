@@ -242,8 +242,9 @@ def create_answers_for_folder(
             cntrow += 1
             # Generate answer
             answer, sources = generate_answer(querier, review_question)
-            answer_plus_document_reference = f"This answer is from {metadata['filename']}:\n {answer}"
-            final_answer = answer_plus_document_reference if synthesis.lower() == "y" else answer
+            # answer_plus_document_reference = f"This answer is from {metadata['filename']}:\n {answer}"
+            # final_answer = answer_plus_document_reference if synthesis.lower() == "y" else answer
+            final_answer = answer
             df_result.loc[cntrow] = [
                 review_file,
                 review_question[0],
@@ -309,6 +310,7 @@ def synthesize_results(querier: Querier,
         synthesis_prompt = synthesize_prompt_template.format(
             question=question, answer_string=answer_string
         )
+        print(f"synthesis_prompt = {synthesis_prompt}")
         synthesis = querier.llm.invoke(synthesis_prompt)
         result[question] = synthesis.content
 

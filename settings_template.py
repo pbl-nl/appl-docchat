@@ -45,9 +45,9 @@ EMBEDDINGS_PROVIDER = "azureopenai"
 #   "llama3", "nomic-embed-text"
 # - EMBEDDINGS_PROVIDER is "azureopenai":
 
-# EMBEDDINGS_MODEL must be the embedding models deployed, e.g.
-#   "text-embedding-ada-002" (1536 dimensional, max 8191 tokens),
-#   "text-embedding-3-large" (3072 dimensional, max 8191 tokens)
+# EMBEDDINGS_MODEL must be one of the embedding models deployed, e.g.
+#   "text-embedding-ada-002" (1536 dimensional, max 8191 tokens, cost: $0.10 per 1M tokens),
+#   "text-embedding-3-large" (3072 dimensional, max 8191 tokens, cost: $0.13 per 1M tokens)
 EMBEDDINGS_MODEL = "text-embedding-ada-002"
 
 # SEARCH_TYPE must be one of: "similarity", "similarity_score_threshold"
@@ -133,11 +133,11 @@ LLM_PROVIDER = "azureopenai"
 #   "zephyr"
 #   See also https://ollama.ai/library
 # - LLM_PROVIDER is "azureopenai":
+#   "gpt-4", context window size = 8192 tokens, cost: $30.00 / $60.00 per 1M tokens
 
 # LLM_MODEL must be one of the LLM models deployed, e.g.:
-#   "gpt-35-turbo", context window size = 4097 tokens
-#   "gpt-4", context window size = 8192 tokens
-#   "gpt-4o", context window size = 128000 tokens
+#   "gpt-35-turbo", context window size = 4097 tokens, cost: $0.50 / $1.50 per 1M tokens
+#   "gpt-4o", context window size = 128000 tokens, cost: $2.50 / $10.00 per 1M tokens
 LLM_MODEL = "gpt-4o"
 
 # AZURE_LLM_DEPLOYMENT_MAP represents a dictionary of Azure LLM model deployments

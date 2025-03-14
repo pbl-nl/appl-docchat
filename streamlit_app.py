@@ -556,7 +556,7 @@ def get_provider_models() -> Dict[str, Dict[str, List[str]]]:
             ],
             'azureopenai': [
                 "gpt-35-turbo",
-                "gpt-4",
+                # "gpt-4",
                 "gpt-4o"
             ]
         }
@@ -763,14 +763,14 @@ def text_processing_settings_tab(descriptions):
     # Chunk Size
     chunk_size = number_input(label="Chunk Size",
                               min_value=1,
-                              max_value=1000,
+                              max_value=2000,
                               key='CHUNK_SIZE',
                               description=descriptions['CHUNK_SIZE'])
 
     # Chunk Overlap
     chunk_overlap = number_input(label="Chunk Overlap",
                                  min_value=0,
-                                 max_value=chunk_size-1,
+                                 max_value=int(0.1 * chunk_size),
                                  key='CHUNK_OVERLAP',
                                  description=descriptions['CHUNK_OVERLAP'],)
 
@@ -809,7 +809,7 @@ def retrieve_settings_tab(descriptions, chunk_size):
     chunk_k = number_input(subheader="Retrieval",
                            label="Chunk K",
                            min_value=1,
-                           max_value=6,
+                           max_value=8,
                            key='CHUNK_K',
                            description=descriptions['CHUNK_K'])
 
@@ -898,11 +898,11 @@ def render_settings_tab(developer_mode):
     # Get descriptions from settings_template.py
     descriptions = get_settings_descriptions()
     provider_models = get_provider_models()
+    choose_llm_emb_provider = False
 
     # Display settings
     col1, col2, col3 = st.columns([1/3, 1/3, 1/3])
     with col1:
-        choose_llm_emb_provider = False
         # Text Splitter Method
         selected_splitter, chunk_size, chunk_overlap = text_processing_settings_tab(descriptions)
 
@@ -1068,7 +1068,7 @@ def render_chat_tab(developer_mode):
                     st.session_state['messages'] = []
                     querier.clear_history()
                     st.session_state['chat_history'] = []
-                    st.session_state['is_GO_clicked'] = False
+                    # st.session_state['is_GO_clicked'] = False
                     logger.info("Clear Conversation button clicked")
                 # display chat messages from history
                 # path is needed to show source documents after the assistant's response
