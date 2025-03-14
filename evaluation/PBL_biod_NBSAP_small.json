@@ -1,0 +1,6 @@
+{
+    "X:/User/troosts/projects/appl-docchat/docs/NBSAP_tr": [
+        {"file": "nbsap_spain en.pdf", "question_type": "initial", "question": "What is the goal regarding protected areas, including Natura 2000, for 2030 in terrestrial and inland water areas?", "ground_truth": "The goal is to protect 30% of terrestrial areas by 2030"},
+        {"file": "nbsap_spain en.pdf", "question_type": "initial", "question": "What kind of terrestrial and inland water areas will specifically be protected?", "ground_truth": "Priority ecosystems will be identified, among which primary and mature forests, wetlands (including peatlands), grasslands. Additionally, forests that are not considered mature, but represent the most mature examples for those types of forest habitats of which there are no mature forests left in Spain or are very scarce, will be strictly protected."}
+    ]
+}

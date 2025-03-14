@@ -2,18 +2,18 @@
 Grid search to tune chunking hyperparameters
 """
 import itertools
-import evaluate
+import evaluation.evaluate as evaluate
 
 # define grid of hyperparameters
-CHUNK_SIZE_SET = [500, 1000]
+CHUNK_SIZE_SET = [1000]
 CHUNK_OVERLAP_SET = [100]
-CHUNK_K_SET = [4]
+CHUNK_K_SET = [4, 8]
 TEXT_SPLITTER_SET = ["NLTKTextSplitter"]
 TEXT_CHILD_SPLITTER_SET = ["NLTKTextSplitter"]
 CHUNK_CHILD_SIZE_SET = [100]
 CHUNK_CHILD_OVERLAP_SET = [50]
 SEARCH_TYPE_SET = ["similarity_score_threshold"]
-SCORE_THRESHOLD_SET = [0.6]
+SCORE_THRESHOLD_SET = [0.75]
 RETRIEVER_SET = ["vectorstore"]
 RERANK = [True]
 # BELOW SHOULD BE IN DICTIONARY FORMAT IN LATER VERSIONS

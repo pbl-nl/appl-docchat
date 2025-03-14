@@ -34,6 +34,13 @@ if sys.platform.startswith("win"):
     asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
 
 
+AGGREGATE_COLUMNS = ["TEXT_SPLITTER_METHOD", "CHUNK_SIZE", "CHUNK_K", "CHUNK_OVERLAP", "EMBEDDINGS_PROVIDER",
+                     "EMBEDDINGS_MODEL", "SEARCH_TYPE", "SCORE_THRESHOLD", "RETRIEVER_TYPE",
+                     "TEXT_SPLITTER_METHOD_CHILD", "CHUNK_SIZE_CHILD", "CHUNK_K_CHILD", "CHUNK_OVERLAP_CHILD",
+                     "RETRIEVER_WEIGHTS", "MULTIQUERY", "RERANK", "RERANK_PROVIDER", "RERANK_MODEL",
+                     "CHUNK_K_FOR_RERANK", "LLM_PROVIDER", "LLM_MODEL", "RETRIEVER_PROMPT_TEMPLATE"]
+
+
 def get_eval_questions(evaluation_folder: str, eval_file: str) -> Tuple[List[str], List[str], List[str]]:
     """
     reads the json file with evaluation questions
@@ -65,15 +72,15 @@ def get_eval_questions(evaluation_folder: str, eval_file: str) -> Tuple[List[str
 def ingest_or_load_documents(evaluation_folder: str,
                              content_folder_path: str,
                              vectordb_folder_path: str,
-                             embeddings_model,
-                             embeddings_provider,
-                             chunk_size,
-                             chunk_overlap,
-                             retriever_type,
-                             text_splitter_method,
-                             text_splitter_method_child,
-                             chunk_size_child,
-                             chunk_overlap_child) -> None:
+                             embeddings_model: str = None,
+                             embeddings_provider: str = None,
+                             chunk_size: int = None,
+                             chunk_overlap: int = None,
+                             retriever_type: str = None,
+                             text_splitter_method: str = None,
+                             text_splitter_method_child: str = None,
+                             chunk_size_child: int = None,
+                             chunk_overlap_child: int = None,) -> None:
     """
     ingests documents and creates vector store or just loads documents if vector store already exists
 
@@ -85,6 +92,24 @@ def ingest_or_load_documents(evaluation_folder: str,
         name of content folder (including path)
     vectordb_folder_path : str
         name of associated vector store (including path)
+    embeddings_model : str, optional
+        embeddings model to use, by default None
+    embeddings_provider : str, optional
+        embeddings provider to use, by default None
+    chunk_size : int, optional
+        the maximum allowed size of the chunks, by default None
+    chunk_overlap : int, optional
+        the overlap between two succeeding chunks, by default None
+    retriever_type : str, optional
+        the type of retriever to use, by default None
+    text_splitter_method : str, optional
+        the method to split the text into chunks, by default None
+    text_splitter_method_child : str, optional
+        the method to split the text into chunks for parentDocument retriever, by default None
+    chunk_size_child : int, optional
+        the maximum allowed size of the child chunks for parentDocument retriever, by default None
+    chunk_overlap_child : int, optional
+        the overlap between two succeeding child chunks for parentDocument retriever, by default None
     """
     # if documents in source folder path are not ingested yet
     if not os.path.exists(vectordb_folder_path):
@@ -243,6 +268,7 @@ def store_aggregated_results(timestamp: str,
     settings_columns = list(settings_dict.keys())
     settings_data = [list(settings_dict.values())[i] for i in range(len(list(settings_dict.keys())))]
     df_settings = pd.DataFrame(data=[settings_data], columns=settings_columns)
+    df_settings = df_settings[AGGREGATE_COLUMNS]
 
     # combined
     df_agg = pd.concat([df_admin, df_agg_result, df_settings], axis=1)
@@ -293,7 +319,9 @@ def store_detailed_results(timestamp: str,
     store_evaluation_result(df, evaluation_folder, "detail")
 
 
-def store_evaluation_result(df: pd.DataFrame, evaluation_folder: str, evaluation_type: str) -> None:
+def store_evaluation_result(df: pd.DataFrame,
+                            evaluation_folder: str,
+                            evaluation_type: str) -> None:
     """
     stores the evaluation results in a csv file, either aggregated or detailed depending on evaluation_type argument
 
@@ -318,20 +346,59 @@ def store_evaluation_result(df: pd.DataFrame, evaluation_folder: str, evaluation
     df.to_csv(path, sep="\t", index=False)
 
 
-def main(splitter, chunk_size, chunk_overlap, embeddings_provider, embeddings_model,
-         chunk_k, search_type, score_threshold, retriever, splitter_child,
-         chunk_size_child, chunk_overlap_child, rerank, llm_provider, llm_model, name=None):
+def main(splitter: str = None,
+         chunk_size: int = None,
+         chunk_overlap: int = None,
+         embeddings_provider: str = None,
+         embeddings_model: str = None,
+         chunk_k: int = None,
+         search_type: str = None,
+         score_threshold: float = None,
+         retriever: str = None,
+         splitter_child: str = None,
+         chunk_size_child: int = None,
+         chunk_overlap_child: int = None,
+         rerank: bool = None,
+         llm_provider: str = None,
+         llm_model: str = None,
+         name: str = None):
     """
     main evaluation function that ingests and queries documents according to the evaluation json file
 
     Parameters
     ----------
+    splitter : str, optional
+        the method to split the text into chunks, by default None
     chunk_size : int, optional
         the maximum allowed size of the chunks, by default None
     chunk_overlap : int, optional
         the overlap between two succeeding chunks, by default None
+    embeddings_provider : str, optional
+        embeddings provider to use, by default None
+    embeddings_model : str, optional
+        embeddings model to use, by default None
     chunk_k : int, optional
         the maximum number of chunks to return from the retriever, by default None
+    search_type : str, optional
+        the type of search to use, by default None
+    score_threshold : float, optional
+        the threshold for the similarity score, by default None
+    retriever : str, optional
+        the type of retriever to use, by default None
+    splitter_child : str, optional
+        the method to split the text into chunks for parentDocument retriever, by default None
+    chunk_size_child : int, optional
+        the maximum allowed size of the child chunks for parentDocument retriever, by default None
+    chunk_overlap_child : int, optional
+        the overlap between two succeeding child chunks for parentDocument retriever, by default None
+    rerank : bool, optional
+        whether or not to rerank the results, by default None
+    llm_provider : str, optional
+        the llm provider to use, by default None
+    llm_model : str, optional
+        the llm model to use, by default None
+    name : str, optional
+        the name of the evaluation file, by default None
     """
     # Create instance of Querier
     querier = Querier(llm_provider=llm_provider,
@@ -408,16 +475,7 @@ def main(splitter, chunk_size, chunk_overlap, embeddings_provider, embeddings_mo
                                    eval_questions=eval_questions,
                                    eval_groundtruths=eval_groundtruths)
 
-        # update location for results
-        if chunk_size:
-            text_process = f"{splitter}_{chunk_size}_{chunk_overlap}_{chunk_k}"
-            llm_embedding = f"_{llm_provider}_{llm_model}_{embeddings_provider}_{embeddings_model}"
-            retriever_search = f"_{search_type}_{score_threshold}_{retriever}"
-            child_text_process = f"_{splitter_child}_{chunk_size_child}_{chunk_overlap_child}"
-            rerank_chunk_k = f"_{rerank}_{chunk_k}"
-
-            evaluation_folder = f"{evaluation_folder}_{text_process}_{llm_embedding}_{retriever_search}"
-            evaluation_folder += f"_{child_text_process}_{rerank_chunk_k}"
+        # write results to file
         # store aggregate results including the ragas score:
         timestamp = ut.get_timestamp()
         admin_columns_agg = ["folder", "timestamp", "eval_file"]

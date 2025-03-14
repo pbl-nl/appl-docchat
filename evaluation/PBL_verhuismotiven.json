@@ -1,0 +1,27 @@
+{
+    "pbl_verhuismotieven": [
+        {"question_type": "initial", "question": "Wie zijn de auteurs van deze publicatie?", "ground_truth": "Christian Lennartz, Stefan Troost en Frans Schilder"},
+        {"question_type": "followup", "question": "Welke databronnen zijn gebruikt voor het onderzoek?", "ground_truth": "CBS microdata en de WoON surveys van 2015, 2018 en 2021"},
+        {"question_type": "followup", "question": "Uit hoeveel hoofdstukken bestaat de publicatie?", "ground_truth": "Uit vier hoofdstukken"},
+        {"question_type": "followup", "question": "Is er een samenvatting aanwezig?", "ground_truth": "Ja"},
+        {"question_type": "followup", "question": "Hoe lang is deze samenvatting?", "ground_truth": "2 pagina’s"},
+        {"question_type": "followup", "question": "Wanneer is de publicatie verschenen?", "ground_truth": "31 augustus 2023"},
+        {"question_type": "followup", "question": "Wat is de bronvermelding van de publicatie?", "ground_truth": "Lennartz, C., Troost, S. & Schilder, F. (2023). Verhuismotieven en ruimtelijke verhuispatronen. Een empirische analyse van het verhuisgedrag van huishoudens in Nederland, Den Haag: Planbureau voor de Leefomgeving"},
+        {"question_type": "followup", "question": "Hoeveel bronnen worden in de publicatie aangehaald?", "ground_truth": "29"},
+        {"question_type": "followup", "question": "Worden bepaalde auteurs meerdere keren aangehaald?", "ground_truth": "Ja, bijvoorbeeld Mulder en Thomas, beide 3 keer"},
+        {"question_type": "followup", "question": "Worden er ook eerdere publicaties van het Planbureau voor de Leefomgeving aangehaald?", "ground_truth": "Ja, bijvoorbeeld de Groot 2013 en Schilder & Buitelaar 2021"},
+        {"question_type": "followup", "question": "Hoeveel verhuismotieven worden in de publicatie verondersteld?", "ground_truth": "Tien"},
+        {"question_type": "followup", "question": "Welk verhuismotief wordt er door de jaren heen het vaakst genoemd?", "ground_truth": "‘ander verhuismotief’"},
+        {"question_type": "followup", "question": "Welk verhuismotief wordt na de categorie ‘ander verhuismotief’ het vaakst genoemd?", "ground_truth": "‘Woning’"},
+        {"question_type": "followup", "question": "Bij welke verhuismotieven zien we een de grootste relatieve toename tussen 2015 en 2021 en bij welke de grootste relatieve afname?", "ground_truth": "Toename ‘ander verhuismotief’, afname ‘zelfstandig wonen’"},
+        {"question_type": "followup", "question": "Hoe is de toename van ‘ander motief’ te verklaren?", "ground_truth": "waarschijnlijk door meenemen ‘financiële reden’"},
+        {"question_type": "followup", "question": "Als respondenten in het WoON meerdere verhuismotieven bij een verhuizing noemen, welke verhuismotieven worden dan samen het vaakst genoemd?", "ground_truth": "‘Woning’ & ‘Woonomgeving’"},
+        {"question_type": "followup", "question": "Welke type model wordt gebruikt om verschillende verhuismotieven te schatten?", "ground_truth": "Binaire logistische regressie"},
+        {"question_type": "followup", "question": "Wijken de resultaten af van bevindingen uit eerdere studies over verhuismotieven?", "ground_truth": "In grote lijnen vergelijkbaar, maar coëfficiënten zijn niet vergelijkbaar want variabelen anders geoperationaliseerd"},
+        {"question_type": "followup", "question": "In hoeverre kunnen de gebruikte modellen verhuismotieven en de verhuisafstand verklaren en voorspellen?", "ground_truth": "De studie toont significante verbanden tussen de afhankelijke en de onafhankelijke variabelen, maar de modelperformance is matig waardoor voorspelling niet mogelijk is"},
+        {"question_type": "followup", "question": "Welke predictor toont een sterk verband met nagenoeg alle verhuismotieven?", "ground_truth": "Met uitzondering van het verhuismotief ‘werk’ is er een sterk verband met de leeftijd van de respondent"},
+        {"question_type": "followup", "question": "Kun je een voorbeeld geven?", "ground_truth": "Jongere mensen verhuizen vaker vanwege zelfstandig wonen, oudere mensen vooral vanwege hun gezondheid"},
+        {"question_type": "followup", "question": "Is de omvang van de categorie ‘ander verhuismotief’ problematisch?", "ground_truth": "De auteurs achten de omvang van deze categorie als mogelijk probleem. De auteurs herhalen de analyses ook zonder deze categorie en vinden nauwelijks een verbetering van de modellen"},
+        {"question_type": "followup", "question": "Laten zich uit de analyses directe beleidsaanbevelingen afleiden?", "ground_truth": "de auteurs geven aan dat dit vanwege onzekerheid bevindingen en complexiteit rond woonvoorkeuren en verhuisproces niet eenvoudig mogelijk is"}
+    ]
+}
