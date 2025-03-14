@@ -1,7 +1,0 @@
-{
-    "NBSAP_tr": [
-        {"file": "nbsap_hungary en.pdf", "question_type": "initial", "question": "Is the international convention 'UNFCCC' (United Nations Framework Convention on Climate Change) mentioned in this document?", "ground_truth": "no"},
-        {"file": "nbsap_japan en.pdf", "question_type": "initial", "question": "Is the international convention 'UNFCCC' (United Nations Framework Convention on Climate Change) mentioned in this document?", "ground_truth": "yes"},
-        {"file": "nbsap_spain en.pdf", "question_type": "initial", "question": "Is the international convention 'UNFCCC' (United Nations Framework Convention on Climate Change) mentioned in this document?", "ground_truth": "no"}
-    ]
-}
