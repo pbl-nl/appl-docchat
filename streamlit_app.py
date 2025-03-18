@@ -220,10 +220,10 @@ def check_vectordb(my_querier: Querier,
                             text_splitter_method_child=my_text_splitter_method_child,
                             chunk_size_child=my_chunk_size_child,
                             chunk_overlap_child=my_chunk_overlap_child)
-        ingester.ingest()
-        error_text = ingester.ingest()
-        if error_text:
-            st.error(error_text)
+        if ut.check_size(my_folder_path_selected, my_documents_selected) <= settings_template.MAX_INGESTION_SIZE:
+            ingester.ingest()
+        else:
+            st.error(f"Size of the files to be ingested exceeds the limit of {settings_template.MAX_INGESTION_SIZE} MB")
 
     # create a new chain based on the new source folder
     my_querier.make_chain(my_folder_name_selected, my_vecdb_folder_path_selected)

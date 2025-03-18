@@ -264,10 +264,7 @@ class Ingester:
             to_add = list(relevant_files_in_folder_selected)
 
         # If there are any files to be ingested into the vector store
-        if ut.check_size(to_add, self.content_folder) > settings.MAX_INGESTION_SIZE:
-            logger.error(f"Size of the files to be ingested exceeds the limit of {settings.MAX_INGESTION_SIZE} MB")
-            return f"Size of the files to be ingested exceeds the limit of {settings.MAX_INGESTION_SIZE} MB"
-        elif len(to_add) > 0:
+        if len(to_add) > 0:
             logger.info(f"Files are added, so vector store for {self.content_folder} needs to be updated")
             # create FileParser object
             file_parser = FileParser()
