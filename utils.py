@@ -428,4 +428,4 @@ def check_size(content_folder, document_selection):
     for file in list_of_files:
         size += os.path.getsize(os.path.join(content_folder, file))
     size = size / 1024 / 1024  # convert to MB
-    return 5
+    return size
