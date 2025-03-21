@@ -38,6 +38,8 @@ class ParentDocumentRetriever(BaseRetriever):
     search_kwargs: dict = Field(default_factory=dict)
     # Type of search to perform (similarity / similarity_score_threshold / mmr)
     search_type: SearchType = SearchType.SIMILARITY
+    # Number of parent chunks to return
+    chunk_k: int = settings.CHUNK_K
 
     def _get_relevant_documents(
         self, query: str, *, run_manager: CallbackManagerForRetrieverRun
@@ -96,4 +98,4 @@ class ParentDocumentRetriever(BaseRetriever):
                 parent_docs.append(parent_doc)
 
         # return maximally chunk_k parent docs
-        return [parent_doc for parent_doc in parent_docs if parent_doc is not None][:settings.CHUNK_K]
+        return [parent_doc for parent_doc in parent_docs if parent_doc is not None][:self.chunk_k]
