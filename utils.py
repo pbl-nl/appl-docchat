@@ -408,3 +408,24 @@ def answer_idontknow(language: str) -> str:
         result = "I don't know because there is no relevant context containing the answer"
 
     return result
+
+
+def check_size(content_folder, document_selection):
+    """
+    Checks the size of the list of files and returns the size of files in memory
+    Parameters
+    ----------
+    list_of_files : List[str]
+        list of files
+    content_folder : str
+    Returns
+    -------
+    float
+        size of files in MB
+    """
+    list_of_files = get_relevant_files_in_folder(content_folder, document_selection)
+    size = 0
+    for file in list_of_files:
+        size += os.path.getsize(os.path.join(content_folder, file))
+    size = size / 1024 / 1024  # convert to MB
+    return size

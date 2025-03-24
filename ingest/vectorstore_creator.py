@@ -2,6 +2,7 @@
 VectorStore class to be used in other modules
 """
 # imports
+from chromadb.config import Settings
 from langchain_chroma import Chroma
 
 
@@ -30,11 +31,16 @@ class VectorStoreCreator():
         # if content_folder contains whitespaces, replace them with underscores
         content_folder = content_folder.replace(" ", "_")
 
+        client_settings = Settings(
+            anonymized_telemetry=False
+        )
+
         vectorstore = Chroma(
             collection_name=content_folder,
             embedding_function=embeddings,
             persist_directory=vecdb_folder,
-            collection_metadata={"hnsw:space": "cosine"}
-            )
+            collection_metadata={"hnsw:space": "cosine"},
+            client_settings=client_settings
+        )
 
         return vectorstore
