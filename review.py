@@ -10,7 +10,6 @@ import csv
 from datetime import datetime
 import pandas as pd
 from loguru import logger
-from langchain_core.prompts import PromptTemplate
 # local imports
 from ingest.ingester import Ingester
 from query.querier import Querier
@@ -133,21 +132,6 @@ def generate_answer(
     return response["answer"], source_docs
 
 
-def write_qa_prompt(myquerier: Querier, output_path: os.PathLike) -> None:
-    """
-    Writes the question-answer prompt to the output file
-
-    Parameters
-    ----------
-    output_path : os.PathLike
-        path of the output file
-    """
-    qa_prompt_template = myquerier.get_qa_template(settings.RETRIEVER_PROMPT_TEMPLATE)
-    with open(file=output_path, mode="a", encoding="utf8") as file:
-        file.write("QA PROMPT TEMPLATE: \n")
-        file.write(f"{qa_prompt_template} \n\n")
-
-
 def write_settings(input_path: os.PathLike, confidential: bool, output_path: os.PathLike) -> None:
     """
     Stores relevant settings to the output file, for reproducability purposes
@@ -188,6 +172,7 @@ def write_settings(input_path: os.PathLike, confidential: bool, output_path: os.
         file.write(f"settings.RETRIEVER_PROMPT_TEMPLATE =  {settings.RETRIEVER_PROMPT_TEMPLATE} \n\n")
 
 
+# TODO: remove the extra addition of the source file in the answer
 def create_answers_for_folder(
     synthesis: str,
     review_files: List[str],
@@ -351,6 +336,7 @@ def main() -> None:
 
     # get path of file with list of questions
     question_list_path = os.path.join(content_folder_path, "review", "questions.txt")
+    qa_prompt_template_path = os.path.join(content_folder_path, "review", "qa_template.txt")
     synthesis_list_path = os.path.join(content_folder_path, "review", "synthesize_prompt.txt")
 
     # if question list path does not exist, stop
@@ -360,7 +346,21 @@ def main() -> None:
         )
         ut.exit_program()
 
+    # if qa prompt template path does not exist, stop
+    if not os.path.exists(qa_prompt_template_path):
+        logger.info(
+            f"The qa prompt template file does not exist, please make sure it exists at {qa_prompt_template_path}."
+        )
+        ut.exit_program()
+
     synthesis = input("Summarize the answers for each question? (y/n): ")
+    if synthesis.lower() == "y":
+        # if synthesis prompt list path does not exist, stop
+        if not os.path.exists(synthesis_list_path):
+            logger.info(
+                f"The synthesis prompt list file does not exist, please make sure it exists at {synthesis_list_path}."
+            )
+            ut.exit_program()
 
     # get list of relevant files in document folder
     review_files = ut.get_relevant_files_in_folder(content_folder_path)
@@ -369,13 +369,17 @@ def main() -> None:
     querier = Querier(llm_provider=llm_provider,
                       llm_model=llm_model,
                       embeddings_provider=embeddings_provider,
-                      embeddings_model=embeddings_model)
+                      embeddings_model=embeddings_model,
+                      qa_template_file_path=qa_prompt_template_path)
 
     # create output folder with timestamp
     timestamp = datetime.now().strftime("%Y_%m_%d_%Hhour_%Mmin_%Ssec")
     os.mkdir(os.path.join(content_folder_path, f"review/{timestamp}"))
     # copy the question list file to the output folder
     os.system(f"cp {question_list_path} {content_folder_path}/review/{timestamp}/questions.txt")
+    # copy the qa prompt template file to the output folder
+    os.system(f"cp {qa_prompt_template_path} {content_folder_path}/review/{timestamp}/qa_template.txt")
+
     # ingest documents if documents in source folder path are not ingested yet
     ingest_or_load_documents(content_folder_name=content_folder_name,
                              content_folder_path=content_folder_path,
@@ -384,24 +388,16 @@ def main() -> None:
     # get review questions from file
     review_questions = get_review_questions(question_list_path)
     synthesis_prompts = get_synthesis_prompts(synthesis_list_path)
-    # write out settings
+
+    # write settings to file
     output_path_settings = os.path.join(
         content_folder_path, f"review/{timestamp}", "settings.txt"
-    )
-    output_path_synthesis = os.path.join(
-        content_folder_path, f"review/{timestamp}", "synthesis.tsv"
     )
     write_settings(input_path=content_folder_path,
                    confidential=confidential,
                    output_path=output_path_settings)
-    # write question-answer template to file
-    output_path_qa = os.path.join(
-        content_folder_path, f"review/{timestamp}", "qa_template.txt"
-    )
-    write_qa_prompt(myquerier=querier,
-                    output_path=output_path_qa)
 
-    # check if there is already a result, if so skip creation of answers
+    # Create answers and store them in the file specified by output_path
     output_path_review = os.path.join(
         content_folder_path, f"review/{timestamp}", "answers.tsv"
     )
@@ -417,6 +413,9 @@ def main() -> None:
     logger.info("Successfully reviewed the documents.")
 
     if synthesis.lower() == "y":
+        output_path_synthesis = os.path.join(
+            content_folder_path, f"review/{timestamp}", "synthesis.tsv"
+        )
         # copy the synthethis prompts file to the output folder
         os.system(f"cp {synthesis_list_path} {content_folder_path}/review/{timestamp}/synthesize_prompt.txt")
         # second phase: synthesize the results
