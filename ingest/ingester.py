@@ -31,7 +31,7 @@ class Ingester:
                  document_selection: List[str] = None, embeddings_provider: str = None, embeddings_model: str = None,
                  retriever_type: str = None, text_splitter_method: str = None,
                  text_splitter_method_child: str = None, chunk_size: int = None, chunk_size_child: int = None,
-                 chunk_overlap: int = None, chunk_overlap_child: int = None) -> None:
+                 chunk_overlap: int = None, chunk_overlap_child: int = None, vector_store=None) -> None:
         load_dotenv(dotenv_path=os.path.join(settings.ENVLOC, ".env"))
         self.collection_name = collection_name
         self.content_folder = content_folder
@@ -48,6 +48,7 @@ class Ingester:
             if text_splitter_method_child is None else text_splitter_method_child
         self.chunk_size_child = settings.CHUNK_SIZE_CHILD if chunk_size_child is None else chunk_size_child
         self.chunk_overlap_child = settings.CHUNK_OVERLAP_CHILD if chunk_overlap_child is None else chunk_overlap_child
+        self.vector_store = vector_store
 
     def merge_hyphenated_words(self, text: str) -> str:
         """
@@ -209,14 +210,15 @@ class Ingester:
                                                                             self.document_selection)
         relevant_files_in_folder_all = ut.get_relevant_files_in_folder(self.content_folder)
         # if the vector store already exists, get the set of ingested files from the vector store
-        if os.path.exists(self.vecdb_folder):
+        if ((self.vecdb_folder is not None) and os.path.exists(self.vecdb_folder)) or (self.vector_store is not None):
             # get vector store
-            vector_store = VectorStoreCreator().get_vectorstore(embeddings,
-                                                                self.collection_name,
-                                                                self.vecdb_folder)
+            if self.vector_store is None:
+                self.vector_store = VectorStoreCreator().get_vectorstore(embeddings,
+                                                                         self.collection_name,
+                                                                         self.vecdb_folder)
             logger.info(f"Vector store already exists for specified settings and folder {self.content_folder}")
             # determine the files that are added or deleted
-            collection = vector_store.get()  # dict_keys(['ids', 'embeddings', 'documents', 'metadatas'])
+            collection = self.vector_store.get()  # dict_keys(['ids', 'embeddings', 'documents', 'metadatas'])
             files_in_store = [metadata['filename'] for metadata in collection['metadatas']]
             files_in_store = list(set(files_in_store))
 
@@ -248,7 +250,7 @@ class Ingester:
                             os.remove(os.path.join(self.content_folder,
                                                    "conversions",
                                                    idx_metadata['filename'] + ".pdf"))
-                vector_store.delete(idx_id_to_delete)
+                self.vector_store.delete(idx_id_to_delete)
                 logger.info("Deleted files from vectorstore")
 
             # add to vector store all chunks associated with added or updated files
@@ -257,9 +259,10 @@ class Ingester:
         else:
             logger.info(f"Vector store to be created for folder {self.content_folder}")
             # get chroma vector store
-            vector_store = VectorStoreCreator().get_vectorstore(embeddings,
-                                                                self.collection_name,
-                                                                self.vecdb_folder)
+            # below should also create in-memory vector store in case vecbd_folder is None
+            self.vector_store = VectorStoreCreator().get_vectorstore(embeddings,
+                                                                     self.collection_name,
+                                                                     self.vecdb_folder)
             # all relevant files in the folder are to be ingested into the vector store
             to_add = list(relevant_files_in_folder_selected)
 
@@ -282,7 +285,7 @@ class Ingester:
                 if tokens_document > 40_000:
                     logger.info("Pause for 10 seconds to avoid hitting rate limit")
                     time.sleep(10)
-                vector_store.add_documents(
+                self.vector_store.add_documents(
                     documents=documents,
                     embedding=embeddings,
                     collection_name=self.collection_name,
