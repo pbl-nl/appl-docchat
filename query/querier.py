@@ -22,7 +22,7 @@ class Querier:
     """
     def __init__(self, llm_provider=None, llm_model=None, embeddings_provider=None, embeddings_model=None,
                  retriever_type=None, rerank=None, chain_name=None, chain_type=None, chain_verbosity=None,
-                 search_type=None, score_threshold=None, chunk_k=None):
+                 search_type=None, score_threshold=None, chunk_k=None, vector_store=None):
         load_dotenv(dotenv_path=os.path.join(settings.ENVLOC, ".env"))
         self.llm_provider = settings.LLM_PROVIDER if llm_provider is None else llm_provider
         self.llm_model = settings.LLM_MODEL if llm_model is None else llm_model
@@ -37,7 +37,7 @@ class Querier:
         self.score_threshold = settings.SCORE_THRESHOLD if score_threshold is None else score_threshold
         self.chunk_k = settings.CHUNK_K if chunk_k is None else chunk_k
         self.chat_history = []
-        self.vector_store = None
+        self.vector_store = vector_store
         self.chain = None
 
         # define llm
@@ -90,9 +90,10 @@ class Querier:
             _description_, by default None
         """
         # get vector store
-        self.vector_store = VectorStoreCreator().get_vectorstore(embeddings=self.embeddings,
-                                                                 content_folder=content_folder,
-                                                                 vecdb_folder=vecdb_folder)
+        if self.vector_store is None:
+            self.vector_store = VectorStoreCreator().get_vectorstore(embeddings=self.embeddings,
+                                                                     content_folder=content_folder,
+                                                                     vecdb_folder=vecdb_folder)
         logger.info(f"Loaded vector store from folder {vecdb_folder}")
 
         # get retriever with search_filter

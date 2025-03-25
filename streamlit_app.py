@@ -195,17 +195,33 @@ def check_vectordb(my_querier: Querier,
     my_vecdb_folder_path_selected : str
         the name of the associated vector database
     """
+    # check whether the selected folder is the same as the last selected folder
+    if my_vecdb_folder_path_selected != st.session_state['vecdb_folder_path_selected']:
+        st.session_state['vector_store'] = None  # reset vector store
+    # check whether we have write access to the selected folder
+    try:
+        os.mkdir(os.path.join(my_folder_path_selected, "test"))
+        os.rmdir(os.path.join(my_folder_path_selected, "test"))
+    except Exception as e:
+        logger.error(f"Error accessing folder {my_vecdb_folder_path_selected}: {e}")
+        logger.error(traceback.format_exc())
+        my_vecdb_folder_path_selected = None  # to create an in-memory vector database
+        my_spinner_message = f'''Error creating/accessing vector database for folder {my_folder_name_selected}.
+                                    In-memory vector database will be created.
+                                    Depending on the size, this may take a while. Please wait...'''
     # When the associated vector database of the chosen content folder doesn't exist with the settings as given
     # in settings.py, create it first
-    if not os.path.exists(my_vecdb_folder_path_selected):
-        ut.create_vectordb_folder(my_folder_path_selected)
-        logger.info("Creating vectordb")
-        my_spinner_message = f'''Creating vector database for folder {my_folder_name_selected}.
-                                 Depending on the size, this may take a while. Please wait...'''
-    else:
-        logger.info("Updating vectordb")
-        my_spinner_message = f'''Checking if vector database needs an update for folder {my_folder_name_selected}.
-                                 This may take a while, please wait...'''
+    if my_vecdb_folder_path_selected is not None:  # if we have write access to the folder
+        if not os.path.exists(my_vecdb_folder_path_selected):
+            ut.create_vectordb_folder(my_folder_path_selected)
+            logger.info("Creating vectordb")
+            my_spinner_message = f'''Creating vector database for folder {my_folder_name_selected}.
+                                    Depending on the size, this may take a while. Please wait...'''
+        else:
+            logger.info("Updating vectordb")
+            my_spinner_message = f'''Checking if vector database needs an update for folder {my_folder_name_selected}.
+                                    This may take a while, please wait...'''
+
     with st.spinner(my_spinner_message):
         ingester = Ingester(collection_name=my_folder_name_selected,
                             content_folder=my_folder_path_selected,
@@ -219,13 +235,19 @@ def check_vectordb(my_querier: Querier,
                             chunk_overlap=my_chunk_overlap,
                             text_splitter_method_child=my_text_splitter_method_child,
                             chunk_size_child=my_chunk_size_child,
-                            chunk_overlap_child=my_chunk_overlap_child)
+                            chunk_overlap_child=my_chunk_overlap_child,
+                            vector_store=st.session_state['vector_store'])
+        # store vector store in session state
+        # whether it is newly created or already existing
+        # whether in-memory or on disk
+        st.session_state['vector_store'] = ingester.vector_store
         if ut.check_size(my_folder_path_selected, my_documents_selected) <= settings_template.MAX_INGESTION_SIZE:
             ingester.ingest()
         else:
             st.error(f"Size of the files to be ingested exceeds the limit of {settings_template.MAX_INGESTION_SIZE} MB")
 
     # create a new chain based on the new source folder
+    my_querier.vector_store = st.session_state['vector_store']
     my_querier.make_chain(my_folder_name_selected, my_vecdb_folder_path_selected)
     # set session state of selected folder to new source folder
     st.session_state['folder_selected'] = my_folder_name_selected
@@ -451,6 +473,10 @@ def initialize_session_state() -> None:
     # chat history is stored in session state to retain it in case of a change in settings
     if 'chat_history' not in st.session_state:
         st.session_state['chat_history'] = []
+    if 'vecdb_folder_path_selected' not in st.session_state:
+        st.session_state['vecdb_folder_path_selected'] = ""
+    if 'vector_store' not in st.session_state:
+        st.session_state['vector_store'] = None
     initialize_settings_state()
 
 
