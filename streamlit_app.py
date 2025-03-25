@@ -222,8 +222,10 @@ def check_vectordb(my_querier: Querier,
                             chunk_overlap_child=my_chunk_overlap_child)
         if ut.check_size(my_folder_path_selected, my_documents_selected) <= settings_template.MAX_INGESTION_SIZE:
             ingester.ingest()
+            st.session_state['file_size_error'] = False
         else:
             st.error(f"Size of the files to be ingested exceeds the limit of {settings_template.MAX_INGESTION_SIZE} MB")
+            st.session_state['file_size_error'] = True
 
     # create a new chain based on the new source folder
     my_querier.make_chain(my_folder_name_selected, my_vecdb_folder_path_selected)
@@ -451,6 +453,8 @@ def initialize_session_state() -> None:
     # chat history is stored in session state to retain it in case of a change in settings
     if 'chat_history' not in st.session_state:
         st.session_state['chat_history'] = []
+    if 'file_size_error' not in st.session_state:
+        st.session_state['file_size_error'] = False
     initialize_settings_state()
 
 
@@ -1064,8 +1068,10 @@ def render_chat_tab(developer_mode):
                     create_and_show_summary(my_summary_type=summary_type,
                                             my_folder_path_selected=folder_path_selected,
                                             my_selected_documents=document_selection)
-                # show button "Clear Conversation"
-                clear_messages_button = st.button(label="Clear Conversation", key="clear")
+                # show button "Clear Conversation" if no file size error
+                clear_messages_button = None
+                if not st.session_state['file_size_error']:
+                    clear_messages_button = st.button(label="Clear Conversation", key="clear")
                 # if button "Clear Conversation" is clicked
                 if clear_messages_button:
                     # clear all chat messages on screen and in Querier object
@@ -1078,8 +1084,13 @@ def render_chat_tab(developer_mode):
                 # display chat messages from history
                 # path is needed to show source documents after the assistant's response
                 display_chat_history(folder_path_selected)
+
+                # create chat input bar if no file size error
+                prompt = None
+                if not st.session_state['file_size_error']:
+                    prompt = st.chat_input("Your question", key="chat_input")
+
                 # react to user input if a question has been asked
-                prompt = st.chat_input("Your question", key="chat_input")
                 if prompt:
                     handle_query(my_folder_path_selected=folder_path_selected,
                                  my_querier=querier,
