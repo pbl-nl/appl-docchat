@@ -94,13 +94,13 @@ def create_and_show_summary(my_summary_type: str,
     logger.info(f"Finished create_and_show_summary() with summarization method {summarization_method}")
 
 
-def display_chat_history(my_folder_path_selected) -> None:
+def display_chat_history(my_folder_path_selected: str) -> None:
     """
     Shows the complete chat history with source documents displayed after each assistant response.
 
     Parameters
     ----------
-    folder_path_selected : str
+    my_folder_path_selected : str
         path of selected document folder
     """
     for i, message in enumerate(st.session_state['messages']):
@@ -125,7 +125,7 @@ def documentlist_creator(my_folder_path_selected: str) -> List[str]:
     Parameters
     ----------
     my_folder_path_selected : str
-        the selected document folder path
+        path of selected document folder
 
     Returns
     -------
@@ -194,6 +194,24 @@ def check_vectordb(my_querier: Querier,
         the path of the selected folder
     my_vecdb_folder_path_selected : str
         the name of the associated vector database
+    my_embeddings_provider : str
+        the chosen embeddings provider
+    my_embeddings_model : str
+        the chosen embeddings model
+    my_text_splitter_method : str
+        the chosen text splitter method
+    my_retriever_type : str
+        the chosen retriever type
+    my_chunk_size : int
+        the chosen chunk size
+    my_chunk_overlap : int
+        the chosen chunk overlap
+    my_text_splitter_method_child : str
+        the chosen text splitter method to create child chunks
+    my_chunk_size_child : int
+        the chosen chunk size for child chunks
+    my_chunk_overlap_child : int
+        the chosen chunk overlap for child chunks
     """
     # When the associated vector database of the chosen content folder doesn't exist with the settings as given
     # in settings.py, create it first
@@ -207,6 +225,7 @@ def check_vectordb(my_querier: Querier,
         my_spinner_message = f'''Checking if vector database needs an update for folder {my_folder_name_selected}.
                                  This may take a while, please wait...'''
     with st.spinner(my_spinner_message):
+        # create ingester object
         ingester = Ingester(collection_name=my_folder_name_selected,
                             content_folder=my_folder_path_selected,
                             document_selection=my_documents_selected,
@@ -222,8 +241,10 @@ def check_vectordb(my_querier: Querier,
                             chunk_overlap_child=my_chunk_overlap_child)
         if ut.check_size(my_folder_path_selected, my_documents_selected) <= settings_template.MAX_INGESTION_SIZE:
             ingester.ingest()
+            st.session_state['file_size_error'] = False
         else:
             st.error(f"Size of the files to be ingested exceeds the limit of {settings_template.MAX_INGESTION_SIZE} MB")
+            st.session_state['file_size_error'] = True
 
     # create a new chain based on the new source folder
     my_querier.make_chain(my_folder_name_selected, my_vecdb_folder_path_selected)
@@ -451,6 +472,8 @@ def initialize_session_state() -> None:
     # chat history is stored in session state to retain it in case of a change in settings
     if 'chat_history' not in st.session_state:
         st.session_state['chat_history'] = []
+    if 'file_size_error' not in st.session_state:
+        st.session_state['file_size_error'] = False
     initialize_settings_state()
 
 
@@ -664,7 +687,6 @@ def selectbox(label, options, key, description, subheader=None):
 
     index = options.index(st.session_state[key]) if st.session_state[key] in options else 0
 
-    # col1, col2 = st.columns([0.4, 0.6])
     # with col1:
     selected = st.selectbox(
         label=label,
@@ -687,7 +709,6 @@ def number_input(label, min_value, max_value, key, description, subheader=None):
 
     default_value = max(min_value, min(max_value, st.session_state[key]))
 
-    # col1, col2 = st.columns([0.4, 0.6])
     # with col1:
     number = st.number_input(
         label=label,
@@ -698,7 +719,7 @@ def number_input(label, min_value, max_value, key, description, subheader=None):
     )
     with st.expander("Description"):
         st.markdown(f"<p style='font-size:18px;'>{description}</p>", unsafe_allow_html=True)
-    # st.divider()
+
     return number
 
 
@@ -709,7 +730,6 @@ def checkbox(label, key, description, subheader=None):
     if key not in st.session_state:
         st.session_state[key] = st.session_state.settings[key]
 
-    # col1, col2 = st.columns([0.4, 0.6])
     # with col1:
     checked = st.checkbox(
         label=label,
@@ -718,7 +738,7 @@ def checkbox(label, key, description, subheader=None):
     )
     with st.expander("Description"):
         st.markdown(f"<p style='font-size:18px;'>{description}</p>", unsafe_allow_html=True)
-    # st.divider()
+
     return checked
 
 
@@ -1058,14 +1078,16 @@ def render_chat_tab(developer_mode):
                                my_chunk_overlap_child=chunk_overlap_child,
                                my_chunk_size_child=chunk_size_child,
                                my_text_splitter_method_child=text_splitter_method_child)
-                # if one of the options is chosen
+                # if one of the summary creation options is chosen
                 if summary_type in ["Short", "Long"]:
                     # show the summary at the top of the screen
                     create_and_show_summary(my_summary_type=summary_type,
                                             my_folder_path_selected=folder_path_selected,
                                             my_selected_documents=document_selection)
-                # show button "Clear Conversation"
-                clear_messages_button = st.button(label="Clear Conversation", key="clear")
+                # show button "Clear Conversation" if no file size error
+                clear_messages_button = None
+                if not st.session_state['file_size_error']:
+                    clear_messages_button = st.button(label="Clear Conversation", key="clear")
                 # if button "Clear Conversation" is clicked
                 if clear_messages_button:
                     # clear all chat messages on screen and in Querier object
@@ -1078,8 +1100,13 @@ def render_chat_tab(developer_mode):
                 # display chat messages from history
                 # path is needed to show source documents after the assistant's response
                 display_chat_history(folder_path_selected)
+
+                # create chat input bar if no file size error
+                prompt = None
+                if not st.session_state['file_size_error']:
+                    prompt = st.chat_input("Your question", key="chat_input")
+
                 # react to user input if a question has been asked
-                prompt = st.chat_input("Your question", key="chat_input")
                 if prompt:
                     handle_query(my_folder_path_selected=folder_path_selected,
                                  my_querier=querier,

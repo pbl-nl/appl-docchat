@@ -203,4 +203,4 @@ CHAIN_TYPE = "stuff"
 RETRIEVER_PROMPT_TEMPLATE = "openai_rag"
 
 # MAX_INGESTION_SIZE represents the maximum size of the folder in MB
-MAX_INGESTION_SIZE = 20
+MAX_INGESTION_SIZE = 50
