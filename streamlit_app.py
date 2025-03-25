@@ -54,7 +54,16 @@ def create_and_show_summary(my_summary_type: str,
 
     logger.info(f"Starting create_and_show_summary() with summarization method {summarization_method}")
     # create subfolder for storage of summaries if not existing
-    ut.create_summaries_folder(my_folder_path_selected)
+    try:
+        ut.create_summaries_folder(my_folder_path_selected)
+        in_memory = False
+    except Exception as e:
+        logger.error(f"Error creating summaries folder: {e}")
+        logger.error(traceback.format_exc())
+        in_memory = True
+        if summarization_method not in st.session_state['summary_storage']:
+            st.session_state['summary_storage'][summarization_method] = {}
+
     # get relevant models
     confidential = False  # temporary
     my_llm_provider, my_llm_model, _, _ = ut.get_relevant_models(summary=True,
@@ -65,7 +74,8 @@ def create_and_show_summary(my_summary_type: str,
                             chunk_size=settings.SUMMARY_CHUNK_SIZE,
                             chunk_overlap=settings.SUMMARY_CHUNK_OVERLAP,
                             llm_provider=my_llm_provider,
-                            llm_model=my_llm_model)
+                            llm_model=my_llm_model,
+                            in_memory=in_memory)
 
     # for each selected file in content folder
     with st.expander(label=f"{my_summary_type} summary", expanded=True):
@@ -79,7 +89,16 @@ def create_and_show_summary(my_summary_type: str,
                 summary_name = os.path.join(my_folder_path_selected, "summaries",
                                             str(file_name) + "_" + str.lower(summarization_method) + ".txt")
                 # if summary does not exist yet, create it
-                if not os.path.isfile(summary_name):
+                if in_memory:
+                    if file not in st.session_state['summary_storage'][summarization_method]:
+                        my_spinner_message = f'''Creating {my_summary_type.lower()} summary for {file}.\n
+                        Depending on the size of the file and the type of summary, this may take a while. Please wait
+                        ...'''
+                        with st.spinner(my_spinner_message):
+                            st.session_state['summary_storage'][summarization_method][file] = \
+                                summarizer.summarize_file(file)
+                # if summary exists, load it????
+                elif not os.path.isfile(summary_name):  # why isfile instead of exists?
                     my_spinner_message = f'''Creating {my_summary_type.lower()} summary for {file}.\n
                     Depending on the size of the file and the type of summary, this may take a while. Please wait...'''
                     with st.spinner(my_spinner_message):
@@ -87,9 +106,13 @@ def create_and_show_summary(my_summary_type: str,
                 # show summary
                 if not first_summary:
                     st.divider()
-                with open(file=summary_name, mode="r", encoding="utf8") as f:
+                if in_memory:
                     st.write(f"**{file}:**\n")
-                    st.write(f.read())
+                    st.write(st.session_state['summary_storage'][summarization_method][file])
+                else:
+                    with open(file=summary_name, mode="r", encoding="utf8") as f:
+                        st.write(f"**{file}:**\n")
+                        st.write(f.read())
                 first_summary = False
     logger.info(f"Finished create_and_show_summary() with summarization method {summarization_method}")
 
@@ -198,6 +221,7 @@ def check_vectordb(my_querier: Querier,
     # check whether the selected folder is the same as the last selected folder
     if my_vecdb_folder_path_selected != st.session_state['vecdb_folder_path_selected']:
         st.session_state['vector_store'] = None  # reset vector store
+        st.session_state['vecdb_folder_path_selected'] = my_vecdb_folder_path_selected
     # check whether we have write access to the selected folder
     try:
         os.mkdir(os.path.join(my_folder_path_selected, "test"))
@@ -240,9 +264,9 @@ def check_vectordb(my_querier: Querier,
         # store vector store in session state
         # whether it is newly created or already existing
         # whether in-memory or on disk
-        st.session_state['vector_store'] = ingester.vector_store
-        if ut.check_size(my_folder_path_selected, my_documents_selected) <= settings_template.MAX_INGESTION_SIZE:
+        if ut.check_size(my_folder_path_selected, my_documents_selected) <= 100:
             ingester.ingest()
+            st.session_state['vector_store'] = ingester.vector_store
         else:
             st.error(f"Size of the files to be ingested exceeds the limit of {settings_template.MAX_INGESTION_SIZE} MB")
 
@@ -265,8 +289,7 @@ def display_sources(sources: List[str], my_folder_path_selected: str, question_n
     my_folder_path_selected : str
         path of selected document folder
     question_number : int
-        number of the question asked by the user to reduce the number of images created
-        (in later versions it can be used to check if the images are already created and stored)
+        ordinal number of the question asked by the user
     """
     if len(sources) > 0:
         with st.expander("Paragraphs used for answer"):
@@ -296,24 +319,31 @@ def display_sources(sources: List[str], my_folder_path_selected: str, question_n
                         st.write(f"**file: {filename}, page {pagenr + 1}**")
                         st.write(f"{document.page_content}")
                 if (filename.endswith(".pdf")) or (filename.endswith(".docx")):
-                    with exp_imgcol:
-                        doc = fitz.open(docpath)
-                        page = doc.load_page(pagenr)
-                        # highlight all occurrences of the search string in the page
-                        # there might be multiple occurrences of the same page with different chunks
-                        for document in documents:
-                            for rect in page.search_for(document.page_content):
-                                page.add_highlight_annot(rect)
-                        # save image of page with highlighted text, zoom factor 2 in each dimension
-                        zoom_x = 2
-                        zoom_y = 2
-                        mat = fitz.Matrix(zoom_x, zoom_y)
-                        pix = page.get_pixmap(matrix=mat)
-                        # store image as a PNG
-                        # question_number//2 + 1 is used to reduce the number of images created
-                        imgfile = f"{docpath}-q{question_number//2 + 1}-ch{i}.png"
-                        pix.save(imgfile)
-                        st.image(imgfile)
+                    # question_number//2 + 1 is used to reduce the number of images created
+                    imgname = f"{docpath}-q{question_number//2 + 1}-ch{i}.png"
+                    if imgname not in st.session_state['source_image']:
+                        with exp_imgcol:
+                            doc = fitz.open(docpath)
+                            page = doc.load_page(pagenr)
+                            # highlight all occurrences of the search string in the page
+                            # there might be multiple occurrences of the same page with different chunks
+                            for document in documents:
+                                for rect in page.search_for(document.page_content):
+                                    page.add_highlight_annot(rect)
+                            # save image of page with highlighted text, zoom factor 2 in each dimension
+                            zoom_x = 2
+                            zoom_y = 2
+                            mat = fitz.Matrix(zoom_x, zoom_y)
+                            pix = page.get_pixmap(matrix=mat)
+                            # store image as a binary string
+                            img_bytes = pix.tobytes()
+                            from io import BytesIO
+                            img_io = BytesIO(img_bytes)
+                            st.session_state['source_image'][imgname] = img_io
+                            st.image(img_io)
+                    else:
+                        with exp_imgcol:
+                            st.image(st.session_state['source_image'][imgname])
                 st.divider()
 
 
@@ -477,6 +507,10 @@ def initialize_session_state() -> None:
         st.session_state['vecdb_folder_path_selected'] = ""
     if 'vector_store' not in st.session_state:
         st.session_state['vector_store'] = None
+    if 'summary_storage' not in st.session_state:
+        st.session_state['summary_storage'] = {}
+    if 'source_image' not in st.session_state:
+        st.session_state['source_image'] = {}
     initialize_settings_state()
 
 
@@ -1023,6 +1057,10 @@ def render_chat_tab(developer_mode):
             st.session_state['messages'] = []
             st.session_state['chat_history'] = []
             st.session_state['is_GO_clicked'] = False
+            st.session_state['vecdb_folder_path_selected'] = ""
+            st.session_state['vector_store'] = None
+            st.session_state['summary_storage'] = {}
+            st.session_state['source_image'] = {}
         st.session_state['folder_selected'] = folder_name_selected
         st.session_state['documents_selected'] = document_selection
 
@@ -1032,6 +1070,10 @@ def render_chat_tab(developer_mode):
             st.session_state['messages'] = []
             st.session_state['chat_history'] = []
             st.session_state['is_GO_clicked'] = False
+            st.session_state['vecdb_folder_path_selected'] = ""
+            st.session_state['vector_store'] = None
+            st.session_state['summary_storage'] = {}
+            st.session_state['source_image'] = {}
         st.session_state['confidential'] = confidential
 
         # create radio button group for summarization
@@ -1099,6 +1141,7 @@ def render_chat_tab(developer_mode):
                     st.session_state['messages'] = []
                     querier.clear_history()
                     st.session_state['chat_history'] = []
+                    st.session_state['source_image'] = {}
                     # st.session_state['is_GO_clicked'] = False
                     logger.info("Clear Conversation button clicked")
                 # display chat messages from history

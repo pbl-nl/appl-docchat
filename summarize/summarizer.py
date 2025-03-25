@@ -18,7 +18,7 @@ class Summarizer:
     When parameters are read from GUI, object is initiated with parameter settings listed
     """
     def __init__(self, content_folder_path: str, summarization_method: str, text_splitter_method=None,
-                 chunk_size=None, chunk_overlap=None, llm_provider=None, llm_model=None) -> None:
+                 chunk_size=None, chunk_overlap=None, llm_provider=None, llm_model=None, in_memory=False) -> None:
         """
         When parameters are read from settings.py, object is initiated without parameter settings
         When parameters are read from GUI, object is initiated with parameter settings listed
@@ -31,6 +31,7 @@ class Summarizer:
         self.chunk_overlap = settings.SUMMARY_CHUNK_OVERLAP if chunk_overlap is None else chunk_overlap
         self.llm_provider = settings.SUMMARY_LLM_PROVIDER if llm_provider is None else llm_provider
         self.llm_model = settings.SUMMARY_LLM_MODEL if llm_model is None else llm_model
+        self.in_memory = in_memory
 
         # create llm object
         load_dotenv(dotenv_path=os.path.join(settings.ENVLOC, ".env"))
@@ -76,8 +77,15 @@ class Summarizer:
         files_in_folder = ut.get_relevant_files_in_folder(self.content_folder_path)
 
         # loop over all files in the folder
+        in_memory_summaries = {}
         for file in files_in_folder:
-            self.summarize_file(file=file)
+            if self.in_memory:
+                in_memory_summaries[file] = self.summarize_file(file=file)
+            else:
+                self.summarize_file(file=file)
+
+        if self.in_memory:
+            return in_memory_summaries
 
     def summarize_file(self, file: str) -> None:
         """
@@ -100,5 +108,8 @@ class Summarizer:
         file_name, _ = os.path.splitext(file)
         result = os.path.join(self.content_folder_path, "summaries", str(file_name) + "_" +
                               str.lower(self.chain_type) + ".txt")
-        with open(file=result, mode="w", encoding="utf8") as f:
-            f.write(summary)
+        if self.in_memory:
+            return summary
+        else:
+            with open(file=result, mode="w", encoding="utf8") as f:
+                f.write(summary)
