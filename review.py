@@ -307,6 +307,65 @@ def synthesize_results(querier: Querier,
         for key, value in result.items():
             tsv_writer.writerow([key, value])
 
+def cluster_dictionaries(input_list, cluster_key):
+    """
+    Cluster dictionaries based on a specific key's value.
+    
+    Args:
+    input_list (list): A list of dictionaries to be clustered
+    cluster_key (str): The key to use for clustering
+    
+    Returns:
+    dict: A dictionary with clustered values, where keys are unique values 
+          and values are lists of corresponding dictionary identifiers
+    """
+    # Create a dictionary to store clusters
+    clusters = {}
+
+    # Iterate through the input list
+    for item in input_list:
+        # Get the filename (assuming 'filename' is the identifier)
+        filename = item['filename']
+        # Get the value for the clustering key
+        try:    
+            item = eval(item['answer'][8:-4])
+            key_value = item[cluster_key]
+        except Exception as e:
+            key_value = 'Could not evaluate json.'
+        
+       
+        
+        
+        # If the key value doesn't exist in clusters, create a new list
+        if key_value not in clusters:
+            clusters[key_value] = []
+        
+        # Add the filename to the corresponding cluster
+        clusters[key_value].append(filename)
+    
+    return clusters
+
+
+def cluster_answers_by_question(question_answers_path, values_to_cluster_by):
+    # load answers 
+    answers_df = pd.read_csv(filepath_or_buffer=question_answers_path, delimiter="\t")
+    # create dict of file names and answers
+    answers_dict = answers_df.to_dict(orient="records")
+    # cluster answers by question
+    answers_clustered = cluster_dictionaries(answers_dict, values_to_cluster_by)
+    # write out the clustered answers
+    review_output_folder_path = os.path.dirname(question_answers_path)
+    clustering_file_path = os.path.join(review_output_folder_path, "question_answers_clustering.tsv")
+    with open(file=clustering_file_path, mode="a", newline="", encoding="utf8") as file:
+        # create a writer object specifying TAB as delimiter
+        tsv_writer = csv.writer(file, delimiter="\t")
+        # write the header
+        tsv_writer.writerow(["question_id", "answers"])
+        # write data
+        for key, value in answers_clustered.items():
+            tsv_writer.writerow([key, value])
+
+
 
 def main() -> None:
     """
@@ -314,6 +373,9 @@ def main() -> None:
     """
     # get source folder with papers from user
     content_folder_path = input("Source folder of documents (including path): ")
+    cluster_json_answers = input("Would you like to cluster the output files (only works for json answers)? (y/n): ")
+    if cluster_json_answers.lower() == "y":
+        values_to_cluster_by = input("What value would you like to cluster by: ")
     # Get content folder name from path
     content_folder_name = os.path.basename(content_folder_path)
     # Get private docs indicator from user
@@ -411,6 +473,8 @@ def main() -> None:
         output_path=output_path_review
     )
     logger.info("Successfully reviewed the documents.")
+    if cluster_json_answers.lower() == "y":
+        cluster_answers_by_question(output_path_review, values_to_cluster_by)
 
     if synthesis.lower() == "y":
         output_path_synthesis = os.path.join(
