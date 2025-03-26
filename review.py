@@ -332,17 +332,24 @@ def cluster_dictionaries(input_list, cluster_key):
             key_value = item[cluster_key]
         except Exception as e:
             key_value = 'Could not evaluate json.'
-        
-       
-        
-        
-        # If the key value doesn't exist in clusters, create a new list
-        if key_value not in clusters:
-            clusters[key_value] = []
-        
-        # Add the filename to the corresponding cluster
-        clusters[key_value].append(filename)
-    
+        try:
+                
+            # If the key value doesn't exist in clusters, create a new list
+            if type(key_value) == list:
+                for value in key_value:
+                    if value not in clusters:
+                        clusters[value] = []
+                    clusters[value].append(filename)
+            else:
+                if key_value not in clusters:
+                    clusters[key_value] = []
+                clusters[key_value].append(filename)
+        except Exception as e:
+            logger.error(f"Could not cluster by {cluster_key} for {filename} because of {e}")
+            if 'Error' not in clusters:
+                clusters['Error'] = []
+            clusters['Error'].append(filename)
+
     return clusters
 
 
@@ -413,7 +420,7 @@ def main() -> None:
         logger.info(
             f"The qa prompt template file does not exist, please make sure it exists at {qa_prompt_template_path}."
         )
-        ut.exit_program()
+        qa_prompt_template_path = None
 
     synthesis = input("Summarize the answers for each question? (y/n): ")
     if synthesis.lower() == "y":
