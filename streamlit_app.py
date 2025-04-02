@@ -295,24 +295,31 @@ def display_sources(sources: List[str], my_folder_path_selected: str, question_n
                         st.write(f"**file: {filename}, page {pagenr + 1}**")
                         st.write(f"{document.page_content}")
                 if (filename.endswith(".pdf")) or (filename.endswith(".docx")):
-                    with exp_imgcol:
-                        doc = fitz.open(docpath)
-                        page = doc.load_page(pagenr)
-                        # highlight all occurrences of the search string in the page
-                        # there might be multiple occurrences of the same page with different chunks
-                        for document in documents:
-                            for rect in page.search_for(document.page_content):
-                                page.add_highlight_annot(rect)
-                        # save image of page with highlighted text, zoom factor 2 in each dimension
-                        zoom_x = 2
-                        zoom_y = 2
-                        mat = fitz.Matrix(zoom_x, zoom_y)
-                        pix = page.get_pixmap(matrix=mat)
-                        # store image as a PNG
-                        # question_number//2 + 1 is used to reduce the number of images created
-                        imgfile = f"{docpath}-q{question_number//2 + 1}-ch{i}.png"
-                        pix.save(imgfile)
-                        st.image(imgfile)
+                    # question_number//2 + 1 is used to reduce the number of images created
+                    imgname = f"{docpath}-q{question_number//2 + 1}-ch{i}.png"
+                    if imgname not in st.session_state['source_image']:
+                        with exp_imgcol:
+                            doc = fitz.open(docpath)
+                            page = doc.load_page(pagenr)
+                            # highlight all occurrences of the search string in the page
+                            # there might be multiple occurrences of the same page with different chunks
+                            for document in documents:
+                                for rect in page.search_for(document.page_content):
+                                    page.add_highlight_annot(rect)
+                            # save image of page with highlighted text, zoom factor 2 in each dimension
+                            zoom_x = 2
+                            zoom_y = 2
+                            mat = fitz.Matrix(zoom_x, zoom_y)
+                            pix = page.get_pixmap(matrix=mat)
+                            # store image as a binary string
+                            img_bytes = pix.tobytes()
+                            from io import BytesIO
+                            img_io = BytesIO(img_bytes)
+                            st.session_state['source_image'][imgname] = img_io
+                            st.image(img_io)
+                    else:
+                        with exp_imgcol:
+                            st.image(st.session_state['source_image'][imgname])
                 st.divider()
 
 
@@ -474,6 +481,8 @@ def initialize_session_state() -> None:
         st.session_state['chat_history'] = []
     if 'file_size_error' not in st.session_state:
         st.session_state['file_size_error'] = False
+    if 'source_image' not in st.session_state:
+        st.session_state['source_image'] = {}
     initialize_settings_state()
 
 
