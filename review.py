@@ -293,7 +293,7 @@ def main() -> None:
     timestamp = datetime.now().strftime("%Y_%m_%d_%Hhour_%Mmin_%Ssec")
     os.mkdir(os.path.join(content_folder_path, f"review/{timestamp}"))
     # copy the question list file to the output folder
-    os.system(f"cp {question_list_path} {content_folder_path}/review/{timestamp}/questions.txt")
+    os.system(f"cp {question_list_path} {content_folder_path}/review/{timestamp}/questions.csv")
     
     # ingest documents if documents in source folder path are not ingested yet
     ingest_or_load_documents(content_folder_name=content_folder_name,
