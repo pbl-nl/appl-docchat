@@ -116,6 +116,7 @@ def write_settings(input_path: os.PathLike, confidential: bool, output_path: os.
         file.write(f"settings.CHUNK_K_FOR_RERANK =  {settings.CHUNK_K_FOR_RERANK} \n")
         file.write(f"settings.RETRIEVER_PROMPT_TEMPLATE =  {settings.RETRIEVER_PROMPT_TEMPLATE} \n\n")
 
+
 def create_answers_for_folder(
     question_list_path: str,
     review_files: List[str],
@@ -170,10 +171,10 @@ def create_answers_for_folder(
         qa_prompt_template_path_or_string = review_question[2]
         # create instance of Querier once
         querier = Querier(llm_provider=llm_provider,
-                        llm_model=llm_model,
-                        embeddings_provider=embeddings_provider,
-                        embeddings_model=embeddings_model,
-                        qa_template_file_path_or_string=qa_prompt_template_path_or_string)
+                          llm_model=llm_model,
+                          embeddings_provider=embeddings_provider,
+                          embeddings_model=embeddings_model,
+                          qa_template_file_path_or_string=qa_prompt_template_path_or_string)
         for review_file in review_files:
             # create the query chain with a search filter and answer each question for each paper
             querier.make_chain(
@@ -184,10 +185,13 @@ def create_answers_for_folder(
             metadata = querier.get_meta_data_by_file_name(review_file)
             cntrow += 1
             # Generate answer
-            answer, sources = generate_answer(querier, review_question_type=review_question[1], review_question=review_question[1])
-        
+            answer, sources = generate_answer(querier=querier,
+                                              review_question_type=review_question[1],
+                                              review_question=review_question[1])
+
             answer_plus_document_reference = f"This answer is from {metadata['filename']}:\n {answer}"
-            final_answer = answer_plus_document_reference if review_question[3] is not None else answer # check if there is a synthesis prompt
+            # check if there is a synthesis prompt
+            final_answer = answer_plus_document_reference if review_question[3] is not None else answer
             df_result.loc[cntrow] = [
                 review_file,
                 index,
@@ -197,7 +201,6 @@ def create_answers_for_folder(
                 review_question[2],
                 sources,
             ]
-
 
     # function to clean up the newlines in the text columns
     def clean_newlines(text):
@@ -216,10 +219,10 @@ def create_answers_for_folder(
             synthesize_prompt_template = row['summary_template']
             # create instance of Querier once
             querier = Querier(llm_provider=llm_provider,
-                            llm_model=llm_model,
-                            embeddings_provider=embeddings_provider,
-                            embeddings_model=embeddings_model,
-                            qa_template_file_path_or_string=qa_prompt_template_path_or_string)
+                              llm_model=llm_model,
+                              embeddings_provider=embeddings_provider,
+                              embeddings_model=embeddings_model,
+                              qa_template_file_path_or_string=qa_prompt_template_path_or_string)
             # get all answers for the question in the dataframe
             answers = df_result[df_result['question_id'] == index]['answer']
             synthesis_prompt = synthesize_prompt_template.format(
@@ -240,7 +243,6 @@ def create_answers_for_folder(
             # write data
             for key, value in summary_result.items():
                 tsv_writer.writerow([key, clean_newlines(value)])
-
 
     # Apply to columns that contain text with newlines
     text_columns = ['question', 'answer', 'sources', 'question_type', 'assistant_prompt']  # 'filename' is not included
@@ -284,17 +286,16 @@ def main() -> None:
             f"The file with questions does not exist, please make sure it exists at {question_list_path}."
         )
         ut.exit_program()
-    
+
     # get list of relevant files in document folder
     review_files = ut.get_relevant_files_in_folder(content_folder_path)
-
 
     # create output folder with timestamp
     timestamp = datetime.now().strftime("%Y_%m_%d_%Hhour_%Mmin_%Ssec")
     os.mkdir(os.path.join(content_folder_path, f"review/{timestamp}"))
     # copy the question list file to the output folder
     os.system(f"cp {question_list_path} {content_folder_path}/review/{timestamp}/questions.csv")
-    
+
     # ingest documents if documents in source folder path are not ingested yet
     ingest_or_load_documents(content_folder_name=content_folder_name,
                              content_folder_path=content_folder_path,
@@ -324,6 +325,7 @@ def main() -> None:
         embeddings_model=embeddings_model,
     )
     logger.info("Successfully reviewed the documents.")
+
 
 if __name__ == "__main__":
     main()
