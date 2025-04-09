@@ -186,7 +186,7 @@ def create_answers_for_folder(
             cntrow += 1
             # Generate answer
             answer, sources = generate_answer(querier=querier,
-                                              review_question_type=review_question[1],
+                                              review_question_type=review_question[0],
                                               review_question=review_question[1])
 
             answer_plus_document_reference = f"This answer is from {metadata['filename']}:\n {answer}"
