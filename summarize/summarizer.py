@@ -18,7 +18,7 @@ class Summarizer:
     When parameters are read from GUI, object is initiated with parameter settings listed
     """
     def __init__(self, content_folder_path: str, summarization_method: str, text_splitter_method=None,
-                 chunk_size=None, chunk_overlap=None, llm_provider=None, llm_model=None) -> None:
+                 chunk_size=None, chunk_overlap=None, llm_provider=None, llm_model=None, in_memory=False) -> None:
         """
         When parameters are read from settings.py, object is initiated without parameter settings
         When parameters are read from GUI, object is initiated with parameter settings listed
@@ -31,6 +31,7 @@ class Summarizer:
         self.chunk_overlap = settings.SUMMARY_CHUNK_OVERLAP if chunk_overlap is None else chunk_overlap
         self.llm_provider = settings.SUMMARY_LLM_PROVIDER if llm_provider is None else llm_provider
         self.llm_model = settings.SUMMARY_LLM_MODEL if llm_model is None else llm_model
+        self.in_memory = in_memory
 
         # create llm object
         load_dotenv(dotenv_path=os.path.join(settings.ENVLOC, ".env"))
@@ -76,6 +77,13 @@ class Summarizer:
         files_in_folder = ut.get_relevant_files_in_folder(self.content_folder_path)
 
         # loop over all files in the folder
+        if self.in_memory:
+            # create summaries in memory
+            in_memory_summaries = {}
+            for file in files_in_folder:
+                in_memory_summaries[file] = self.summarize_file(file=file)
+            return in_memory_summaries
+        # create summaries on disk
         for file in files_in_folder:
             self.summarize_file(file=file)
 
@@ -85,7 +93,7 @@ class Summarizer:
         """
         # detect language first
         file_parser = FileParser()
-        _, metadata = file_parser.parse_file(os.path.join(self.content_folder_path, file))
+        _, metadata = file_parser.parse_file(os.path.join(self.content_folder_path, file), in_memory=self.in_memory)
         language = ut.LANGUAGE_MAP.get(metadata['Language'], 'english')
         # create splitter object
         text_splitter = SplitterCreator(text_splitter_method=self.text_splitter_method,
@@ -96,6 +104,8 @@ class Summarizer:
         docs = loader.load_and_split(text_splitter=text_splitter)
         chain = self.make_chain(language)
         summary = chain.invoke(docs)["output_text"]
+        if self.in_memory:
+            return summary
         # store summary on disk
         file_name, _ = os.path.splitext(file)
         result = os.path.join(self.content_folder_path, "summaries", str(file_name) + "_" +

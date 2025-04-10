@@ -54,7 +54,10 @@ def create_and_show_summary(my_summary_type: str,
 
     logger.info(f"Starting create_and_show_summary() with summarization method {summarization_method}")
     # create subfolder for storage of summaries if not existing
-    ut.create_summaries_folder(my_folder_path_selected)
+    if not st.session_state['is_in_memory']:
+        ut.create_summaries_folder(my_folder_path_selected)
+    elif summarization_method not in st.session_state['summary_storage']:
+        st.session_state['summary_storage'][summarization_method] = {}
     # get relevant models
     confidential = False  # temporary
     my_llm_provider, my_llm_model, _, _ = ut.get_relevant_models(summary=True,
@@ -65,7 +68,8 @@ def create_and_show_summary(my_summary_type: str,
                             chunk_size=settings.SUMMARY_CHUNK_SIZE,
                             chunk_overlap=settings.SUMMARY_CHUNK_OVERLAP,
                             llm_provider=my_llm_provider,
-                            llm_model=my_llm_model)
+                            llm_model=my_llm_model,
+                            in_memory=st.session_state['is_in_memory'])
 
     # for each selected file in content folder
     with st.expander(label=f"{my_summary_type} summary", expanded=True):
@@ -82,14 +86,26 @@ def create_and_show_summary(my_summary_type: str,
                 if not os.path.isfile(summary_name):
                     my_spinner_message = f'''Creating {my_summary_type.lower()} summary for {file}.\n
                     Depending on the size of the file and the type of summary, this may take a while. Please wait...'''
-                    with st.spinner(my_spinner_message):
-                        summarizer.summarize_file(file)
+                    if st.session_state['is_in_memory'] and (file not in
+                                                             st.session_state['summary_storage'][summarization_method]):
+                        with st.spinner(my_spinner_message):
+                            st.session_state['summary_storage'][summarization_method][file] = \
+                                                                                        summarizer.summarize_file(file)
+                    else:
+                        with st.spinner(my_spinner_message):
+                            summarizer.summarize_file(file)
                 # show summary
                 if not first_summary:
                     st.divider()
-                with open(file=summary_name, mode="r", encoding="utf8") as f:
+                if st.session_state['is_in_memory'] and (file in
+                                                         st.session_state['summary_storage'][summarization_method]):
                     st.write(f"**{file}:**\n")
-                    st.write(f.read())
+                    st.write(st.session_state['summary_storage'][summarization_method][file])
+                else:
+                    # show summary from file
+                    st.write(f"**{file}:**\n")
+                    with open(file=summary_name, mode="r", encoding="utf8") as f:
+                        st.write(f.read())
                 first_summary = False
     logger.info(f"Finished create_and_show_summary() with summarization method {summarization_method}")
 
@@ -213,17 +229,27 @@ def check_vectordb(my_querier: Querier,
     my_chunk_overlap_child : int
         the chosen chunk overlap for child chunks
     """
+    # check whether the selected folder is the same as the last selected folder
+    if my_vecdb_folder_path_selected != st.session_state['vecdb_folder_path_selected']:
+        st.session_state['vector_store'] = None  # reset vector store
+        st.session_state['vecdb_folder_path_selected'] = my_vecdb_folder_path_selected
     # When the associated vector database of the chosen content folder doesn't exist with the settings as given
     # in settings.py, create it first
-    if not os.path.exists(my_vecdb_folder_path_selected):
-        ut.create_vectordb_folder(my_folder_path_selected)
-        logger.info("Creating vectordb")
-        my_spinner_message = f'''Creating vector database for folder {my_folder_name_selected}.
-                                 Depending on the size, this may take a while. Please wait...'''
+    if st.session_state['is_in_memory']:
+        my_vecdb_folder_path_selected = None
+        my_spinner_message = f'''Error creating/accessing vector database for folder {my_folder_name_selected}.
+                                    In-memory vector database will be created.
+                                    Depending on the size, this may take a while. Please wait...'''
     else:
-        logger.info("Updating vectordb")
-        my_spinner_message = f'''Checking if vector database needs an update for folder {my_folder_name_selected}.
-                                 This may take a while, please wait...'''
+        if not os.path.exists(my_vecdb_folder_path_selected):
+            ut.create_vectordb_folder(my_folder_path_selected)
+            logger.info("Creating vectordb")
+            my_spinner_message = f'''Creating vector database for folder {my_folder_name_selected}.
+                                    Depending on the size, this may take a while. Please wait...'''
+        else:
+            logger.info("Updating vectordb")
+            my_spinner_message = f'''Checking if vector database needs an update for folder {my_folder_name_selected}.
+                                    This may take a while, please wait...'''
     with st.spinner(my_spinner_message):
         # create ingester object
         ingester = Ingester(collection_name=my_folder_name_selected,
@@ -238,15 +264,19 @@ def check_vectordb(my_querier: Querier,
                             chunk_overlap=my_chunk_overlap,
                             text_splitter_method_child=my_text_splitter_method_child,
                             chunk_size_child=my_chunk_size_child,
-                            chunk_overlap_child=my_chunk_overlap_child)
+                            chunk_overlap_child=my_chunk_overlap_child,
+                            vector_store=st.session_state['vector_store'],
+                            in_memory=st.session_state['is_in_memory'])
         if ut.check_size(my_folder_path_selected, my_documents_selected) <= settings_template.MAX_INGESTION_SIZE:
             ingester.ingest()
             st.session_state['file_size_error'] = False
+            st.session_state['vector_store'] = ingester.vector_store
         else:
             st.error(f"Size of the files to be ingested exceeds the limit of {settings_template.MAX_INGESTION_SIZE} MB")
             st.session_state['file_size_error'] = True
 
     # create a new chain based on the new source folder
+    my_querier.vector_store = st.session_state['vector_store']
     my_querier.make_chain(my_folder_name_selected, my_vecdb_folder_path_selected)
     # set session state of selected folder to new source folder
     st.session_state['folder_selected'] = my_folder_name_selected
@@ -264,8 +294,7 @@ def display_sources(sources: List[str], my_folder_path_selected: str, question_n
     my_folder_path_selected : str
         path of selected document folder
     question_number : int
-        number of the question asked by the user to reduce the number of images created
-        (in later versions it can be used to check if the images are already created and stored)
+        ordinal number of the question asked by the user
     """
     if len(sources) > 0:
         with st.expander("Paragraphs used for answer"):
@@ -294,8 +323,9 @@ def display_sources(sources: List[str], my_folder_path_selected: str, question_n
                         # add 1 to metadata page_number because that starts at 0
                         st.write(f"**file: {filename}, page {pagenr + 1}**")
                         st.write(f"{document.page_content}")
-                if (filename.endswith(".pdf")) or (filename.endswith(".docx")):
-                    # question_number//2 + 1 is used to reduce the number of images created
+                if (filename.endswith(".pdf")) or\
+                   ((filename.endswith(".docx") and not st.session_state['is_in_memory'])):
+                    # question_number//2 + 1 is used due to human and chatbot interaction
                     imgname = f"{docpath}-q{question_number//2 + 1}-ch{i}.png"
                     if imgname not in st.session_state['source_image']:
                         with exp_imgcol:
@@ -483,6 +513,14 @@ def initialize_session_state() -> None:
         st.session_state['file_size_error'] = False
     if 'source_image' not in st.session_state:
         st.session_state['source_image'] = {}
+    if 'vector_store' not in st.session_state:
+        st.session_state['vector_store'] = None
+    if 'vecdb_folder_path_selected' not in st.session_state:
+        st.session_state['vecdb_folder_path_selected'] = ""
+    if 'summary_storage' not in st.session_state:
+        st.session_state['summary_storage'] = {}
+    if 'is_in_memory' not in st.session_state:
+        st.session_state['is_in_memory'] = False
     initialize_settings_state()
 
 
@@ -1026,6 +1064,12 @@ def render_chat_tab(developer_mode):
             st.session_state['messages'] = []
             st.session_state['chat_history'] = []
             st.session_state['is_GO_clicked'] = False
+            st.session_state['is_in_memory'] = ut.check_in_memory_storage(folder_path_selected)
+            st.session_state['file_size_error'] = False
+            st.session_state['source_image'] = {}
+            st.session_state['vector_store'] = None
+            st.session_state['vecdb_folder_path_selected'] = ""
+            st.session_state['summary_storage'] = {}
         st.session_state['folder_selected'] = folder_name_selected
         st.session_state['documents_selected'] = document_selection
 
@@ -1035,6 +1079,13 @@ def render_chat_tab(developer_mode):
             st.session_state['messages'] = []
             st.session_state['chat_history'] = []
             st.session_state['is_GO_clicked'] = False
+            st.session_state['is_in_memory'] = ut.check_in_memory_storage(folder_path_selected)
+            st.session_state['file_size_error'] = False
+            st.session_state['source_image'] = {}
+            st.session_state['vector_store'] = None
+            st.session_state['vecdb_folder_path_selected'] = ""
+            st.session_state['summary_storage'] = {}
+        # update session state for confidentiality
         st.session_state['confidential'] = confidential
 
         # create radio button group for summarization
@@ -1104,6 +1155,7 @@ def render_chat_tab(developer_mode):
                     st.session_state['messages'] = []
                     querier.clear_history()
                     st.session_state['chat_history'] = []
+                    st.session_state['source_image'] = {}
                     # st.session_state['is_GO_clicked'] = False
                     logger.info("Clear Conversation button clicked")
                 # display chat messages from history
