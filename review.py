@@ -17,6 +17,7 @@ import utils as ut
 import settings
 
 
+
 def ingest_or_load_documents(
     content_folder_name: str, content_folder_path: str, vecdb_folder_path: str
 ) -> None:
@@ -163,7 +164,7 @@ def create_answers_for_folder(
 
     # load review questions
     review_questions = pd.read_csv(filepath_or_buffer=question_list_path)
-
+    review_questions.dropna(inplace=True, how="all")
     for index, review_question in review_questions.iterrows():
         review_question = list(review_question)
         logger.info(f"reviewing question {review_question[0]}")
