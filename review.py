@@ -118,27 +118,22 @@ def write_settings(input_path: os.PathLike, confidential: bool, output_path: os.
         file.write(f"settings.RETRIEVER_PROMPT_TEMPLATE =  {settings.RETRIEVER_PROMPT_TEMPLATE} \n\n")
 
 
-def create_answers_for_folder(
-    question_list_path: str,
-    review_files: List[str],
-    content_folder_name: str,
-    vecdb_folder_path: str,
-    output_path: os.PathLike,
-    llm_provider,
-    llm_model,
-    embeddings_provider,
-    embeddings_model,
-
-) -> None:
+def create_answers_for_folder(question_list_path: str,
+                              review_files: List[str],
+                              content_folder_name: str,
+                              querier: Querier,
+                              vecdb_folder_path: str,
+                              output_path: os.PathLike) -> None:
     """
     Phase 1 of the review: loop over all the questions and all the documents, gather the answers and store on disk
+    Phase 2 of the review (if the file questions.csv contains a value for summary_template)
 
     Parameters
     ----------
+    question_list_path : str
+        path of the file with the list of questions
     review_files : List[str]
         list of files to be reviewed
-    review_questions : List[Tuple[int, str, str]]
-        list of tuples containing question id, question type and question
     content_folder_name : str
         name of the document folder
     querier : Querier
@@ -157,7 +152,7 @@ def create_answers_for_folder(
             "question",
             "answer",
             "assistant_prompt",
-            "sources",
+            "sources"
         ]
     )
     cntrow = 0
@@ -165,42 +160,50 @@ def create_answers_for_folder(
     # load review questions
     review_questions = pd.read_csv(filepath_or_buffer=question_list_path)
     review_questions.dropna(inplace=True, how="all")
-    for index, review_question in review_questions.iterrows():
-        review_question = list(review_question)
+    for index, row in review_questions.iterrows():
+        review_question_type = row["Question_Type"]
+        review_question = row["Question"]
+        review_instruction_template = row["Instruction_Template"]
+        review_summary_template = row["summary_template"]
         logger.info(f"reviewing question {review_question[0]}")
         # get the relevant qa_prompt_template_path for that question
-        qa_prompt_template_path_or_string = review_question[2]
+        qa_prompt_template_path_or_string = review_instruction_template
         # create instance of Querier once
         querier = Querier(llm_provider=llm_provider,
                           llm_model=llm_model,
                           embeddings_provider=embeddings_provider,
                           embeddings_model=embeddings_model,
                           qa_template_file_path_or_string=qa_prompt_template_path_or_string)
+
+        logger.info(f"reviewing question {review_question}")
+
         for review_file in review_files:
-            # create the query chain with a search filter and answer each question for each paper
-            querier.make_chain(
-                content_folder_name,
-                vecdb_folder_path,
-                search_filter={"filename": review_file},
-            )
-            metadata = querier.get_meta_data_by_file_name(review_file)
-            cntrow += 1
+            # create the query chain with a search filter and answer each question for each document
+            querier.make_chain(content_folder=content_folder_name,
+                               vecdb_folder=vecdb_folder_path,
+                               search_filter={"filename": review_file},
+                               qa_template_file_path_or_string=review_instruction_template)
+
             # Generate answer
             answer, sources = generate_answer(querier=querier,
-                                              review_question_type=review_question[0],
-                                              review_question=review_question[1])
+                                              review_question_type=review_question_type,
+                                              review_question=review_question)
 
-            answer_plus_document_reference = f"This answer is from {metadata['filename']}:\n {answer}"
-            # check if there is a synthesis prompt
-            final_answer = answer_plus_document_reference if review_question[3] is not None else answer
+
+            # check if there is a synthesis prompt. If so, add the document reference to the answer
+            answer_plus_document_reference = f"This answer is from {review_file}:\n {answer}"
+            final_answer = answer_plus_document_reference if str(review_summary_template) != "nan" else answer
+
+            # add resulting answer and input data to dataframe
+            cntrow += 1
             df_result.loc[cntrow] = [
                 review_file,
                 index,
-                review_question[0],
-                review_question[1],
+                review_question_type,
+                review_question,
                 final_answer,
-                review_question[2],
-                sources,
+                review_instruction_template,
+                sources
             ]
 
     # function to clean up the newlines in the text columns
@@ -209,7 +212,7 @@ def create_answers_for_folder(
             return text.replace('\n', ' ')
         return text
 
-    # if there is a summary in the question template, create a summary and write it out
+    # if one of the questions requires summarization, create a summary and save it
     if review_questions['summary_template'].notnull().any():
         summary_result = {}
         # get rows that have a summary template
@@ -218,17 +221,11 @@ def create_answers_for_folder(
         for index, row in summary_rows.iterrows():
             # get the relevant qa_prompt_template_path for that question
             synthesize_prompt_template = row['summary_template']
-            # create instance of Querier once
-            querier = Querier(llm_provider=llm_provider,
-                              llm_model=llm_model,
-                              embeddings_provider=embeddings_provider,
-                              embeddings_model=embeddings_model,
-                              qa_template_file_path_or_string=qa_prompt_template_path_or_string)
             # get all answers for the question in the dataframe
             answers = df_result[df_result['question_id'] == index]['answer']
             synthesis_prompt = synthesize_prompt_template.format(
-                            question=row['Question'], answer_string="\n\n".join(answers)
-                            )
+                question=row['Question'], answer_string="\n\n".join(answers)
+                )
             # query llm for synthesis
             synthesis = querier.llm.invoke(synthesis_prompt)
             summary_result[row['Question']] = synthesis.content
@@ -314,16 +311,20 @@ def main() -> None:
     output_path_review = os.path.join(
         content_folder_path, f"review/{timestamp}", "answers.tsv"
     )
+
+    # create instance of Querier once
+    querier = Querier(llm_provider=llm_provider,
+                      llm_model=llm_model,
+                      embeddings_provider=embeddings_provider,
+                      embeddings_model=embeddings_model)
+
     create_answers_for_folder(
         question_list_path=question_list_path,
         review_files=review_files,
         content_folder_name=content_folder_name,
+        querier=querier,
         vecdb_folder_path=vecdb_folder_path,
-        output_path=output_path_review,
-        llm_provider=llm_provider,
-        llm_model=llm_model,
-        embeddings_provider=embeddings_provider,
-        embeddings_model=embeddings_model,
+        output_path=output_path_review
     )
     logger.info("Successfully reviewed the documents.")
 

@@ -23,7 +23,7 @@ class Querier:
     """
     def __init__(self, llm_provider=None, llm_model=None, embeddings_provider=None, embeddings_model=None,
                  retriever_type=None, rerank=None, chain_name=None, chain_type=None, chain_verbosity=None,
-                 search_type=None, score_threshold=None, chunk_k=None, qa_template_file_path_or_string=None):
+                 search_type=None, score_threshold=None, chunk_k=None):
         load_dotenv(dotenv_path=os.path.join(settings.ENVLOC, ".env"))
         self.llm_provider = settings.LLM_PROVIDER if llm_provider is None else llm_provider
         self.llm_model = settings.LLM_MODEL if llm_model is None else llm_model
@@ -37,7 +37,6 @@ class Querier:
         self.search_type = settings.SEARCH_TYPE if search_type is None else search_type
         self.score_threshold = settings.SCORE_THRESHOLD if score_threshold is None else score_threshold
         self.chunk_k = settings.CHUNK_K if chunk_k is None else chunk_k
-        self.qa_template_file_path_or_string = qa_template_file_path_or_string
         self.chat_history = []
         self.vector_store = None
         self.chain = None
@@ -78,7 +77,8 @@ class Querier:
     def make_chain(self,
                    content_folder: str,
                    vecdb_folder: str,
-                   search_filter: Dict = None) -> None:
+                   search_filter: Dict = None,
+                   qa_template_file_path_or_string: str | Path = None) -> None:
         """
         Creates the chain that is used for question answering
 
@@ -108,12 +108,12 @@ class Querier:
         # get appropriate RAG prompt for querying:
         # if qa_template_file_path is provided, use the template from the file
         # else, use the template from the settings
-        if isinstance(self.qa_template_file_path_or_string, Path):
-            with open(self.qa_template_file_path_or_string, 'r') as file:
+        if isinstance(qa_template_file_path_or_string, Path):
+            with open(qa_template_file_path_or_string, 'r') as file:
                 current_template = file.read()
                 prompt = PromptTemplate.from_template(template=current_template)
-        elif isinstance(self.qa_template_file_path_or_string, str):
-            prompt = PromptTemplate.from_template(template=self.qa_template_file_path_or_string)
+        elif isinstance(qa_template_file_path_or_string, str):
+            prompt = PromptTemplate.from_template(template=qa_template_file_path_or_string)
         else:
             current_template = self.get_qa_template(settings.RETRIEVER_PROMPT_TEMPLATE)
             prompt = PromptTemplate.from_template(template=current_template)
