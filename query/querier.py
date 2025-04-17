@@ -87,9 +87,11 @@ class Querier:
         content_folder : str
             the content folder name
         vecdb_folder : str
-            the folder of the vector databse that is associated with the content folder
+            the folder of the vector database that is associated with the content folder
         search_filter : Dict, optional
-            _description_, by default None
+            dictionary of search filters, by default None
+        qa_template_file_path_or_string : str | Path, optional
+            the path to the template file or a string with the template, by default None
         """
         # get vector store
         self.vector_store = VectorStoreCreator().get_vectorstore(embeddings=self.embeddings,

@@ -158,6 +158,7 @@ def create_answers_for_folder(question_list_path: str,
 
     # load review questions
     review_questions = pd.read_csv(filepath_or_buffer=question_list_path)
+    review_questions.dropna(inplace=True, how="all")
 
     # loop over each combination of question, question template and summary template
     for index, row in review_questions.iterrows():
@@ -166,7 +167,6 @@ def create_answers_for_folder(question_list_path: str,
         review_question = row["Question"]
         review_instruction_template = row["Instruction_Template"]
         review_summary_template = row["summary_template"]
-        print(index, review_question_type, review_question, review_instruction_template, review_summary_template)
         logger.info(f"reviewing question {review_question}")
         for review_file in review_files:
             # create the query chain with a search filter and answer each question for each document
