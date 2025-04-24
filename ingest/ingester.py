@@ -106,6 +106,9 @@ class Ingester:
                 chunk_num = 0
                 child_chunk_num = 0
             chunk_texts = splitter.split_text(text)
+            # !! chunk_texts can contain duplicates (experienced with ingestion of .txt files)
+            # Deduplicate the list chunk_texts
+            chunk_texts = list(dict.fromkeys(chunk_texts))
             for chunk_text in chunk_texts:
                 # in case of parent retriever, split the parent chunk texts again, into smaller child chunk texts
                 # and add parent chunk text as metadata to child chunk text

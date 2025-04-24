@@ -33,7 +33,8 @@ class SplitterCreator():
         )
         if self.text_splitter_method == "NLTKTextSplitter":
             text_splitter = splitter.NLTKTextSplitter(
-                separator="\n\n",
+                separator="",
+                use_span_tokenize=True,
                 language=my_language,
                 chunk_size=self.chunk_size,
                 chunk_overlap=self.chunk_overlap
