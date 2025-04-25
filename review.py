@@ -242,12 +242,10 @@ def create_answers_for_folder(question_list_path: str,
     df_result.to_csv(output_path, sep='\t', index=False, mode='a')
 
 
-def main() -> None:
+def main(content_folder_path) -> None:
     """
     Main loop of this module
     """
-    # get source folder with papers from user
-    content_folder_path = input("Source folder of documents (including path): ")
     # Get content folder name from path
     content_folder_name = os.path.basename(content_folder_path)
     confidential = False
@@ -320,4 +318,6 @@ def main() -> None:
 
 
 if __name__ == "__main__":
-    main()
+    # get source folder with papers from user
+    content_folder_path = input("Source folder of documents (including path): ")
+    main(content_folder_path=content_folder_path)
