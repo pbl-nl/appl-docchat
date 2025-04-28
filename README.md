@@ -113,3 +113,19 @@ This repo is mainly inspired by:
 - https://blog.langchain.dev/evaluating-rag-pipelines-with-ragas-langsmith/
 - https://github.com/explodinggradients/ragas
 
+
+### Review.py
+review.py is aimed at conducting a systematic review of multiple sources. Hereby, a question posed will be asked to all documents in the specified folder. Enabling the user to comparable data from a range of documents. 
+To use the review functionality the following steps need to be executed:
+1. Creation of a docs/your_docs/review folder
+2. Creation of a docs/your_docs/review/questions.csv file (see appl-docchat\docs\GBF_T1\review\questions.csv example)
+3. Filling in the questions that shall be posed to the documents
+  3.1 Question_Type - Define the question type, either Initial or Follow Up (Follow Up will retain context form previous question)
+  3.2 Question	- The actual question you would like to ask
+  3.3 Instruction_Template (optional) - Gives instructions how the large language model shall behave. If provided, it needs to have the phrases "{context}" & "{question}" (with the brackets) included. If not provided, it reverts back to default instructions defined at settings.RETRIEVER_PROMPT_TEMPLATE
+  3.4 summary_template (optional) - gives instructions for the creation of a summary of all the document's answer to the question (if not defined, no summary will be provided); If provided it needs to include the phrases "{question}" & "{answer_string}" (with the brackets)
+4. Activate the virtual environment through the cmd command "venv\Scripts\activate"
+5. Run "python review.py" in command line
+6. Specify document folder which shall be assessed
+7. Lean back and wait for results
+  

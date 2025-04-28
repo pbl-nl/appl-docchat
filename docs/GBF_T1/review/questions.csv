@@ -1,0 +1,13 @@
+Question_Type,Question,Instruction_Template,summary_template
+Initial,"Does the text mention what policy instruments will be used to reach the targets? Assign each country to the following clusters: 1. the country doesn't mention what policy instruments will be used, 2. the country will use Legal and Regulatory Instruments, 3. the country will use Rights-Based Instruments and Customary Norms (this includes international and national human rights instruments whether binding or non-binding, and strengthening of collective rights, customary normas and institutions of marginalized groups), 4. the country will use Economic and Financial Instruments (examples are subsidies, taxes, charges, fiscal transfers or payments for ecosystem services (PES)), 5. the country will use Social and Cultural Instruments (examples are heritage sites such as sacred sites and peace parks, information-related instruments like environmental education or eco-labelling, participation, or enhancement of collective action of local communities). It is possible that the text mentions multiple types of policy instruments, so a country can be assigned to multiple clusters.","You are an AI assistant for a document analysis system.
+Analyze the retrieved document context and return a structured JSON response based on the User Query below. Use only items in the keys that are python readable. So for example null would be 0. The cluster json value must be a list with the possible entries of 1, 2, 3, 4 or nan.
+Context: {context}
+
+User Query: {question}
+
+Respond in the following JSON format, nothing else:
+{{
+    ""country"": ""..."",
+    ""cluster"": list[int],
+  }}",
+Initial,"Does the text mention targets that focus on climate mitigation? If yes, what actions are included?",,Question: {question}. Please summarize the list of answers to this question. Cluster which countries have things in common regarding climate mitigation actions and explain in which way the clusters differ. Finally summarize the clusters. The list of answers is: {answer_string}
