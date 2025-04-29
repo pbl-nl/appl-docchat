@@ -94,9 +94,10 @@ class Querier:
             the path to the template file or a string with the template, by default None
         """
         # get vector store
-        self.vector_store = VectorStoreCreator().get_vectorstore(embeddings=self.embeddings,
-                                                                 content_folder=content_folder,
-                                                                 vecdb_folder=vecdb_folder)
+        if self.vector_store is None:
+            self.vector_store = VectorStoreCreator().get_vectorstore(embeddings=self.embeddings,
+                                                                     content_folder=content_folder,
+                                                                     vecdb_folder=vecdb_folder)
         logger.info(f"Loaded vector store from folder {vecdb_folder}")
 
         # get retriever with search_filter
