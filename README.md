@@ -81,12 +81,19 @@ In the activated virtual environment, the GUI can be started with <code>streamli
 When this command is used, a browser session will open automatically
 
 ### Querying multiple documents with multiple questions in batch
-The file review.py uses the standard question-answer technique but allows you to ask multiple questions to each document in a folder sequentially. 
-* Create a subfolder with the name <B>review</B> in a document folder
-* Secondly, add a file with the name <B>questions.txt</B> in the review folder with all your questions. The file expects a header with column names <B>Question Type</B> and <B>Question</B> for example. Then add all your question types ('Initial', or 'Follow Up' when the question refers to the previous question) and questions tab-separated in the following lines. You can find an example in the docs/CAP_nis folder.<br>
+The file review.py uses the standard question-answer technique but allows you to ask multiple questions to each document in a folder sequentially, enabling the user to comparable data from a range of documents. It is aimed at conducting a systematic review of multiple sources. To use the review functionality the following steps need to be executed:
+1. Creation of a docs/your_docs/review folder
+2. Creation of a docs/your_docs/review/questions.csv file (tab-separated, see appl-docchat\docs\GBF_T1\review\questions.csv example)
+3. Filling in the questions that shall be posed to the documents
+  3.1 Question_Type - Define the question type, either Initial or Follow Up (Follow Up will retain context form previous question)
+  3.2 Question	- The actual question you would like to ask
+  3.3 Instruction_Template (optional) - Gives instructions how the large language model shall behave. If provided, it needs to have the phrases "{context}" & "{question}" (with the brackets) included. If not provided, it reverts back to default instructions defined at settings.RETRIEVER_PROMPT_TEMPLATE
+  3.4 summary_template (optional) - gives instructions for the creation of a summary of all the document's answer to the question (if not defined, no summary will be provided); If provided it needs to include the phrases "{question}" & "{answer_string}" (with the brackets)
+4. Execution is done in the activated virtual environment with <code>python review.py</code>
+5. Specify document folder when asked
 
-Execution is done in the activated virtual environment with <code>python review.py</code>
-All the results, including the answers and the sources used to create the answers, are stored in a file result.csv which is also stored in the subfolder <B>review</B>
+All the results, including the answers and the sources used to create the answers, are stored in a file answers.tsv which is also stored in the subfolder <B>review</B><br>
+If it was chosen to use the summary template, an additional file, answers_summary.tsv is generated, in the same location
 
 ### For developers: Monitoring the results of the chunking process through a Streamlit User Interface
 When parsing files, the raw text is chunked. To see and compare the results of different chunking methods, use the chunks analysis GUI.<br>
@@ -112,4 +119,4 @@ This repo is mainly inspired by:
 - https://github.com/PrithivirajDamodaran/FlashRank
 - https://blog.langchain.dev/evaluating-rag-pipelines-with-ragas-langsmith/
 - https://github.com/explodinggradients/ragas
-
+  
