@@ -17,7 +17,6 @@ import utils as ut
 import settings
 
 
-
 def ingest_or_load_documents(
     content_folder_name: str, content_folder_path: str, vecdb_folder_path: str
 ) -> None:
@@ -117,7 +116,8 @@ def write_settings(input_path: os.PathLike, confidential: bool, output_path: os.
         file.write(f"settings.CHUNK_K_FOR_RERANK =  {settings.CHUNK_K_FOR_RERANK} \n")
         file.write(f"settings.RETRIEVER_PROMPT_TEMPLATE =  {settings.RETRIEVER_PROMPT_TEMPLATE} \n\n")
 
-def check_string_formating(
+
+def check_string_formatting(
     review_instruction_template: str, review_question_type: str
 ) -> None:
     """
@@ -127,35 +127,36 @@ def check_string_formating(
     ----------
     review_instruction_template : str
         the instruction template to be checked
-    review_question : str
-        the question to be checked
+    review_question_type : str
+        the type of question (should be either "Initial" or "Follow Up")
 
     Raises
     ------
     ValueError
         if the string formatting is not correct
     """
-    if not pd.isna(review_instruction_template): # check if there is an entry for the instruction template
+    # check if there is an entry for the instruction template
+    if not pd.isna(review_instruction_template):
         # check if the template is properly formatted
         if ("{question}" not in review_instruction_template) or \
-            ("{context}" not in review_instruction_template):
-            logger.info(f"Instruction template {review_instruction_template} does not contain the required placeholders {{question}} and {{context}}.")
+           ("{context}" not in review_instruction_template):
+            logger.info(f"""Instruction template {review_instruction_template} does not contain
+                         the required placeholders {{question}} and {{context}}.""")
             raise ValueError(
-                f"Instruction template {review_instruction_template} does not contain the required placeholders {{question}} and {{context}}."
-        )
+                "The instruction template does not contain the required placeholders {question} and/or {context}."
+            )
         else:
             logger.info(f"Instruction template {review_instruction_template} is correct.")
     else:
         logger.info(f"Instruction template {review_instruction_template} is correct.")
     if review_question_type.lower() not in ["initial", "follow up"]:
-            logger.info(f"Question type {review_question_type} is not valid.")
-            raise ValueError(
-                f"Question type {review_question_type} is not valid."
-            )
+        logger.info(f"Question type {review_question_type} is not valid.")
+        raise ValueError(
+            f"Question type {review_question_type} is not valid."
+        )
     else:
         logger.info(f"Question type {review_question_type} is correct.")
-    
-    
+
 
 def create_answers_for_folder(question_list_path: str,
                               review_files: List[str],
@@ -207,13 +208,12 @@ def create_answers_for_folder(question_list_path: str,
         review_question = row["Question"]
         review_instruction_template = row["Instruction_Template"]
         review_summary_template = row["summary_template"]
-        logger.info(f"reviewing question {review_question} of type {review_question_type} with template {review_instruction_template}")
+        logger.info(f"""reviewing question {review_question} of type {review_question_type}
+                    with template {review_instruction_template}""")
         # check if the string formatting is correct
-        check_string_formating(review_instruction_template=review_instruction_template,
-                               review_question_type=review_question_type)
-        
-        
-        logger.info(f"reviewing question {review_question}")
+        check_string_formatting(review_instruction_template=review_instruction_template,
+                                review_question_type=review_question_type)
+
         for review_file in review_files:
             # create the query chain with a search filter and answer each question for each document
             querier.make_chain(content_folder=content_folder_name,
@@ -258,11 +258,13 @@ def create_answers_for_folder(question_list_path: str,
             # get the relevant qa_prompt_template_path for that question
             synthesize_prompt_template = row['summary_template']
             # check if the summary template is properly formatted
-            if '{question}' not in synthesize_prompt_template \
-                or '{answer_string}' not in synthesize_prompt_template:
-                logger.info(f"Summary template {synthesize_prompt_template} does not contain the required placeholders  {{question}} and {{answer_string}}")
+            if ('{question}' not in synthesize_prompt_template) or \
+               ('{answer_string}' not in synthesize_prompt_template):
+                logger.info(f"""Summary template {synthesize_prompt_template} does not contain
+                             the required placeholders {{question}} and {{answer_string}}""")
                 raise ValueError(
-                    f"Summary template {synthesize_prompt_template} does not contain the required placeholders  {{question}} and {{answer_string}}"
+                    f"""Summary template {synthesize_prompt_template} does not contain the required
+                     placeholders {{question}} and {{answer_string}}"""
                 )
             # get all answers for the question in the dataframe
             answers = df_result[df_result['question_id'] == index]['answer']
