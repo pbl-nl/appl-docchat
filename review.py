@@ -6,6 +6,7 @@ The module is split in two phases:
 """
 from typing import List, Tuple
 import os
+import shutil
 import csv
 from datetime import datetime
 import pandas as pd
@@ -54,10 +55,10 @@ def generate_answer(
     ----------
     querier : Querier
         the Querier object
-    review_question :str
-        the question to be answered
     review_question_type : str
         the type of the question [initial or follow up]
+    review_question :str
+        the question to be answered
 
     Returns
     -------
@@ -83,8 +84,12 @@ def write_settings(input_path: os.PathLike, confidential: bool, output_path: os.
 
     Parameters
     ----------
+    input_path : os.PathLike
+        path of the input settings file
+    confidential : bool
+        whether the documents are confidential or not
     output_path : os.PathLike
-        path of the output file
+        path of the output file to write the used settings to
     """
     with open(file=output_path, mode="w", encoding="utf8") as file:
         file.write(f"input path =  {input_path} \n")
@@ -300,6 +305,11 @@ def create_answers_for_folder(question_list_path: str,
 def main(content_folder_path) -> None:
     """
     Main loop of this module
+
+    Parameters
+    ----------
+    content_folder_path : str
+        the path of the folder with documents
     """
     # Get content folder name from path
     content_folder_name = os.path.basename(content_folder_path)
@@ -335,8 +345,8 @@ def main(content_folder_path) -> None:
     timestamp = datetime.now().strftime("%Y_%m_%d_%Hhour_%Mmin_%Ssec")
     os.mkdir(os.path.join(content_folder_path, f"review/{timestamp}"))
     # copy the question list file to the output folder
-    os.system(f"cp {question_list_path} {content_folder_path}/review/{timestamp}/questions.csv")
-
+    destination_path = os.path.join(content_folder_path, f"review/{timestamp}", "questions.csv")
+    shutil.copy(question_list_path, destination_path)
     # ingest documents if documents in source folder path are not ingested yet
     ingest_or_load_documents(content_folder_name=content_folder_name,
                              content_folder_path=content_folder_path,
