@@ -66,7 +66,8 @@ class Summarizer:
 
     def summarize_folder(self) -> None:
         """
-        creates summaries of all files in the folder, using the chosen summarization method. One summary per file.
+        Create summaries of all files in the folder, using the chosen summarization method.
+        One summary per file is created when the summary of the file does not exist yet.
         """
         # create subfolder "summaries" if not existing
         if 'summaries' not in os.listdir(self.content_folder_path):
@@ -77,7 +78,12 @@ class Summarizer:
 
         # loop over all files in the folder
         for file in files_in_folder:
-            self.summarize_file(file=file)
+            file_name, _ = os.path.splitext(file)
+            summary_name = os.path.join(self.content_folder_path, "summaries",
+                                        str(file_name) + "_" + str.lower(self.chain_type) + ".txt")
+            # if summary does not exist yet, create it
+            if not os.path.isfile(summary_name):
+                self.summarize_file(file=file)
 
     def summarize_file(self, file: str) -> None:
         """
