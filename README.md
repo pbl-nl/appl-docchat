@@ -83,12 +83,14 @@ When this command is used, a browser session will open automatically
 ### Querying multiple documents with multiple questions in batch
 The file review.py uses the standard question-answer technique but allows you to ask multiple questions to each document in a folder sequentially, enabling the user to comparable data from a range of documents. It is aimed at conducting a systematic review of multiple sources. To use the review functionality the following steps need to be executed:
 1. Creation of a docs/your_docs/review folder
-2. Creation of a docs/your_docs/review/questions.csv file (tab-separated, see appl-docchat\docs\GBF_T1\review\questions.csv example)
+2. Creation of a docs/your_docs/review/questions.csv file (see folder review for an example)
 3. Filling in the questions that shall be posed to the documents
-  3.1 Question_Type - Define the question type, either Initial or Follow Up (Follow Up will retain context form previous question)
+  3.1 Question_Type - Define the question type, either Initial or Follow Up (Follow Up will retain context from previous question)
   3.2 Question	- The actual question you would like to ask
-  3.3 Instruction_Template (optional) - Gives instructions how the large language model shall behave. If provided, it needs to have the phrases "{context}" & "{question}" (with the brackets) included. If not provided, it reverts back to default instructions defined at settings.RETRIEVER_PROMPT_TEMPLATE
-  3.4 summary_template (optional) - gives instructions for the creation of a summary of all the document's answer to the question (if not defined, no summary will be provided); If provided it needs to include the phrases "{question}" & "{answer_string}" (with the brackets)
+  3.3 Question_Template (optional) - Gives instructions how the large language model shall behave. If provided, it needs to include the terms "{context}" & "{question}" (with the brackets). If not provided, the template defined in settings.RETRIEVER_PROMPT_TEMPLATE will be used
+  3.4 Summary_Template (optional) - gives instructions for the creation of a summary of all the document's answer to the question (if not defined, no summary will be provided); If provided it needs to include the terms "{question}" & "{answer_string}" (with the brackets)
+  3.5 Classification (optional) - Indicator (y/n or blank) that indicates whether the question is considered a classification question or not
+  3.6 Classes (optional) - If Classification is "y", this field should contain the names of the classes, each class on a new line
 4. Execution is done in the activated virtual environment with <code>python review.py</code>
 5. Specify document folder when asked
 
