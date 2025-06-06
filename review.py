@@ -123,22 +123,24 @@ def write_settings(input_path: os.PathLike, confidential: bool, output_path: os.
 
 
 def check_string_formatting(
-    review_question_template: str, review_question_type: str
+    review_question_type: str, review_question_template: str, review_summary_template: str
 ) -> None:
     """
     Check if the string formatting is correct for the given question type and question template
 
     Parameters
     ----------
-    review_question_template : str
-        the question template to be checked
     review_question_type : str
         the type of question (should be either "Initial" or "Follow Up")
+    review_question_template : str
+        the question template to be checked
+    review_summary_template : str
+        the summary template to be checked
 
     Raises
     ------
     ValueError
-        if the string formatting is not correct
+        if the string formatting of one of the arguments is not correct
     """
     # check if question type is equal to "initial" or "follow up"
     if review_question_type.lower() not in ["initial", "follow up"]:
@@ -147,7 +149,7 @@ def check_string_formatting(
             f"The question type {review_question_type} is not valid."
         )
 
-    # if there is an entry for the instruction template
+    # if there is an entry for the question template
     if not pd.isna(review_question_template):
         # check if the template is properly formatted
         if ("{question}" not in review_question_template) or \
@@ -155,8 +157,19 @@ def check_string_formatting(
             logger.info(f"""The question template {review_question_template} does not contain
                          the required placeholders {{question}} and {{context}}.""")
             raise ValueError(
-                "The question template does not contain the required placeholders {question} and/or {context}."
-            )
+                f"""The question template does not contain
+                the required placeholders {{question}} and/or {{context}}.""")
+
+    # if there is an entry for the summary template
+    if not pd.isna(review_summary_template):
+        # check if the summary template is properly formatted
+        if ("{question}" not in review_summary_template) or \
+           ("{answer_string}" not in review_summary_template):
+            logger.info(f"""The summary template {review_summary_template} does not contain
+                        the required placeholders {{question}} and {{answer_string}}""")
+            raise ValueError(
+                f"""The summary template {review_summary_template} does not contain
+                the required placeholders {{question}} and {{answer_string}}""")
 
 
 def create_answers_for_folder(question_list_path: str,
@@ -219,8 +232,9 @@ def create_answers_for_folder(question_list_path: str,
                     with question template {review_question_template}""")
 
         # check if the string formatting is correct
-        check_string_formatting(review_question_template=review_question_template,
-                                review_question_type=review_question_type)
+        check_string_formatting(review_question_type=review_question_type,
+                                review_question_template=review_question_template,
+                                review_summary_template=review_summary_template)
 
         for review_file in review_files:
             # create the query chain with a search filter and answer each question for each document
@@ -268,15 +282,6 @@ def create_answers_for_folder(question_list_path: str,
         for index, row in summary_rows.iterrows():
             # get the relevant qa_prompt_template_path for that question
             synthesize_prompt_template = row['Summary_Template']
-            # # check if the summary template is properly formatted
-            # if ('{question}' not in synthesize_prompt_template) or \
-            #    ('{answer_string}' not in synthesize_prompt_template):
-            #     logger.info(f"""Summary template {synthesize_prompt_template} does not contain
-            #                  the required placeholders {{question}} and {{answer_string}}""")
-            #     raise ValueError(
-            #         f"""Summary template {synthesize_prompt_template} does not contain the required
-            #          placeholders {{question}} and {{answer_string}}"""
-            #     )
             # get all answers for the question in the dataframe
             answers = df_result[df_result['question_id'] == index]['answer']
             synthesis_prompt = synthesize_prompt_template.format(
