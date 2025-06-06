@@ -16,7 +16,7 @@ Just return output in the format country: class number
 
 Examples:
 - if country X mentions pollution from excess nutrients but has no quantified target to reduce that type of pollution, the output would be X: 2
-- if country Y mentions pollution from excess nutrients but the quantified target is lower than 50% reduction, the output would be Y: 3"",",,y,"no mention
+- if country Y mentions pollution from excess nutrients but the quantified target is lower than 50% reduction, the output would be Y: 3",,y,"no mention
 no quantification
 below target
 at or above target"
