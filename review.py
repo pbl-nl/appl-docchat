@@ -157,7 +157,7 @@ def check_string_formatting(
             logger.info(f"""The question template {review_question_template} does not contain
                          the required placeholders {{question}} and {{context}}.""")
             raise ValueError(
-                f"""The question template does not contain
+                f"""The question template {review_question_template} does not contain
                 the required placeholders {{question}} and/or {{context}}.""")
 
     # if there is an entry for the summary template
