@@ -13,6 +13,7 @@ import re
 from loguru import logger
 from langchain_community.document_loaders import BSHTMLLoader
 from langchain_community.document_loaders import TextLoader
+from langchain_community.document_loaders import UnstructuredWordDocumentLoader
 import fitz
 from docx2pdf import convert
 # local imports
@@ -27,7 +28,7 @@ class FileParser:
     def __init__(self) -> None:
         pass
 
-    def parse_file(self, file_path: str) -> Tuple[List[Tuple[int, str]], Dict[str, str]]:
+    def parse_file(self, file_path: str, in_memory: bool = False) -> Tuple[List[Tuple[int, str]], Dict[str, str]]:
         """
         Calls function for parsing the file depending on the file extension
 
@@ -35,6 +36,8 @@ class FileParser:
         ----------
         file_path : str
             the filepath of the file to parse
+        in_memory : bool
+            whether the doc file should be parsed in memory or not
 
         Returns
         -------
@@ -48,8 +51,10 @@ class FileParser:
         elif file_path.endswith(".html"):
             raw_pages, metadata = self.parse_html(file_path)
         elif file_path.endswith(".docx"):
-            raw_pages, metadata = self.parse_word(file_path)
-
+            if not in_memory:
+                raw_pages, metadata = self.parse_word(file_path)
+            else:
+                raw_pages, metadata = self.parse_word_in_memory(file_path)
         # return raw text from pages and metadata
         return raw_pages, metadata
 
@@ -321,4 +326,31 @@ class FileParser:
         path_to_pdf = self.convert_docx_to_pdf(file_path)
         pages, metadata = self.parse_pymupdf(path_to_pdf)
 
+        return pages, metadata
+
+    def parse_word_in_memory(self, file_path: str) -> Tuple[List[Tuple[int, str]], Dict[str, str]]:
+        """
+        Extract and return the pages and metadata from the word document
+        Parameters
+        ----------
+        file_path : str
+            the filepath of the docx file to parse
+        Returns
+        -------
+        Tuple[List[Tuple[int, str]], Dict[str, str]]
+            tuple of pages (list of tuples of pagenumbers and page texts) and metadata (dictionary)
+        """
+        logger.info("Extracting text from word file")
+        loader = UnstructuredWordDocumentLoader(file_path)
+        text = loader.load()
+        raw_text = text[0].page_content
+        # currently not able to extract pages yet!
+        pages = [(1, raw_text)]
+        # extract metadata
+        logger.info("Extracting metadata")
+        metadata_text = text[0].metadata
+        logger.info(f"{getattr(metadata_text, 'title', 'no title')}")
+        metadata = self.get_metadata(file_path, metadata_text)
+        metadata['Language'] = metadata['Language'] if 'Language' in metadata.keys() else \
+            ut.detect_language(raw_text)
         return pages, metadata

@@ -429,3 +429,24 @@ def check_size(content_folder, document_selection):
         size += os.path.getsize(os.path.join(content_folder, file))
     size = size / 1024 / 1024  # convert to MB
     return size
+
+
+def check_in_memory_storage(folder_path) -> bool:
+    """
+    Checks whether to store variables in memory or not by trying to create a test folder
+    Parameters
+    ----------
+    folder_path : str
+        path of the folder
+    Returns
+    -------
+    bool
+        True if in memory, False otherwise
+    """
+    try:
+        os.mkdir(os.path.join(folder_path, "test"))
+        os.rmdir(os.path.join(folder_path, "test"))
+        return False
+    except Exception:
+        logger.info("We are in memory")
+        return True
