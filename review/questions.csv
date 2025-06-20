@@ -1,0 +1,22 @@
+Question_Type,Question,Question_Template,Summary_Template,Classification,Classes
+Initial,"Does the text mention any targets specifically for reducing excess nutrients pollution? Excess nutrients pollution is defined as nutrients lost to the environment. Some examples of nutrients are nitrogen, phosphorus and fertilizer. If yes, is the target quantified? A quantified target is defined by a reduction in terms of a percentage, in terms of an absolute value or in terms of ""reduce by half"" or ""phase out"".","You are an AI assistant for a document analysis system.
+Analyze the retrieved document context and return a response based on the User Query below.
+Context: {context}
+
+User Query: {question}
+
+Assign each country to one and only one of the following classes:
+
+class 1: the context doesn't mention pollution from excess nutrients
+class 2: the context mentions pollution from excess nutrients but has no quantified target to reduce that type of pollution
+class 3: the context mentions pollution from excess nutrients but the quantified target is lower than 50% reduction
+class 4: the context mentions pollution from excess nutrients AND also the quantified target is at least 50% reduction.
+
+Just return output in the format country: class number
+
+Examples:
+- if country X mentions pollution from excess nutrients but has no quantified target to reduce that type of pollution, the output would be X: 2
+- if country Y mentions pollution from excess nutrients but the quantified target is lower than 50% reduction, the output would be Y: 3",,y,"no mention
+no quantification
+below target
+at or above target"
