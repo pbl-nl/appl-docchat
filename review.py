@@ -217,26 +217,26 @@ def create_answers_for_folder(question_list_path: str,
     review_questions = pd.read_csv(filepath_or_buffer=question_list_path)
     review_questions.dropna(inplace=True, how="all")
 
-    # loop over each combination of question, question template and summary template
-    for index, row in review_questions.iterrows():
-        # expected is a file questions.csv with columns "Question_Type", "Question", "Question_Template",
-        # "Summary_Template", "Classification" and "Classes"
-        review_question_type = row["Question_Type"]
-        review_question = row["Question"]
-        review_question_template = row["Question_Template"]
-        review_summary_template = row["Summary_Template"]
-        review_question_classification = row["Classification"]
-        review_classes = row["Classes"]
+    # loop over each file, then over each row in questions.csv
+    for review_file in review_files:
+        for index, row in review_questions.iterrows():
+            # expected is a file questions.csv with columns "Question_Type", "Question", "Question_Template",
+            # "Summary_Template", "Classification" and "Classes"
+            review_question_type = row["Question_Type"]
+            review_question = row["Question"]
+            review_question_template = row["Question_Template"]
+            review_summary_template = row["Summary_Template"]
+            review_question_classification = row["Classification"]
+            review_classes = row["Classes"]
 
-        logger.info(f"""reviewing question {review_question} of type {review_question_type}
-                    with question template {review_question_template}""")
+            logger.info(f"""reviewing question {review_question} of type {review_question_type}
+                        with question template {review_question_template}""")
 
-        # check if the string formatting is correct
-        check_string_formatting(review_question_type=review_question_type,
-                                review_question_template=review_question_template,
-                                review_summary_template=review_summary_template)
+            # check if the string formatting is correct
+            check_string_formatting(review_question_type=review_question_type,
+                                    review_question_template=review_question_template,
+                                    review_summary_template=review_summary_template)
 
-        for review_file in review_files:
             # create the query chain with a search filter and answer each question for each document
             querier.make_chain(content_folder=content_folder_name,
                                vecdb_folder=vecdb_folder_path,
@@ -309,7 +309,7 @@ def create_answers_for_folder(question_list_path: str,
         df_result[col] = df_result[col].apply(clean_newlines)
 
     # Then save to TSV
-    df_result = df_result.sort_values(by=["question_id", "filename"])
+    df_result = df_result.sort_values(by=["filename", "question_id"])
     df_result.to_csv(output_path, sep='\t', index=False, mode='a')
 
 
