@@ -1,6 +1,6 @@
 # Chat with your docs! 
 A RAG (Retrieval Augmented Generation) setup for further exploration of chatting to company documents<br><br><br>
-![image](https://github.com/pbl-nl/appl-docchat/assets/7226328/d30cdb13-2276-4510-aae9-c94fcaeb9f66)
+<img width="787" alt="pipeline" src="https://github.com/user-attachments/assets/365bb844-2719-4512-8e57-a4d29d868c26" />
 
 
 ## How to use this repo
@@ -85,12 +85,12 @@ The file review.py uses the standard question-answer technique but allows you to
 1. Creation of a docs/your_docs/review folder
 2. Creation of a docs/your_docs/review/questions.csv file (see folder review for an example)
 3. Filling in the questions that shall be posed to the documents
-  3.1 Question_Type - Define the question type, either Initial or Follow Up (Follow Up will retain context from previous question)
-  3.2 Question	- The actual question you would like to ask
-  3.3 Question_Template (optional) - Gives instructions how the large language model shall behave. If provided, it needs to include the terms "{context}" & "{question}" (with the brackets). If not provided, the template defined in settings.RETRIEVER_PROMPT_TEMPLATE will be used
-  3.4 Summary_Template (optional) - gives instructions for the creation of a summary of all the document's answer to the question (if not defined, no summary will be provided); If provided it needs to include the terms "{question}" & "{answer_string}" (with the brackets)
-  3.5 Classification (optional) - Indicator (y/n or blank) that indicates whether the question is considered a classification question or not
-  3.6 Classes (optional) - If Classification is "y", this field should contain the names of the classes, each class on a new line
+    1. Question_Type - Define the question type, either Initial or Follow Up (Follow Up will retain context from previous question)
+    2. Question	- The actual question you would like to ask
+    3. Question_Template (optional) - Gives instructions how the large language model shall behave. If provided, it needs to include the terms "{context}" & "{question}" (with the brackets). If not provided, the template defined in settings.RETRIEVER_PROMPT_TEMPLATE will be used
+    4. Summary_Template (optional) - gives instructions for the creation of a summary of all the document's answer to the question (if not defined, no summary will be provided); If provided it needs to include the terms "{question}" & "{answer_string}" (with the brackets)
+    5. Classification (optional) - Indicator (y/n or blank) that indicates whether the question is considered a classification question or not
+    6. Classes (optional) - If Classification is "y", this field should contain the names of the classes, each class on a new line
 4. Execution is done in the activated virtual environment with <code>python review.py</code>
 5. Specify document folder when asked
 
