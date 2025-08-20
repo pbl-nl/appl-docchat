@@ -302,9 +302,8 @@ def create_answers_for_folder(question_list_path: str,
             # write data
             for key, value in summary_result.items():
                 tsv_writer.writerow([key, clean_newlines(value)])
-
     # Apply to columns that contain text with newlines
-    text_columns = ['question', 'answer', 'sources', 'question_type', 'question_template', 'summary_template', 'classes', 'classification']
+    text_columns = ['question', 'answer', 'sources', 'question_type', 'question_template', 'classes', 'question_classification']
     for col in text_columns:
         df_result[col] = df_result[col].apply(clean_newlines)
 
