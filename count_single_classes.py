@@ -49,7 +49,6 @@ results_folder_path = os.path.join(source_folder_path, "review")
 # 2025_05_20_16hour_21min_15sec
 # then you would choose as selection string 2025_05_20_16 to just gather all results from folder starting their name with "2025_05_20_16"
 selection_string = input("Selection string: ")
-multilabel = input("More than 1 class possible? (y/n): ")
 # make a list of all relevant folder names in results_folder_path
 folder_names = [f for f in os.listdir(results_folder_path) if f.startswith(selection_string)]
 # for each folder in folder_names
