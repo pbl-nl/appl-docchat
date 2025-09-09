@@ -13,8 +13,9 @@ def write_to_file(file_path, content):
     with open(file_path, 'w') as file:
         file.write(content)
 
-def classify_string(s) -> list[int]:
-    print('Classifying string:', s, type(s), s.split(', '))
+def classify_string(s: str) -> list[int]:
+    if type(s) != str:
+        return []
     if s.isdigit():
         return [int(s)]
     elif ', ' in s:
@@ -75,13 +76,13 @@ for counter, folder_name in enumerate(folder_names):
             classification_answer, comment = (row['answer'].split(':')[1].strip(), None) if ':' in row['answer'] else ([], f'Error classifications for {to_classify}')
             # if classification contains a space, take only the part before the space and convert to int
             classification = classify_string(classification_answer)
-            classification.sort()
-            mapping = row['classes'].split('|')
-            # print('Mapping: ', mapping)
-            # print('Classification: ', classification)
-            if len(mapping) > 0:
+            if classification is not None:
+                classification.sort()
+                mapping = row['classes'].split('|')
                 # map classification number to classification description
                 classification = [mapping[int(classification_value) - 1] for classification_value in classification]
+            else:
+                classification = None
             question_ids.append(question_id)
             questions.append(question)
             to_classifies.append(to_classify)
@@ -98,19 +99,12 @@ for counter, folder_name in enumerate(folder_names):
     else:
         # append the classes series to the dataframe as a new column
         df_results["run_" + str(counter + 1)] = classifications
-    print(df_results)
-    if multilabel == "y":
-        # convert the column to a list of numbers
-        df_results["run_" + str(counter + 1)] = \
-            df_results["run_" + str(counter + 1)].apply(lambda x: [str(i).strip() for i in x])
-
+    
 numruns = counter + 1
 
 
 run_columns = [col for col in df_results.columns if col.startswith('run_')]
 df_results["majority vote"] = df_results[run_columns].mode(axis=1)[0]
-print(df_results)
-print()
 df_results["confidence score"] = df_results.apply(
     lambda row: round(
         (row[run_columns].apply(lambda x: str(x) == str(row["majority vote"]))).sum() / numruns, 
