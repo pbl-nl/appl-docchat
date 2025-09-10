@@ -167,6 +167,5 @@ for question_id in question_ids:
 
         content += "\n\n"
 
-
 # write the content to a file
 write_to_file(file_path=os.path.join(results_folder_path, "multiple_run_answers_summary.txt"), content=content)
