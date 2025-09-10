@@ -79,7 +79,8 @@ for counter, folder_name in enumerate(folder_names):
                 classification.sort()
                 mapping = row['classes'].split('|')
                 # map classification number to classification description
-                classification = [mapping[int(classification_value) - 1] for classification_value in classification]
+                classification = [mapping[int(classification_value) - 1] if int(classification_value) <= len(mapping) else 'Classification Index out of Range'  for classification_value in classification]
+
             else:
                 classification = None
             question_ids.append(question_id)
