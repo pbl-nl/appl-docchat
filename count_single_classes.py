@@ -2,7 +2,7 @@ from pathlib import Path
 import pandas as pd
 import regex as re
 import os
-from io import StringIO
+import itertools
 
 def strip_alphanumeric(s):
     # Use a regular expression to remove alphanumeric characters from the start and end of the string
@@ -12,6 +12,12 @@ def strip_alphanumeric(s):
 def write_to_file(file_path, content):
     with open(file_path, 'w') as file:
         file.write(content)
+
+def generate_permutations(input_list):
+    permutations = []
+    for r in range(1, len(input_list) + 1):
+        permutations.extend(itertools.permutations(input_list, r))
+    return permutations
 
 def classify_string(s: str) -> list[int]:
     if type(s) != str:
@@ -138,29 +144,28 @@ for question_id in question_ids:
     classification = df_questions.loc[df_questions['Question'] == question, "Classification"].values[0]
     if classification == "y":
         content += f"question: {question}:\n"
-        # get the corresponding classes
-        mapping = df_questions.loc[df_questions['Question'] == question, "Classes"].values[0].split('\n')
-        # for each class, get the value from column "to_classify" for which the value in column "majority vote" is equal to the class
-        for mapped_class in mapping:
-            total_occurrences = 0
-            count_occurrences = 0
-            first_occurrence = True
-            content += f"{mapped_class}: "
-            for index, row in df_results.iterrows():
-                if row['question_id'] == question_id:
-                    total_occurrences +=1
-                    if row['majority vote'] == mapped_class:
-                        if first_occurrence:
-                            content += f"{row['to_classify']}"
-                            first_occurrence = False
-                        else:
-                            content += f", {row['to_classify']}"
-                        count_occurrences += 1
-            content += "\n"
-            percentage_occurences = round(count_occurrences / total_occurrences * 100, 1)
-            content += f"percentage of occurrences: {percentage_occurences}%\n"
-        content += "\n\n"
+        # get all rows for this question_id
+        question_rows = df_results[df_results['question_id'] == question_id]
 
+        # get unique classes that actually appear in the data (explode if it is a list instead of a string)
+        if question_rows['majority vote'].apply(lambda x: isinstance(x, list)).any():
+            question_rows = question_rows.explode('majority vote')
+        unique_classes = question_rows['majority vote'].unique()
+
+        # loop through the unique classes
+        for mapped_class in unique_classes:
+            class_rows = question_rows[question_rows['majority vote'] == mapped_class]
+            total_occurrences = len(question_rows)
+            count_occurrences = len(class_rows)
+
+            # add the "to_classify" values (comma-separated)
+            values = ", ".join(class_rows['to_classify'].astype(str).tolist())
+
+            content += f"{mapped_class}: {values}\n"
+            percentage_occurrences = round(count_occurrences / total_occurrences * 100, 1)
+            content += f"percentage of occurrences: {percentage_occurrences}%\n"
+
+        content += "\n\n"
 
 # write the content to a file
 write_to_file(file_path=os.path.join(results_folder_path, "multiple_run_answers_summary.txt"), content=content)
