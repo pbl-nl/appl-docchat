@@ -2,6 +2,7 @@ from pathlib import Path
 import pandas as pd
 import regex as re
 import os
+from io import StringIO
 
 def strip_alphanumeric(s):
     # Use a regular expression to remove alphanumeric characters from the start and end of the string
@@ -12,8 +13,24 @@ def write_to_file(file_path, content):
     with open(file_path, 'w') as file:
         file.write(content)
 
+def classify_string(s: str) -> list[int]:
+    if type(s) != str:
+        return []
+    if s.isdigit():
+        return [int(s)]
+    elif ', ' in s:
+        classifications = s.split(', ')
+    elif ',' in s:
+        classifications = s.split(',')
+    elif ' ' in s:
+        classifications = s.split(' ')
+    else:
+        return None
+    return [int(c) for c in classifications if c.isdigit()]
+    
 source_folder_path = input("Source folder path: ")
 results_folder_path = os.path.join(source_folder_path, "review")
+
 # The selection string is the string that is common for all output folders you want to consider aggregating
 # e.g. If you want to obtain the majority vote for resulting classifications in folders:
 # 2025_05_13_12hour_02min_48sec
@@ -32,7 +49,6 @@ results_folder_path = os.path.join(source_folder_path, "review")
 # 2025_05_20_16hour_21min_15sec
 # then you would choose as selection string 2025_05_20_16 to just gather all results from folder starting their name with "2025_05_20_16"
 selection_string = input("Selection string: ")
-multilabel = input("More than 1 class possible? (y/n): ")
 # make a list of all relevant folder names in results_folder_path
 folder_names = [f for f in os.listdir(results_folder_path) if f.startswith(selection_string)]
 # for each folder in folder_names
@@ -43,10 +59,11 @@ for counter, folder_name in enumerate(folder_names):
     questions = []
     to_classifies = []
     classifications = []
+    error_comments = []
     questions_folder_path = Path(results_folder_path + "\\" + folder_name + '\\questions.csv')
     df_questions = pd.read_csv(questions_folder_path, sep=',')
     answers_folder_path = Path(results_folder_path + "\\" + folder_name + '\\answers.tsv')
-    df_answers = pd.read_csv(answers_folder_path, sep='\t')
+    df_answers = pd.read_csv(answers_folder_path, sep='\t', engine='python')
     for index, row in df_answers.iterrows():
         question_classification = row['question_classification']
         # only consider classification questions
@@ -55,51 +72,52 @@ for counter, folder_name in enumerate(folder_names):
             question = row['question']
             to_classify = row['answer'].split(':')[0]
             # only take classification of the first element to classify
-            classification = row['answer'].split(':')[1].strip()
-            classification = int(classification.split(' ')[0]) if ' ' in classification else int(classification)
-            mapping = row['classes'].split('\n')
-            if len(mapping) > 0:
+            classification_answer, comment = (row['answer'].split(':')[1].strip(), None) if ':' in row['answer'] else ([], f'Error classifications for {to_classify}')
+            # if classification contains a space, take only the part before the space and convert to int
+            classification = classify_string(classification_answer)
+            if classification is not None:
+                classification.sort()
+                mapping = row['classes'].split('|')
                 # map classification number to classification description
-                classification = mapping[int(classification) - 1]
+                classification = [mapping[int(classification_value) - 1] for classification_value in classification]
+            else:
+                classification = None
             question_ids.append(question_id)
             questions.append(question)
             to_classifies.append(to_classify)
             classifications.append(classification)
+            error_comments.append(comment)
 
     if first:
         df_results = pd.DataFrame({"question_id": question_ids,
                                    "question": questions,
                                    "to_classify": to_classifies,
-                                   "run_" + str(counter + 1): classifications})
+                                   "run_" + str(counter + 1): classifications,
+                                   'error_comments': error_comments})
         first = False
     else:
         # append the classes series to the dataframe as a new column
         df_results["run_" + str(counter + 1)] = classifications
-
-    if multilabel == "y":
-        # convert the column to a list of numbers
-        df_results["run_" + str(counter + 1)] = \
-            df_results["run_" + str(counter + 1)].apply(lambda x: [str(i).strip() for i in x.split(',')])
-
+    
 numruns = counter + 1
 
-print(df_results)
-print()
+
 run_columns = [col for col in df_results.columns if col.startswith('run_')]
 df_results["majority vote"] = df_results[run_columns].mode(axis=1)[0]
-df_results["confidence score"] = \
-    df_results.apply(lambda row: round((row[run_columns] == row["majority vote"]).sum() / numruns, 2), axis=1)
+df_results["confidence score"] = df_results.apply(
+    lambda row: round(
+        (row[run_columns].apply(lambda x: str(x) == str(row["majority vote"]))).sum() / numruns, 
+        2
+    ), 
+    axis=1
+)
 
-print(df_questions)
 # for each row in the dataframe df_results
 for index, row in df_results.iterrows():
     question = row['question']
-    classification = df_questions.loc[df_questions['Question'] == question, "classification"].values[0]
-    # print(classification)
+    classification = df_questions.loc[df_questions['Question'] == question, "Classification"].values[0]
     if classification == "y":
-        mapping = df_questions.loc[df_questions['Question'] == question, "classes"].values[0].split('\n')
-        # print(mapping)
-        # mapping = row['classes'].split('\n')
+        mapping = df_questions.loc[df_questions['Question'] == question, "Classes"].values[0].split('\n')
         for mapped_class in mapping:
             if mapped_class == df_results["majority vote"][index]:
                 df_results.at[index, mapped_class] = 1
@@ -116,11 +134,11 @@ question_ids = df_results['question_id'].unique()
 # for each question id, get the corresponding question and classification
 for question_id in question_ids:
     question = df_results.loc[df_results['question_id'] == question_id, 'question'].values[0]
-    classification = df_questions.loc[df_questions['Question'] == question, "classification"].values[0]
+    classification = df_questions.loc[df_questions['Question'] == question, "Classification"].values[0]
     if classification == "y":
         content += f"question: {question}:\n"
         # get the corresponding classes
-        mapping = df_questions.loc[df_questions['Question'] == question, "classes"].values[0].split('\n')
+        mapping = df_questions.loc[df_questions['Question'] == question, "Classes"].values[0].split('\n')
         # for each class, get the value from column "to_classify" for which the value in column "majority vote" is equal to the class
         for mapped_class in mapping:
             total_occurrences = 0
