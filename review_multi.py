@@ -2,8 +2,7 @@
 This module is meant to use the review.py module repetitively
 """
 import review
-import time
-
+from chromadb.api.shared_system_client import SharedSystemClient
 
 if __name__ == "__main__":
     # get source folder with papers from user
@@ -12,4 +11,5 @@ if __name__ == "__main__":
     repetitions = input("How many repetitions? : ")
     for i in range(1, int(repetitions) + 1):
         review.main(content_folder_path)
-        time.sleep(15) # add a timer, to allow proper closure of old processes
+        # clear the cache of chromadb to allow multiple runs sequentially
+        SharedSystemClient.clear_system_cache()
