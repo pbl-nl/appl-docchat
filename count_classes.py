@@ -119,9 +119,9 @@ for counter, folder_name in enumerate(folder_names):
             question_id = row['question_id']
             question = row['question']
             classes_string = row['classes']
-            to_classify = row['answer'].split(':')[0]
+            to_classify = row['answer'].split("|")[0].split(':')[0]
             # only take classification of the first element to classify
-            classification_answer, comment = (row['answer'].split(':')[1].strip(), None) if ':' in row['answer'] else ("", f'Error classifications for {to_classify}')
+            classification_answer, comment = (row['answer'].split("|")[0].split(':')[1].strip(), None) if ':' in row['answer'] else ("", f'Error classifications for {to_classify}')
             # if classification contains a space, take only the part before the space and convert to int
             classification = classify_string(classification_answer)
             if classification is not None:
