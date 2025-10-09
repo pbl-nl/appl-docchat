@@ -9,7 +9,7 @@ def strip_alphanumeric(s):
 
 # write string to a .txt file
 def write_to_file(file_path, content):
-    with open(file_path, 'w') as file:
+    with open(file_path, 'w', encoding='utf-8') as file:
         file.write(content)
 
 def generate_permutations(input_list):
