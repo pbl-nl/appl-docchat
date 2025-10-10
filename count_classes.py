@@ -187,9 +187,10 @@ for _, row in df_questions.iterrows():
         cnt = 0
         content += f"{my_class}: "
         for _, row in df_results.iterrows():
-            if my_class in row["relevant_classes"]:
-                content += row["to_classify"] + ", "
-                cnt += 1
+            if question == row["question"]:
+                if my_class in row["relevant_classes"]:
+                    content += row["to_classify"] + ", "
+                    cnt += 1
         content = content[:-2] + "\n"
         percentage_occurrences = round(cnt / len(valid_to_classifies) * 100, 1)
         content += f"percentage of occurrences: {percentage_occurrences}%\n"
