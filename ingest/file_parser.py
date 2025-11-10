@@ -15,6 +15,7 @@ from langchain_community.document_loaders import BSHTMLLoader
 from langchain_community.document_loaders import TextLoader
 import fitz
 from docx2pdf import convert
+import pymupdf4llm
 # local imports
 import utils as ut
 
@@ -41,8 +42,9 @@ class FileParser:
         Tuple[List[Tuple[int, str]], Dict[str, str]]
             tuple of pages (list of tuples of pagenumbers and page texts) and metadata (dictionary)
         """
+        tables = []
         if file_path.endswith(".pdf"):
-            raw_pages, metadata = self.parse_pymupdf(file_path)
+            raw_pages, metadata, tables = self.parse_pymupdf(file_path)
         elif file_path.endswith(".txt") or file_path.endswith(".md"):
             raw_pages, metadata = self.parse_txt(file_path)
         elif file_path.endswith(".html"):
@@ -51,7 +53,7 @@ class FileParser:
             raw_pages, metadata = self.parse_word(file_path)
 
         # return raw text from pages and metadata
-        return raw_pages, metadata
+        return raw_pages, metadata, tables
 
     def get_metadata(self, file_path: str, doc_metadata: Dict[str, str]) -> Dict[str, str]:
         """
@@ -266,8 +268,41 @@ class FileParser:
             ut.detect_language(pages[page_with_max_text][1])
         logger.info(f"The language detected for this document is {metadata['Language']}")
         metadata["last_change_time"] = os.stat(file_path).st_mtime
+        tables = self.extract_tables(file_path)
 
-        return pages, metadata
+        return pages, metadata, tables
+
+    def extract_tables(self, file_path, show_progress=False):
+        """
+        first chunks each page of the pdf file into markdown and then extracts tables from the markdown text.
+        md_text_list contains image, graphics, metadata, table positions, and text of the pdf file in markdown format.
+        Might be helpful in text parsing.
+
+        Parameters
+        ----------
+        file_path : str
+            path to the pdf file
+        show_progress : bool, optional
+            _description_, by default False
+
+        Returns
+        -------
+        _type_
+            list of tuples, each tuple contains the page number and the table in markdown format
+        """
+        md_text_list = pymupdf4llm.to_markdown(file_path, page_chunks=True, show_progress=show_progress)
+        # Regular expression to detect Markdown tables
+        table_pattern = re.compile(r"(\|.*?\|\n\|[-|]+\|\n(?:\|.*?\|\n)+)")
+
+        # Process each page to find Markdown tables
+        table_pages = []
+        for i, md_text in enumerate(md_text_list):
+            text = md_text['text']
+            tables = table_pattern.findall(text)
+            if tables:
+                table_pages.extend([(i, table) for table in tables])
+
+        return table_pages
 
     def parse_txt(self, file_path: str) -> Tuple[List[Tuple[int, str]], Dict[str, str]]:
         """
@@ -319,6 +354,6 @@ class FileParser:
         """
         # convert docx to pdf
         path_to_pdf = self.convert_docx_to_pdf(file_path)
-        pages, metadata = self.parse_pymupdf(path_to_pdf)
+        pages, metadata, _ = self.parse_pymupdf(path_to_pdf)
 
         return pages, metadata
