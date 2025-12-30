@@ -192,7 +192,8 @@ for _, row in df_questions.iterrows():
                     content += row["to_classify"] + ", "
                     cnt += 1
         content = content[:-2] + "\n"
-        percentage_occurrences = round(cnt / len(valid_to_classifies) * 100, 1)
+        length_valid_to_classifies = max(len(valid_to_classifies), 1) # to avoid division by zero
+        percentage_occurrences = round(cnt / length_valid_to_classifies * 100, 1)
         content += f"percentage of occurrences: {percentage_occurrences}%\n"
     content += "\n\n"
 
