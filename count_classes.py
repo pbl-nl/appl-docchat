@@ -199,3 +199,41 @@ for _, row in df_questions.iterrows():
 
 # write the content to file multiple_run_answers_summary.txt
 write_to_file(file_path=os.path.join(results_folder_path, "multiple_run_answers_summary.txt"), content=content)
+
+# gather all combinations of classes mentioned in the answers of the countries
+# approach:
+# sort df_results first by question_id, then by relevant classes, then country name
+# df_results = df_results.sort_values(by=["question_id", "relevant_classes", "to_classify"]).reset_index(drop=True)
+content = ""
+# loop over all questions
+for _, row in df_questions.iterrows():
+    question = row["Question"]
+    content += f"question: {question}:\n"
+    # loop over all rows in df_results of this question to obtain a list of distinct relvant classes combinations
+    seen_combinations = set()
+    for _, row in df_results.iterrows():
+        if question == row["question"]:
+            relevant_classes = row["relevant_classes"]
+            if len(relevant_classes) > 1:
+                combinations_of_two = set(itertools.combinations(relevant_classes, 2))
+                for combination in combinations_of_two:
+                    if combination not in seen_combinations:
+                        seen_combinations.add(combination)
+    # Now count percentages of combined classes
+    for combination in seen_combinations:
+        cnt_combination = 0
+        for _, row in df_results.iterrows():
+            if question == row["question"]:
+                relevant_classes = row["relevant_classes"]
+                if len(relevant_classes) > 1:
+                    combinations_of_two = set(itertools.combinations(relevant_classes, 2))
+                    if combination in combinations_of_two:
+                        cnt_combination += 1
+        length_valid_to_classifies = max(len(valid_to_classifies), 1) # to avoid division by zero
+        percentage_occurrences = round(cnt_combination / length_valid_to_classifies * 100, 1)
+        content += f"percentage of co-occurence combination: {combination[0]} and {combination[1]}: {percentage_occurrences}% ({cnt_combination} co-occurrences, of total {length_valid_to_classifies} occurrences)\n"
+    content += "\n\n"
+
+# write the content to file multiple_run_answers_summary.txt
+write_to_file(file_path=os.path.join(results_folder_path, "multiple_run_co-occurences.txt"), content=content)
+
