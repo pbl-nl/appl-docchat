@@ -144,9 +144,8 @@ LLM_MODEL = "gpt-4o"
 # with key the model name and value the deployment name\
 # Adjust for your own Azure model deployments
 AZURE_LLM_DEPLOYMENT_MAP = {
-    "gpt-35-turbo": "pbl-openai-a-cd-openai",
-    "gpt-4": "pbl-openai-a-cd-openai4",
-    "gpt-4o": "pbl-openai-a-cd-openai4o"
+    "gpt-4o": "gpt-4o-DataZoneStandard",
+    "gpt-4o-mini": "gpt-4o-mini-DataZoneStandard",
 }
 
 # AZURE_OPENAI_ENDPOINT represents the Azure OpenAI endpoint used for connecting to Azure OpenAI API
