@@ -116,37 +116,27 @@ CHUNK_K_FOR_RERANK = 10
 # LLM_PROVIDER must be "azureopenai" in case of using the Azure OpenAI Services API
 LLM_PROVIDER = "azureopenai"
 
-# - If LLM_PROVIDER is "openai", LLM_MODEL must be one of:
-#   "gpt-3.5-turbo", context window size = 4097 tokens (equivalent to ~3000 words)
-#   "gpt-3.5-turbo-16k", context window size = 16385 tokens
-#   "gpt-4", context window size = 8192 tokens
-#   "gpt-4o", context window size = 128000 tokens
-# The default llm is "gpt-3.5-turbo"
+# - If LLM_PROVIDER is "openai", LLM_MODEL must be one of the OpenAI LLM models, e.g. "gpt-4o" or "gpt-4o-mini":
 # - if LLM_PROVIDER is "huggingface", LLM_MODEL should be one of the models as defined on Huggingface,
 #   e.g. one of: "meta-llama/Llama-2-7b-chat-hf", "google/flan-t5-base"
 #   See Huggingface documentation for context window sizes
 #   note: "meta-llama/Llama-2-7b-chat-hf" requires Huggingface Pro Account and access to the llama2 model,
 #   see https://huggingface.co/meta-llama/Llama-2-7b-chat-hf
-# - If LLM_PROVIDER is "ollama", LLM_MODEL must be one of your Ollama downloaded models, e.g.
-#   "llama3"
-#   "orca-mini"
-#   "zephyr"
+# - If LLM_PROVIDER is "ollama", LLM_MODEL must be one of your Ollama downloaded models, e.g. "llama3", "orca-mini" or "zephyr"
 #   See also https://ollama.ai/library
-# - LLM_PROVIDER is "azureopenai":
-#   "gpt-4", context window size = 8192 tokens, cost: $30.00 / $60.00 per 1M tokens
+# - If LLM_PROVIDER is "azureopenai", LLM_MODEL must be one of the LLM models deployed, e.g.:
+#   "gpt-4o", context window size = 128000 tokens
+#   "gpt-4o-mini", context window size = 128000 tokens
 
-# LLM_MODEL must be one of the LLM models deployed, e.g.:
-#   "gpt-35-turbo", context window size = 4097 tokens, cost: $0.50 / $1.50 per 1M tokens
-#   "gpt-4o", context window size = 128000 tokens, cost: $2.50 / $10.00 per 1M tokens
+# LLM_MODEL must be one of the LLM models deployed
 LLM_MODEL = "gpt-4o"
 
 # AZURE_LLM_DEPLOYMENT_MAP represents a dictionary of Azure LLM model deployments
 # with key the model name and value the deployment name\
 # Adjust for your own Azure model deployments
 AZURE_LLM_DEPLOYMENT_MAP = {
-    "gpt-35-turbo": "pbl-openai-a-cd-openai",
-    "gpt-4": "pbl-openai-a-cd-openai4",
-    "gpt-4o": "pbl-openai-a-cd-openai4o"
+    "gpt-4o": "gpt-4o-DataZoneStandard",
+    "gpt-4o-mini": "gpt-4o-mini-DataZoneStandard",
 }
 
 # AZURE_OPENAI_ENDPOINT represents the Azure OpenAI endpoint used for connecting to Azure OpenAI API
