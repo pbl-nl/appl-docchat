@@ -575,10 +575,8 @@ def get_provider_models() -> Dict[str, Dict[str, List[str]]]:
         },
         'llm': {
             'openai': [
-                "gpt-3.5-turbo",
-                "gpt-3.5-turbo-16k",
-                "gpt-4",
-                "gpt-4o"
+                "gpt-4o",
+                "gpt-4o-mini"
             ],
             'huggingface': [
                 "meta-llama/Llama-2-7b-chat-hf",
@@ -590,10 +588,9 @@ def get_provider_models() -> Dict[str, Dict[str, List[str]]]:
                 "zephyr"
             ],
             'azureopenai': [
-                "gpt-35-turbo",
-                # "gpt-4",
-                "gpt-4o"
-            ]
+                "gpt-4o",
+                "gpt-4o-mini"
+        ]
         }
     }
 
