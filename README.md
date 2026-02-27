@@ -1,6 +1,6 @@
 # Chat with your docs! 
 A RAG (Retrieval Augmented Generation) setup for further exploration of chatting to company documents<br><br><br>
-<img width="787" alt="pipeline" src="https://github.com/user-attachments/assets/365bb844-2719-4512-8e57-a4d29d868c26" />
+<img width="907" height="746" alt="pipeline" src="https://github.com/user-attachments/assets/9dda70a9-faaf-4b5a-8a74-69b66dfc12f3" />
 
 
 ## How to use this repo
