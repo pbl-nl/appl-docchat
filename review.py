@@ -11,6 +11,7 @@ import csv
 from datetime import datetime
 import pandas as pd
 from loguru import logger
+from openai import APIError
 # local imports
 from ingest.ingester import Ingester
 from query.querier import Querier
@@ -68,14 +69,24 @@ def generate_answer(
     # Generate the answer for the question
     if review_question_type.lower() == "initial":
         querier.clear_history()
-    response = querier.ask_question(review_question)
     source_docs = ""
-    for doc in response["source_documents"]:
-        source_docs += (
-            f"page {str(doc.metadata['page_number'])}\n{doc.page_content}\n\n"
-        )
 
-    return response["answer"], source_docs
+    try:
+        response = querier.ask_question(review_question)
+        for doc in response["source_documents"]:
+            source_docs += (
+                f"page {str(doc.metadata['page_number'])}\n{doc.page_content}\n\n"
+            )
+        return response["answer"], source_docs
+    except APIError as e:
+        if e.code == "content_filter":
+            return "APIError: Content filtered.", "No sources"
+        else:
+            print(f"APIError: {e.code}")
+            return f"APIError: {e.code}", "No sources"
+    except Exception as e:
+        print(f"Unexpected error: {e}")
+        return f"Error {e}", f"No sources"
 
 
 def write_settings(input_path: os.PathLike, confidential: bool, output_path: os.PathLike) -> None:
@@ -219,6 +230,7 @@ def create_answers_for_folder(question_list_path: str,
 
     # loop over each file, then over each row in questions.csv
     for review_file in review_files:
+        logger.info(f"Reviewing file {review_file}...")
         for index, row in review_questions.iterrows():
             # expected is a file questions.csv with columns "Question_Type", "Question", "Question_Template",
             # "Summary_Template", "Classification" and "Classes"
@@ -229,8 +241,7 @@ def create_answers_for_folder(question_list_path: str,
             review_question_classification = row["Classification"]
             review_classes = row["Classes"]
 
-            logger.info(f"""reviewing question {review_question} of type {review_question_type}
-                        with question template {review_question_template}""")
+            logger.info(f"reviewing question {review_question}")
 
             # check if the string formatting is correct
             check_string_formatting(review_question_type=review_question_type,
