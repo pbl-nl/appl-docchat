@@ -32,7 +32,7 @@ try {
     }
 
     # 4. Write to .env file
-    $envContent | Out-File -FilePath $envFile -Encoding utf8
+    $envContent | Out-File -FilePath ..\$envFile -Encoding utf8
     Write-Host "`nSuccess! Secrets exported to: $(Get-Item $envFile)" -ForegroundColor Green
 
 }
