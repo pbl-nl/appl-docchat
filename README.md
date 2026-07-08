@@ -103,9 +103,9 @@ In the activated virtual environment, the chunks analysis GUI can be started wit
 When this command is used, a browser session will open automatically
 
 ### For developers: Evaluation of Question Answer results
-The file evaluate.py can be used to evaluate the generated answers for a list of questions, provided that the file eval.json exists, containing 
+The file evaluate_all.py can be used to evaluate the generated answers for a list of questions, according to a list of parameter combinations, provided that an evaluation json file exists, containing 
 not only the list of questions but also the related list of desired answers (ground truth).<br>
-Evaluation is done at folder level (one or multiple folders) in the activated virtual environment with <code>python evaluate.py</code><br>
+Evaluation is done at folder level (one or multiple folders) in the activated virtual environment with <code>python evaluate_all.py</code><br>
 
 ### For developers: Monitoring the evaluation results through a Streamlit User Interface
 All evaluation results can be viewed by using a dedicated evaluation GUI.<br>
