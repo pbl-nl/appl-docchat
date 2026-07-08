@@ -39,7 +39,9 @@ def main():
         elif summarization_method == "m":
             summarization_method = "map_reduce"
         # create subfolder for storage of summaries if not existing
-        ut.create_summaries_folder(content_folder_path)
+        is_in_memory = ut.is_in_memory(content_folder_path)
+        if not is_in_memory:
+            ut.create_summaries_folder(content_folder_path)
         # content_folder_path, _ = ut.create_vectordb_path(content_folder_name)
         summarizer = Summarizer(content_folder_path=content_folder_path,
                                 summarization_method=summarization_method,
@@ -47,10 +49,15 @@ def main():
                                 chunk_size=settings.SUMMARY_CHUNK_SIZE,
                                 chunk_overlap=settings.SUMMARY_CHUNK_OVERLAP,
                                 llm_provider=llm_provider,
-                                llm_model=llm_model)
+                                llm_model=llm_model,
+                                in_memory=is_in_memory)
         logger.info(f"Starting summarizer with method {summarization_method}")
-        summarizer.summarize_folder()
-        logger.info(f"{content_folder_name} successfully summarized.")
+        if is_in_memory:
+            logger.info(f"Summarizing in memory for {content_folder_name}")
+            logger.info(f"SUMMARIES \n\n {summarizer.summarize_folder()}")
+        else:
+            summarizer.summarize_folder()
+            logger.info(f"{content_folder_name} successfully summarized.")
 
 
 if __name__ == "__main__":
